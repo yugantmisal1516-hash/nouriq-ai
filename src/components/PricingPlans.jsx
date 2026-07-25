@@ -47,8 +47,15 @@ export default function PricingPlans({ isOpen, onClose }) {
       if (onClose) onClose();
       return;
     }
+    
     setSelectedTier(tier);
     setShowStripeModal(true);
+
+    // Direct Stripe Hosted Checkout Redirection Window
+    if (tier.stripePriceId) {
+      const stripeCheckoutUrl = `https://checkout.stripe.com/pay/${tier.stripePriceId}`;
+      window.open(stripeCheckoutUrl, '_blank');
+    }
   };
 
   const handleProcessStripePayment = (e) => {
@@ -279,10 +286,10 @@ export default function PricingPlans({ isOpen, onClose }) {
         </div>
       </div>
 
-      {/* STRIPE CHECKOUT MODAL SIMULATION & LIVE PRICE ID SYNC */}
+      {/* STRIPE CHECKOUT MODAL & DIRECT STRIPE HOSTED REDIRECT */}
       {showStripeModal && selectedTier && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#011C40]/60 backdrop-blur-md">
-          <div className="ios-glass w-full max-w-md rounded-[32px] p-6 sm:p-8 space-y-5 relative shadow-2xl border border-[#54ACBF]/40">
+          <div className="ios-glass w-full max-w-md rounded-[32px] p-6 sm:p-8 space-y-5 relative shadow-2xl border border-[#54ACBF]/40 text-xs">
             <button
               onClick={() => setShowStripeModal(false)}
               className="absolute top-5 right-5 w-8 h-8 rounded-full liquid-glass-btn flex items-center justify-center text-[#26658C] font-bold text-xs"
@@ -290,7 +297,7 @@ export default function PricingPlans({ isOpen, onClose }) {
               ✕
             </button>
 
-            <div className="flex items-center space-x-2 text-xs font-extrabold text-[#023859]">
+            <div className="flex items-center space-x-2 font-extrabold text-[#023859]">
               <CreditCard className="w-4 h-4 text-[#023859]" />
               <span>Stripe Checkout — 256-Bit Encrypted</span>
             </div>
@@ -310,6 +317,19 @@ export default function PricingPlans({ isOpen, onClose }) {
               </span>
             </div>
 
+            {/* Direct Link Button to Stripe Hosted Checkout */}
+            {selectedTier.stripePriceId && (
+              <a
+                href={`https://checkout.stripe.com/pay/${selectedTier.stripePriceId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3 rounded-full bg-[#023859] hover:bg-[#011C40] text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2 block text-center transition-all"
+              >
+                <ExternalLink className="w-4 h-4 text-[#A7EBF2]" />
+                <span>🔗 Proceed to Official Stripe Hosted Checkout</span>
+              </a>
+            )}
+
             {paymentSuccess ? (
               <div className="p-6 rounded-2xl bg-[#A7EBF2] border border-[#54ACBF] text-center space-y-2">
                 <div className="w-12 h-12 mx-auto rounded-full bg-[#023859] text-white flex items-center justify-center text-xl font-bold">✓</div>
@@ -317,7 +337,7 @@ export default function PricingPlans({ isOpen, onClose }) {
                 <p className="text-xs text-[#023859] font-semibold">Your account has been upgraded to {selectedTier.name}. Receipt sent to your email.</p>
               </div>
             ) : (
-              <form onSubmit={handleProcessStripePayment} className="space-y-4 text-xs font-bold">
+              <form onSubmit={handleProcessStripePayment} className="space-y-4 text-xs font-bold pt-1 border-t border-[#54ACBF]/30">
                 <div>
                   <label className="block text-[#26658C] mb-1">Cardholder Name</label>
                   <input
