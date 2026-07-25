@@ -5,17 +5,26 @@ import {
   Sparkles, 
   Crown, 
   ShieldCheck, 
-  Zap, 
   CreditCard, 
   ArrowRight,
-  HelpCircle,
-  Clock,
-  Star
+  Lock,
+  ExternalLink
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
+export const STRIPE_PRICE_IDS = {
+  pro: {
+    monthly: 'price_1Tx2AESM1HN5cAihVew0wefR',
+    annual: 'price_1Tx2DPSM1HN5cAihIw6ILuus'
+  },
+  ultimate: {
+    monthly: 'price_1Tx28uSM1HN5cAihF9P0wfxm',
+    annual: 'price_1Tx2CfSM1HN5cAihDlpntrW6'
+  }
+};
+
 export default function PricingPlans({ isOpen, onClose }) {
-  const { subscription, upgradeSubscription, cancelSubscription, goals } = useNutrition();
+  const { subscription, upgradeSubscription, goals } = useNutrition();
   const [billingCycle, setBillingCycle] = useState('annual'); // 'monthly' or 'annual'
   const [showStripeModal, setShowStripeModal] = useState(false);
   const [selectedTier, setSelectedTier] = useState(null);
@@ -75,6 +84,7 @@ export default function PricingPlans({ isOpen, onClose }) {
       priceAnnual: 0,
       badge: 'Free Forever',
       desc: 'Essential tracking tools for fitness beginners',
+      stripePriceId: null,
       features: [
         '5 AI Food Scans per day',
         'Basic 7-Day Meal Planner',
@@ -92,13 +102,14 @@ export default function PricingPlans({ isOpen, onClose }) {
       annualTotal: 119,
       badge: '👑 Most Popular (Save 33%)',
       desc: 'Full power for high-performing fitness enthusiasts',
+      stripePriceId: billingCycle === 'annual' ? STRIPE_PRICE_IDS.pro.annual : STRIPE_PRICE_IDS.pro.monthly,
       features: [
         'Unlimited Multi-Modal AI Food Scans',
         'Custom 7-Day Architect with Portion Weight (g)',
         'USDA AI Auto-Calculate Macros Engine',
         '24/7 AI Masterclass Chef & Clinical Nutritionist',
-        'Unlimited Intermittent Fasting Autophagy Logs',
-        'Export Detailed PDF Macro Reports',
+        'Metabolic Autophagy Stages Tracker',
+        'AI Micronutrient Deficit Grocery Insights',
         'Stripe 30-Day Money-Back Guarantee'
       ],
       isPopular: true,
@@ -112,11 +123,12 @@ export default function PricingPlans({ isOpen, onClose }) {
       annualTotal: 239,
       badge: '⭐ VIP Metabolic Suite',
       desc: 'White-glove clinical guidance & human dietitian sync',
+      stripePriceId: billingCycle === 'annual' ? STRIPE_PRICE_IDS.ultimate.annual : STRIPE_PRICE_IDS.ultimate.monthly,
       features: [
         'Everything in Nouriq Pro',
         '1-on-1 Certified Clinical Dietitian Consultation',
         'Metabolic Bloodwork & Biomarker Sync',
-        'Custom PCOS, Diabetic & Renal Protocols',
+        'Schedule 1-on-1 AI Chat Consultation (IST & EST)',
         'Priority 24/7 VIP Support Desk'
       ],
       isPopular: false,
@@ -205,6 +217,12 @@ export default function PricingPlans({ isOpen, onClose }) {
                   )}
                 </div>
 
+                {tier.stripePriceId && (
+                  <div className="text-[10px] text-[#26658C] font-semibold bg-[#A7EBF2]/40 px-2.5 py-1 rounded-lg truncate">
+                    💳 Stripe ID: {tier.stripePriceId}
+                  </div>
+                )}
+
                 <div className="space-y-2.5 text-xs">
                   <span className="text-[11px] font-extrabold text-[#011C40] uppercase tracking-wider block">Included Features:</span>
                   {tier.features.map((feat, idx) => (
@@ -261,7 +279,7 @@ export default function PricingPlans({ isOpen, onClose }) {
         </div>
       </div>
 
-      {/* STRIPE CHECKOUT MODAL SIMULATION */}
+      {/* STRIPE CHECKOUT MODAL SIMULATION & LIVE PRICE ID SYNC */}
       {showStripeModal && selectedTier && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#011C40]/60 backdrop-blur-md">
           <div className="ios-glass w-full max-w-md rounded-[32px] p-6 sm:p-8 space-y-5 relative shadow-2xl border border-[#54ACBF]/40">
@@ -280,8 +298,11 @@ export default function PricingPlans({ isOpen, onClose }) {
             <div className="p-4 rounded-2xl bg-[#A7EBF2]/40 border border-[#54ACBF] flex items-center justify-between text-xs">
               <div>
                 <span className="font-extrabold text-[#011C40] block text-sm">{selectedTier.name}</span>
-                <span className="text-[#26658C] font-medium">
+                <span className="text-[#26658C] font-medium block">
                   {billingCycle === 'annual' ? `Annual Plan ($${selectedTier.annualTotal}/yr)` : `Monthly Plan ($${selectedTier.priceMonthly}/mo)`}
+                </span>
+                <span className="text-[10px] text-[#023859] font-bold block mt-0.5">
+                  Price ID: {selectedTier.stripePriceId}
                 </span>
               </div>
               <span className="text-xl font-black text-[#011C40]">
@@ -302,7 +323,7 @@ export default function PricingPlans({ isOpen, onClose }) {
                   <input
                     type="text"
                     required
-                    defaultValue={goals.name || 'Alex Rivera'}
+                    defaultValue={goals?.name || 'Alex Rivera'}
                     className="w-full bg-white border border-[#54ACBF]/50 rounded-xl px-3.5 py-2 text-[#011C40]"
                   />
                 </div>
