@@ -7,7 +7,6 @@ import {
   ShieldCheck, 
   CreditCard, 
   ArrowRight,
-  Lock,
   ExternalLink
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -20,6 +19,18 @@ export const STRIPE_PRICE_IDS = {
   ultimate: {
     monthly: 'price_1Tx28uSM1HN5cAihF9P0wfxm',
     annual: 'price_1Tx2CfSM1HN5cAihDlpntrW6'
+  }
+};
+
+// Official Stripe Hosted Payment Links (Direct Redirect like CareerForge AI)
+export const STRIPE_PAYMENT_LINKS = {
+  pro: {
+    monthly: 'https://buy.stripe.com/test_00w6oJbEB8XYgtI7al0RG00',
+    annual: 'https://buy.stripe.com/test_14A5kFaAxgqqa5k0LX0RG01'
+  },
+  ultimate: {
+    monthly: 'https://buy.stripe.com/test_14A00leQN2zAgtI8ep0RG02',
+    annual: 'https://buy.stripe.com/test_9B6dRbbEB8XYdhwamx0RG03'
   }
 };
 
@@ -48,6 +59,12 @@ export default function PricingPlans({ isOpen, onClose }) {
       return;
     }
     
+    // Direct Stripe Hosted Payment Link Redirect (100% like CareerForge AI!)
+    if (tier.paymentLink) {
+      window.location.href = tier.paymentLink;
+      return;
+    }
+
     setSelectedTier(tier);
     setShowStripeModal(true);
   };
@@ -86,6 +103,7 @@ export default function PricingPlans({ isOpen, onClose }) {
       badge: 'Free Forever',
       desc: 'Essential tracking tools for fitness beginners',
       stripePriceId: null,
+      paymentLink: null,
       features: [
         '5 AI Food Scans per day',
         'Basic 7-Day Meal Planner',
@@ -104,6 +122,7 @@ export default function PricingPlans({ isOpen, onClose }) {
       badge: '👑 Most Popular (Save 33%)',
       desc: 'Full power for high-performing fitness enthusiasts',
       stripePriceId: billingCycle === 'annual' ? STRIPE_PRICE_IDS.pro.annual : STRIPE_PRICE_IDS.pro.monthly,
+      paymentLink: billingCycle === 'annual' ? STRIPE_PAYMENT_LINKS.pro.annual : STRIPE_PAYMENT_LINKS.pro.monthly,
       features: [
         'Unlimited Multi-Modal AI Food Scans',
         'Custom 7-Day Architect with Portion Weight (g)',
@@ -125,6 +144,7 @@ export default function PricingPlans({ isOpen, onClose }) {
       badge: '⭐ VIP Metabolic Suite',
       desc: 'White-glove clinical guidance & human dietitian sync',
       stripePriceId: billingCycle === 'annual' ? STRIPE_PRICE_IDS.ultimate.annual : STRIPE_PRICE_IDS.ultimate.monthly,
+      paymentLink: billingCycle === 'annual' ? STRIPE_PAYMENT_LINKS.ultimate.annual : STRIPE_PAYMENT_LINKS.ultimate.monthly,
       features: [
         'Everything in Nouriq Pro',
         '1-on-1 Certified Clinical Dietitian Consultation',
@@ -220,7 +240,7 @@ export default function PricingPlans({ isOpen, onClose }) {
 
                 {tier.stripePriceId && (
                   <div className="text-[10px] text-[#26658C] font-semibold bg-[#A7EBF2]/40 px-2.5 py-1 rounded-lg truncate">
-                    💳 Stripe Price ID: {tier.stripePriceId}
+                    💳 Price ID: {tier.stripePriceId}
                   </div>
                 )}
 
@@ -280,7 +300,7 @@ export default function PricingPlans({ isOpen, onClose }) {
         </div>
       </div>
 
-      {/* STRIPE CHECKOUT MODAL */}
+      {/* STRIPE CHECKOUT MODAL FALLBACK */}
       {showStripeModal && selectedTier && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#011C40]/60 backdrop-blur-md">
           <div className="ios-glass w-full max-w-md rounded-[32px] p-6 sm:p-8 space-y-5 relative shadow-2xl border border-[#54ACBF]/40 text-xs">
