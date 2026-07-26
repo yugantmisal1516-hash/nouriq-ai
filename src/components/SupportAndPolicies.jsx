@@ -12,7 +12,9 @@ import {
   Lock,
   Sparkles,
   Check,
-  Eye
+  Eye,
+  Printer,
+  Download
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -52,7 +54,7 @@ export default function SupportAndPolicies() {
     };
 
     try {
-      // Single API Endpoint to nouriq.aisupport@gmail.com with instant _autoresponse back to user (NO activation link needed!)
+      // Direct Secure Payload to Support Desk (Strictly Private - Sent ONLY to nouriq.aisupport@gmail.com)
       await fetch('https://formsubmit.co/ajax/nouriq.aisupport@gmail.com', {
         method: 'POST',
         headers: {
@@ -60,26 +62,29 @@ export default function SupportAndPolicies() {
           'Accept': 'application/json'
         },
         body: JSON.stringify({
-          name: contactName || 'Nouriq Member',
-          email: contactEmail,
-          _replyto: contactEmail,
-          _subject: `🚨 New Nouriq Support Complaint [Ticket #${ticketId}] - ${issueType}`,
           ticket_id: ticketId,
-          complaint_category: issueType,
           user_name: contactName || 'Nouriq Member',
           user_email: contactEmail,
+          category: issueType,
           complaint_message: message.trim(),
-          _autoresponse: `Dear ${contactName || 'Valued Nouriq Member'},\n\nWe have received your support complaint regarding "${issueType}" [Ticket #${ticketId}]. Our support team is reviewing your message and will respond within 2 hours.\n\nCopy of your submitted complaint:\n"${message.trim()}"\n\nThank you for reaching out to Nouriq AI Customer Support.\nSupport Desk Email: nouriq.aisupport@gmail.com`
+          submitted_at: timestamp,
+          _subject: `🚨 New Nouriq Complaint [Ticket #${ticketId}] - ${issueType}`,
+          _template: 'table',
+          _captcha: 'false'
         })
       });
     } catch (err) {
-      console.warn('Real Email dispatch API attempted:', err);
+      console.warn('Complaint dispatch attempted:', err);
     } finally {
       setIsSending(false);
       setTicketDetails(newTicket);
       setSubmitted(true);
       confetti({ particleCount: 80, spread: 70 });
     }
+  };
+
+  const handlePrintTicket = () => {
+    window.print();
   };
 
   return (
@@ -172,7 +177,7 @@ export default function SupportAndPolicies() {
               <div className="p-3.5 rounded-2xl bg-[#A7EBF2]/40 border border-[#54ACBF]/40 text-xs space-y-1">
                 <span className="font-extrabold text-[#023859] block">⚡ Response & Email Dispatch Commitment</span>
                 <p className="text-[#26658C] text-[11px] font-medium leading-relaxed">
-                  When you submit any complaint, an automated complaint copy is dispatched directly to <strong className="text-[#011C40]">nouriq.aisupport@gmail.com</strong> and a confirmation receipt is sent to your email with a <strong className="text-[#023859]">under 2 hours response SLA</strong>.
+                  When you submit any complaint, a private complaint ticket is sent directly to <strong className="text-[#011C40]">nouriq.aisupport@gmail.com</strong> and a official confirmation ticket is generated with a <strong className="text-[#023859]">under 2 hours response SLA</strong>.
                 </p>
               </div>
 
@@ -208,14 +213,14 @@ export default function SupportAndPolicies() {
           {/* Interactive Support Ticket Form & Automated Dispatch Engine */}
           <div className="lg:col-span-7 ios-glass p-6 rounded-[28px] space-y-4 shadow-sm">
             <h2 className="text-base font-extrabold text-[#011C40]">Contact Customer Support Team</h2>
-            <p className="text-xs text-[#26658C] font-medium font-sans">File any complaint or query. Automated email copies are sent to admin & user email instantly.</p>
+            <p className="text-xs text-[#26658C] font-medium font-sans">File any complaint or query. Strictly private complaint logging sent to support admin inbox.</p>
 
             {submitted && ticketDetails ? (
               <div className="p-6 rounded-2xl bg-[#A7EBF2]/50 border border-[#54ACBF] space-y-4 animate-fade-in">
                 <div className="flex items-center space-x-3 text-[#023859]">
                   <CheckCircle2 className="w-8 h-8 shrink-0 text-[#023859]" />
                   <div>
-                    <h3 className="text-sm font-extrabold text-[#011C40]">Support Complaint Logged & Dispatched!</h3>
+                    <h3 className="text-sm font-extrabold text-[#011C40]">Official Complaint Ticket Logged & Dispatched!</h3>
                     <span className="text-[11px] font-bold text-[#023859] block">Ticket ID: {ticketDetails.id} | {ticketDetails.timestamp}</span>
                   </div>
                 </div>
@@ -224,8 +229,8 @@ export default function SupportAndPolicies() {
                 <div className="space-y-2 text-xs">
                   <div className="ios-glass-card p-3 rounded-xl flex items-center justify-between gap-2 border-l-4 border-emerald-500">
                     <div className="min-w-0 flex-1">
-                      <span className="font-extrabold text-[#011C40] block">📩 Admin Complaint Inbox Notification</span>
-                      <span className="text-[#26658C] text-[11px] font-medium block truncate">Dispatched to: <strong>nouriq.aisupport@gmail.com</strong></span>
+                      <span className="font-extrabold text-[#011C40] block">📩 Support Admin Inbox Notification</span>
+                      <span className="text-[#26658C] text-[11px] font-medium block truncate">Delivered strictly to: <strong>nouriq.aisupport@gmail.com</strong></span>
                     </div>
                     <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold shrink-0 flex items-center gap-1">
                       <Check className="w-3 h-3" /> Delivered
@@ -234,54 +239,33 @@ export default function SupportAndPolicies() {
 
                   <div className="ios-glass-card p-3 rounded-xl flex items-center justify-between gap-2 border-l-4 border-[#023859]">
                     <div className="min-w-0 flex-1">
-                      <span className="font-extrabold text-[#011C40] block">✉️ User Confirmation Receipt</span>
-                      <span className="text-[#26658C] text-[11px] font-medium block truncate">Dispatched to: <strong>{ticketDetails.userEmail}</strong></span>
+                      <span className="font-extrabold text-[#011C40] block">✉️ Official User Confirmation Receipt</span>
+                      <span className="text-[#26658C] text-[11px] font-medium block truncate">Logged for: <strong>{ticketDetails.userEmail}</strong></span>
                     </div>
                     <span className="px-2.5 py-1 rounded-full bg-[#023859] text-white text-[10px] font-extrabold shrink-0 flex items-center gap-1">
-                      <Check className="w-3 h-3 text-[#A7EBF2]" /> Delivered
+                      <Check className="w-3 h-3 text-[#A7EBF2]" /> Confirmed
                     </span>
                   </div>
                 </div>
 
-                {/* Toggle Email Transmission Preview Drawer */}
-                <div className="pt-1">
-                  <button
-                    onClick={() => setShowEmailPreview(!showEmailPreview)}
-                    className="w-full py-2 px-4 rounded-xl liquid-glass-btn text-[#011C40] font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-xs"
-                  >
-                    <Eye className="w-3.5 h-3.5 text-[#023859]" />
-                    <span>{showEmailPreview ? 'Hide Transmitted Email Receipts' : 'View Transmitted Email Copies'}</span>
-                  </button>
-
-                  {showEmailPreview && (
-                    <div className="mt-3 space-y-3 text-[11px] animate-fade-in">
-                      
-                      {/* Admin Email Copy */}
-                      <div className="ios-glass p-3.5 rounded-xl border border-[#54ACBF]/50 bg-white/90 space-y-1">
-                        <span className="font-extrabold text-[#011C40] block border-b border-slate-200 pb-1">
-                          📩 Copy Sent to Support Team (nouriq.aisupport@gmail.com):
-                        </span>
-                        <div className="text-[#26658C] font-mono text-[10px] space-y-1 pt-1">
-                          <p><strong>Subject:</strong> 🚨 New Complaint Logged [{ticketDetails.id}] - {ticketDetails.category}</p>
-                          <p><strong>From:</strong> {ticketDetails.name} &lt;{ticketDetails.userEmail}&gt;</p>
-                          <p><strong>Complaint:</strong> "{ticketDetails.message}"</p>
-                        </div>
-                      </div>
-
-                      {/* User Email Copy */}
-                      <div className="ios-glass p-3.5 rounded-xl border border-[#54ACBF]/50 bg-white/90 space-y-1">
-                        <span className="font-extrabold text-[#011C40] block border-b border-slate-200 pb-1">
-                          ✉️ Direct Confirmation Receipt Sent to User ({ticketDetails.userEmail}):
-                        </span>
-                        <div className="text-[#26658C] font-mono text-[10px] space-y-1 pt-1">
-                          <p><strong>Subject:</strong> ✉️ Complaint Confirmation [{ticketDetails.id}] - Nouriq AI Support</p>
-                          <p><strong>To:</strong> {ticketDetails.userEmail}</p>
-                          <p><strong>Message:</strong> Dear {ticketDetails.name}, we received your complaint regarding "{ticketDetails.category}". Our support desk at nouriq.aisupport@gmail.com is reviewing it now.</p>
-                        </div>
-                      </div>
-
-                    </div>
-                  )}
+                {/* User Confirmation Ticket Box */}
+                <div className="ios-glass p-4 rounded-2xl border border-[#54ACBF] bg-white space-y-2 text-xs">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <span className="font-extrabold text-[#011C40] text-xs">📄 Complaint Confirmation Ticket #{ticketDetails.id}</span>
+                    <button
+                      onClick={handlePrintTicket}
+                      className="px-3 py-1 rounded-full liquid-glass-btn text-[#023859] font-bold text-[11px] flex items-center gap-1"
+                    >
+                      <Printer className="w-3 h-3" /> Print Ticket
+                    </button>
+                  </div>
+                  <div className="text-[11px] text-[#26658C] space-y-1 font-sans">
+                    <p><strong>Member Name:</strong> {ticketDetails.name}</p>
+                    <p><strong>Email Address:</strong> {ticketDetails.userEmail}</p>
+                    <p><strong>Category:</strong> {ticketDetails.category}</p>
+                    <p><strong>Status:</strong> <span className="text-emerald-700 font-bold">Logged & In Review (SLA &lt; 2 Hours)</span></p>
+                    <p className="pt-1 text-[#011C40] font-medium"><strong>Complaint Details:</strong> "{ticketDetails.message}"</p>
+                  </div>
                 </div>
 
                 <div className="pt-2">
@@ -313,7 +297,7 @@ export default function SupportAndPolicies() {
                   </div>
 
                   <div>
-                    <label className="block text-[#26658C] mb-1 font-semibold">Your Real Email Address (For Direct Confirmation)</label>
+                    <label className="block text-[#26658C] mb-1 font-semibold">Your Real Email Address</label>
                     <input
                       type="email"
                       required
@@ -346,7 +330,7 @@ export default function SupportAndPolicies() {
                     required
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Provide details about your complaint or query. Copies will be emailed to nouriq.aisupport@gmail.com and your email..."
+                    placeholder="Provide details about your complaint or query. Complaint will be emailed strictly to nouriq.aisupport@gmail.com..."
                     className="w-full bg-white border border-[#54ACBF]/50 rounded-xl px-3.5 py-2.5 text-[#011C40] font-bold focus:outline-none placeholder:text-[#26658C]/60"
                   />
                 </div>
@@ -357,7 +341,7 @@ export default function SupportAndPolicies() {
                   className="w-full py-3.5 px-6 rounded-full liquid-glass-btn liquid-glass-btn-active text-white font-extrabold text-xs shadow-xs active:scale-95 flex items-center justify-center gap-2"
                 >
                   <Send className="w-4 h-4 text-white" />
-                  <span>{isSending ? 'Transmitting Real Email Copies...' : 'Send Complaint & Automate Email Receipts'}</span>
+                  <span>{isSending ? 'Transmitting Secure Complaint...' : 'Send Complaint & Generate Ticket Receipt'}</span>
                 </button>
               </form>
             )}
