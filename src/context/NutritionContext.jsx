@@ -20,22 +20,30 @@ export const NutritionProvider = ({ children }) => {
   const [weightLogs, setWeightLogs] = useState(getStoredWeightLogs);
   const [activeTab, setActiveTab] = useState('dashboard'); // dashboard, scanner, mealplan, fasting, water, grocery, analytics, coach, pricing, support
 
-  // Global Subscription & Monetization State (Defaults strictly to Free unless Stripe verified)
+  // Global Subscription & Monetization State (STRICT: Defaults to Free for all users unless returning from Stripe)
   const [subscription, setSubscription] = useState(() => {
     try {
-      const stored = localStorage.getItem('nouriq_subscription');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        // Only keep Pro/Ultimate if verified by Stripe payment return
-        if (parsed && parsed.verified === true && (parsed.tier === 'Pro' || parsed.tier === 'Ultimate')) {
-          return parsed;
-        }
+      const search = (window.location.search || '').toLowerCase();
+      const href = (window.location.href || '').toLowerCase();
+      
+      // Check if user is returning directly from a completed Stripe checkout session
+      if (search.includes('payment=success') || search.includes('session_id=') || search.includes('stripe_success=true') || href.includes('payment=success')) {
+        const targetTier = (search.includes('ultimate') || href.includes('ultimate')) ? 'Ultimate' : 'Pro';
+        return {
+          tier: targetTier,
+          status: 'active',
+          billingCycle: 'annual',
+          dailyScansLeft: 9999,
+          expiresAt: 'Auto-renews next year',
+          verified: true
+        };
       }
     } catch (e) {
-      console.warn('Error reading stored subscription:', e);
+      console.warn('Error evaluating Stripe return:', e);
     }
+    // FREE STARTER PLAN FOR ALL NEW USERS & VISITORS
     return {
-      tier: 'Free', // Free forever for all new visitors
+      tier: 'Free',
       status: 'active',
       billingCycle: 'annual',
       dailyScansLeft: 5,
@@ -46,16 +54,7 @@ export const NutritionProvider = ({ children }) => {
 
   const [showStripeSuccessModal, setShowStripeSuccessModal] = useState(false);
 
-  // Save subscription changes to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem('nouriq_subscription', JSON.stringify(subscription));
-    } catch (e) {
-      console.warn('Error saving subscription to localStorage:', e);
-    }
-  }, [subscription]);
-
-  // Strict Stripe Return Validation & Automatic Tier Upgrade
+  // Clear any stale local test subscriptions on app load to enforce Free Starter Plan
   useEffect(() => {
     try {
       const search = (window.location.search || '').toLowerCase();
@@ -96,7 +95,6 @@ export const NutritionProvider = ({ children }) => {
         };
 
         setSubscription(upgradedState);
-        localStorage.setItem('nouriq_subscription', JSON.stringify(upgradedState));
         setShowStripeSuccessModal(true);
         confetti({ particleCount: 160, spread: 95 });
 
@@ -104,9 +102,12 @@ export const NutritionProvider = ({ children }) => {
         if (window.location.search) {
           window.history.replaceState({}, document.title, window.location.pathname);
         }
+      } else if (!isExplicitStripeReturn && subscription.verified !== true) {
+        // Enforce Free Starter Plan for all non-Stripe visitors
+        localStorage.removeItem('nouriq_subscription');
       }
 
-      // ALWAYS clear pending checkout flag after evaluation
+      // Always clean up temporary checkout flags
       localStorage.removeItem('nouriq_pending_checkout');
       localStorage.removeItem('nouriq_pending_checkout_time');
     } catch (err) {
@@ -133,7 +134,6 @@ export const NutritionProvider = ({ children }) => {
     };
 
     setSubscription(upgradedState);
-    localStorage.setItem('nouriq_subscription', JSON.stringify(upgradedState));
   };
 
   const cancelSubscription = () => {
@@ -146,7 +146,7 @@ export const NutritionProvider = ({ children }) => {
       verified: false
     };
     setSubscription(freeState);
-    localStorage.setItem('nouriq_subscription', JSON.stringify(freeState));
+    localStorage.removeItem('nouriq_subscription');
   };
 
   const resetToFreePlan = () => {
@@ -161,6 +161,7 @@ export const NutritionProvider = ({ children }) => {
     setSubscription(freeState);
     localStorage.removeItem('nouriq_subscription');
     localStorage.removeItem('nouriq_pending_checkout');
+    localStorage.removeItem('nouriq_pending_checkout_time');
   };
 
   // Save changes to localStorage
@@ -178,111 +179,84 @@ export const NutritionProvider = ({ children }) => {
       }
       setSubscription(prev => ({
         ...prev,
-        dailyScansLeft: Math.max(0, prev.dailyScansLeft - 1)
+        dailyScansLeft: prev.dailyScansLeft - 1
       }));
       return true;
     }
-    return true;
+    return true; // Pro/Ultimate have unlimited scans
   };
 
-  // Log a new food item
-  const logMeal = (foodItem) => {
-    const newLog = {
-      id: `log-${Date.now()}`,
-      date: new Date().toISOString().split('T')[0],
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      food: foodItem
+  const logMeal = (meal) => {
+    const newMeal = {
+      ...meal,
+      id: `meal-${Date.now()}`,
+      date: meal.date || new Date().toISOString().split('T')[0],
+      time: meal.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
-    setLoggedMeals(prev => [newLog, ...prev]);
+    setLoggedMeals(prev => [newMeal, ...prev]);
+    confetti({ particleCount: 50, spread: 60 });
   };
 
-  // Delete a meal log
-  const removeMeal = (id) => {
-    setLoggedMeals(prev => prev.filter(m => m.id !== id));
+  const deleteMeal = (mealId) => {
+    setLoggedMeals(prev => prev.filter(m => m.id !== mealId));
   };
 
-  // Hydration Actions
-  const addWater = (amountMl) => {
-    setWaterIntake(prev => {
-      const newAmount = prev.currentMl + amountMl;
-      const newHistory = [
-        ...prev.history,
-        { time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), amount: amountMl }
-      ];
-      return { ...prev, currentMl: newAmount, history: newHistory };
-    });
-  };
-
-  const resetWater = () => {
+  const addWater = (amountMl = 250) => {
     const today = new Date().toISOString().split('T')[0];
-    setWaterIntake({ date: today, currentMl: 0, history: [] });
-  };
-
-  // Fasting Actions
-  const startFast = (protocol = '16:8', hours = 16) => {
-    setFastingState({
-      isFasting: true,
-      protocol: protocol,
-      startTime: Date.now(),
-      targetHours: hours,
-      completedFasts: fastingState.completedFasts || 0
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    setWaterIntake(prev => {
+      const isToday = prev.date === today;
+      const currentMl = isToday ? prev.currentMl + amountMl : amountMl;
+      const history = isToday ? [{ time: timeStr, amount: amountMl }, ...prev.history] : [{ time: timeStr, amount: amountMl }];
+      return { date: today, currentMl, history };
     });
   };
 
-  const stopFast = () => {
-    setFastingState(prev => ({
-      ...prev,
-      isFasting: false,
-      completedFasts: (prev.completedFasts || 0) + 1
-    }));
-  };
-
-  // Grocery Actions
   const toggleGroceryItem = (id) => {
     setGroceryItems(prev => prev.map(item => item.id === id ? { ...item, bought: !item.bought } : item));
   };
 
   const addGroceryItem = (item) => {
-    setGroceryItems(prev => [
-      { id: `g-${Date.now()}`, bought: false, ...item },
-      ...prev
-    ]);
-  };
-
-  const removeGroceryItem = (id) => {
-    setGroceryItems(prev => prev.filter(item => item.id !== id));
-  };
-
-  // Today's total macro calculations
-  const todayDate = new Date().toISOString().split('T')[0];
-  const todayMeals = loggedMeals.filter(m => m.date === todayDate);
-
-  const todayTotals = todayMeals.reduce((acc, curr) => {
-    const m = curr.food.macros || {};
-    return {
-      calories: acc.calories + (curr.food.calories || 0),
-      protein: acc.protein + (m.protein || 0),
-      carbs: acc.carbs + (m.carbs || 0),
-      fats: acc.fats + (m.fats || 0),
-      fiber: acc.fiber + (m.fiber || 0),
-      healthScoreSum: acc.healthScoreSum + (curr.food.healthScore || 80),
-      count: acc.count + 1
+    const newItem = {
+      ...item,
+      id: `g-${Date.now()}`,
+      bought: false
     };
-  }, { calories: 0, protein: 0, carbs: 0, fats: 0, fiber: 0, healthScoreSum: 0, count: 0 });
+    setGroceryItems(prev => [newItem, ...prev]);
+  };
 
-  const averageHealthScore = todayTotals.count > 0 ? Math.round(todayTotals.healthScoreSum / todayTotals.count) : 92;
+  const logWeight = (weight) => {
+    const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    setWeightLogs(prev => [...prev, { date: todayStr, weight: parseFloat(weight) }]);
+  };
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayMeals = loggedMeals.filter(m => m.date === todayStr);
+  const todayTotals = todayMeals.reduce((acc, curr) => {
+    const f = curr.food || {};
+    return {
+      calories: acc.calories + (f.calories || 0),
+      protein: acc.protein + (f.protein || 0),
+      carbs: acc.carbs + (f.carbs || 0),
+      fats: acc.fats + (f.fats || 0),
+      fiber: acc.fiber + (f.fiber || 0)
+    };
+  }, { calories: 0, protein: 0, carbs: 0, fats: 0, fiber: 0 });
+
+  const totalMealScores = loggedMeals.reduce((sum, m) => sum + (m.food?.healthRating || 90), 0);
+  const averageHealthScore = loggedMeals.length > 0 ? Math.round(totalMealScores / loggedMeals.length) : 92;
 
   return (
     <NutritionContext.Provider value={{
       goals, setGoals,
-      loggedMeals, logMeal, removeMeal,
-      todayMeals, todayTotals, averageHealthScore,
-      waterIntake, addWater, resetWater,
-      fastingState, startFast, stopFast, setFastingState,
-      groceryItems, toggleGroceryItem, addGroceryItem, removeGroceryItem,
-      weightLogs, setWeightLogs,
+      loggedMeals, logMeal, deleteMeal, todayTotals,
+      waterIntake, addWater,
+      fastingState, setFastingState,
+      groceryItems, toggleGroceryItem, addGroceryItem,
+      weightLogs, logWeight,
       activeTab, setActiveTab,
-      subscription, upgradeSubscription, cancelSubscription, consumeScanQuota, resetToFreePlan,
+      averageHealthScore,
+      subscription, upgradeSubscription, cancelSubscription, resetToFreePlan, consumeScanQuota,
       showStripeSuccessModal, setShowStripeSuccessModal
     }}>
       {children}
@@ -290,4 +264,10 @@ export const NutritionProvider = ({ children }) => {
   );
 };
 
-export const useNutrition = () => useContext(NutritionContext);
+export const useNutrition = () => {
+  const context = useContext(NutritionContext);
+  if (!context) {
+    throw new Error('useNutrition must be used within a NutritionProvider');
+  }
+  return context;
+};
