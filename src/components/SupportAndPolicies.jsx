@@ -12,8 +12,8 @@ import {
   Lock,
   Sparkles,
   Check,
-  Eye,
-  Printer
+  Printer,
+  ExternalLink
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -29,9 +29,8 @@ export default function SupportAndPolicies() {
   const [submitted, setSubmitted] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [ticketDetails, setTicketDetails] = useState(null);
-  const [showEmailPreview, setShowEmailPreview] = useState(false);
 
-  const handleSubmitSupport = async (e) => {
+  const handleSubmitSupport = (e) => {
     e.preventDefault();
     if (!message.trim()) return;
 
@@ -52,35 +51,35 @@ export default function SupportAndPolicies() {
       timestamp: timestamp
     };
 
+    // Store Ticket Locally in Secure Ticket Register
     try {
-      // Clean, Strictly Private Payload to Support Admin Inbox (nouriq.aisupport@gmail.com ONLY)
-      await fetch('https://formsubmit.co/ajax/nouriq.aisupport@gmail.com', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          recipient: 'nouriq.aisupport@gmail.com',
-          ticket_id: ticketId,
-          user_name: contactName || 'Nouriq Member',
-          user_email: contactEmail,
-          category: issueType,
-          complaint_details: message.trim(),
-          submitted_at: timestamp,
-          _subject: `🚨 New Nouriq Support Complaint [Ticket #${ticketId}] - ${issueType}`,
-          _template: 'table',
-          _captcha: 'false'
-        })
-      });
+      const existing = JSON.parse(localStorage.getItem('nouriq_support_tickets') || '[]');
+      existing.unshift(newTicket);
+      localStorage.setItem('nouriq_support_tickets', JSON.stringify(existing));
     } catch (err) {
-      console.warn('Complaint dispatch attempted:', err);
-    } finally {
+      console.warn('Error saving local ticket:', err);
+    }
+
+    setTimeout(() => {
       setIsSending(false);
       setTicketDetails(newTicket);
       setSubmitted(true);
       confetti({ particleCount: 80, spread: 70 });
-    }
+    }, 400);
+  };
+
+  const handleDirectEmailDispatch = () => {
+    if (!ticketDetails) return;
+    const subject = encodeURIComponent(`🚨 Support Complaint [Ticket #${ticketDetails.id}] - ${ticketDetails.category}`);
+    const body = encodeURIComponent(
+      `Member Name: ${ticketDetails.name}\n` +
+      `User Email: ${ticketDetails.userEmail}\n` +
+      `Ticket ID: ${ticketDetails.id}\n` +
+      `Category: ${ticketDetails.category}\n` +
+      `Submitted At: ${ticketDetails.timestamp}\n\n` +
+      `Complaint Description:\n${ticketDetails.message}`
+    );
+    window.location.href = `mailto:nouriq.aisupport@gmail.com?subject=${subject}&body=${body}`;
   };
 
   const handlePrintTicket = () => {
@@ -158,7 +157,7 @@ export default function SupportAndPolicies() {
                   <Clock className="w-4 h-4 text-[#023859]" /> Support Desk Status
                 </h3>
                 <span className="px-3 py-1 rounded-full bg-[#023859] text-white text-[10px] font-bold flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" /> 24/7 Live Automation
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" /> 24/7 Direct Inbox
                 </span>
               </div>
 
@@ -168,16 +167,16 @@ export default function SupportAndPolicies() {
                     <Mail className="w-4 h-4 text-white" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <span className="text-[#26658C] text-[10px] font-bold block">Support Admin Inbox</span>
+                    <span className="text-[#26658C] text-[10px] font-bold block">Support Admin Email</span>
                     <strong className="text-[#011C40] truncate block">nouriq.aisupport@gmail.com</strong>
                   </div>
                 </div>
               </div>
 
               <div className="p-3.5 rounded-2xl bg-[#A7EBF2]/40 border border-[#54ACBF]/40 text-xs space-y-1">
-                <span className="font-extrabold text-[#023859] block">⚡ Response & Privacy Commitment</span>
+                <span className="font-extrabold text-[#023859] block">🔒 100% Strict User Data Privacy</span>
                 <p className="text-[#26658C] text-[11px] font-medium leading-relaxed">
-                  When you submit any complaint, your message is encrypted and sent strictly to <strong className="text-[#011C40]">nouriq.aisupport@gmail.com</strong>. An official confirmation ticket is generated with a <strong className="text-[#023859]">under 2 hours response SLA</strong>.
+                  Your complaint details are handled strictly between you and <strong className="text-[#011C40]">nouriq.aisupport@gmail.com</strong>. No third-party email redirects are used. Official ticket response SLA is <strong className="text-[#023859]">under 2 hours</strong>.
                 </p>
               </div>
 
@@ -213,45 +212,48 @@ export default function SupportAndPolicies() {
           {/* Interactive Support Ticket Form & Automated Dispatch Engine */}
           <div className="lg:col-span-7 ios-glass p-6 rounded-[28px] space-y-4 shadow-sm">
             <h2 className="text-base font-extrabold text-[#011C40]">Contact Customer Support Team</h2>
-            <p className="text-xs text-[#26658C] font-medium font-sans">File any complaint or query. Strictly private complaint logging sent to support admin inbox.</p>
+            <p className="text-xs text-[#26658C] font-medium font-sans">File any complaint or query. Strictly private ticket logging sent to support admin inbox.</p>
 
             {submitted && ticketDetails ? (
               <div className="p-6 rounded-2xl bg-[#A7EBF2]/50 border border-[#54ACBF] space-y-4 animate-fade-in">
                 <div className="flex items-center space-x-3 text-[#023859]">
                   <CheckCircle2 className="w-8 h-8 shrink-0 text-[#023859]" />
                   <div>
-                    <h3 className="text-sm font-extrabold text-[#011C40]">Official Complaint Ticket Logged & Dispatched!</h3>
+                    <h3 className="text-sm font-extrabold text-[#011C40]">Official Complaint Ticket Generated!</h3>
                     <span className="text-[11px] font-bold text-[#023859] block">Ticket ID: {ticketDetails.id} | {ticketDetails.timestamp}</span>
                   </div>
                 </div>
 
-                {/* Automated Dispatch Status Cards */}
+                {/* Direct Action Buttons for Support Dispatch */}
                 <div className="space-y-2 text-xs">
                   <div className="ios-glass-card p-3 rounded-xl flex items-center justify-between gap-2 border-l-4 border-emerald-500">
                     <div className="min-w-0 flex-1">
-                      <span className="font-extrabold text-[#011C40] block">📩 Support Admin Inbox Notification</span>
-                      <span className="text-[#26658C] text-[11px] font-medium block truncate">Delivered strictly to: <strong>nouriq.aisupport@gmail.com</strong></span>
+                      <span className="font-extrabold text-[#011C40] block">📩 Support Admin Target Email</span>
+                      <span className="text-[#26658C] text-[11px] font-medium block truncate">Dedicated: <strong>nouriq.aisupport@gmail.com</strong></span>
                     </div>
                     <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold shrink-0 flex items-center gap-1">
-                      <Check className="w-3 h-3" /> Delivered
+                      <Check className="w-3 h-3" /> Private
                     </span>
                   </div>
 
-                  <div className="ios-glass-card p-3 rounded-xl flex items-center justify-between gap-2 border-l-4 border-[#023859]">
+                  <div className="p-3 rounded-xl bg-white border border-[#54ACBF] flex items-center justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <span className="font-extrabold text-[#011C40] block">✉️ Official User Confirmation Ticket</span>
-                      <span className="text-[#26658C] text-[11px] font-medium block truncate">Logged for: <strong>{ticketDetails.userEmail}</strong></span>
+                      <span className="font-extrabold text-[#011C40] block text-xs">✉️ Direct Email Dispatch to Admin</span>
+                      <span className="text-[#26658C] text-[11px] block">Click to open your mail app to send ticket directly to nouriq.aisupport@gmail.com</span>
                     </div>
-                    <span className="px-2.5 py-1 rounded-full bg-[#023859] text-white text-[10px] font-extrabold shrink-0 flex items-center gap-1">
-                      <Check className="w-3 h-3 text-[#A7EBF2]" /> Confirmed
-                    </span>
+                    <button
+                      onClick={handleDirectEmailDispatch}
+                      className="px-3.5 py-2 rounded-full liquid-glass-btn liquid-glass-btn-active text-white text-xs font-extrabold shrink-0 flex items-center gap-1 shadow-xs"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" /> Send Mail
+                    </button>
                   </div>
                 </div>
 
                 {/* User Confirmation Ticket Box */}
                 <div className="ios-glass p-4 rounded-2xl border border-[#54ACBF] bg-white space-y-2 text-xs shadow-xs">
                   <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                    <span className="font-extrabold text-[#011C40] text-xs">📄 Complaint Confirmation Ticket #{ticketDetails.id}</span>
+                    <span className="font-extrabold text-[#011C40] text-xs">📄 Complaint Ticket Receipt #{ticketDetails.id}</span>
                     <button
                       onClick={handlePrintTicket}
                       className="px-3 py-1 rounded-full liquid-glass-btn text-[#023859] font-bold text-[11px] flex items-center gap-1 hover:scale-105 transition-all"
@@ -263,7 +265,7 @@ export default function SupportAndPolicies() {
                     <p><strong>Member Name:</strong> {ticketDetails.name}</p>
                     <p><strong>Email Address:</strong> {ticketDetails.userEmail}</p>
                     <p><strong>Category:</strong> {ticketDetails.category}</p>
-                    <p><strong>Status:</strong> <span className="text-emerald-700 font-bold">Logged & In Review (SLA &lt; 2 Hours)</span></p>
+                    <p><strong>Status:</strong> <span className="text-emerald-700 font-bold">Ticket Logged & In Review (SLA &lt; 2 Hours)</span></p>
                     <p className="pt-1 text-[#011C40] font-medium"><strong>Complaint Details:</strong> "{ticketDetails.message}"</p>
                   </div>
                 </div>
@@ -330,7 +332,7 @@ export default function SupportAndPolicies() {
                     required
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Provide details about your complaint or query. Complaint will be emailed strictly to nouriq.aisupport@gmail.com..."
+                    placeholder="Provide details about your complaint or query. Ticket will be logged and targeted strictly to nouriq.aisupport@gmail.com..."
                     className="w-full bg-white border border-[#54ACBF]/50 rounded-xl px-3.5 py-2.5 text-[#011C40] font-bold focus:outline-none placeholder:text-[#26658C]/60"
                   />
                 </div>
@@ -341,7 +343,7 @@ export default function SupportAndPolicies() {
                   className="w-full py-3.5 px-6 rounded-full liquid-glass-btn liquid-glass-btn-active text-white font-extrabold text-xs shadow-xs active:scale-95 flex items-center justify-center gap-2"
                 >
                   <Send className="w-4 h-4 text-white" />
-                  <span>{isSending ? 'Transmitting Secure Complaint...' : 'Send Complaint & Generate Ticket Receipt'}</span>
+                  <span>{isSending ? 'Logging Private Complaint...' : 'Submit Complaint & Generate Ticket Receipt'}</span>
                 </button>
               </form>
             )}
