@@ -35,7 +35,7 @@ export const STRIPE_PAYMENT_LINKS = {
 };
 
 export default function PricingPlans({ isOpen, onClose }) {
-  const { subscription, upgradeSubscription, goals } = useNutrition();
+  const { subscription, upgradeSubscription, resetToFreePlan, goals } = useNutrition();
   const [billingCycle, setBillingCycle] = useState('annual'); // 'monthly' or 'annual'
   const [showStripeModal, setShowStripeModal] = useState(false);
   const [selectedTier, setSelectedTier] = useState(null);
@@ -52,8 +52,8 @@ export default function PricingPlans({ isOpen, onClose }) {
 
   const handleOpenStripe = (tier) => {
     if (tier.id === 'free') {
-      if (typeof upgradeSubscription === 'function') {
-        upgradeSubscription('Free', billingCycle);
+      if (typeof resetToFreePlan === 'function') {
+        resetToFreePlan();
       }
       if (onClose) onClose();
       return;
@@ -120,7 +120,7 @@ export default function PricingPlans({ isOpen, onClose }) {
         'Standard Food Database'
       ],
       isPopular: false,
-      cta: 'Current Starter Plan'
+      cta: subscription?.tier === 'Free' ? 'Current Starter Plan' : 'Switch to Starter Free Plan'
     },
     {
       id: 'pro',
@@ -308,6 +308,20 @@ export default function PricingPlans({ isOpen, onClose }) {
           </span>
         </div>
       </div>
+
+      {/* Reset Cache Option for Testing */}
+      {subscription?.tier !== 'Free' && (
+        <div className="text-center pt-2">
+          <button
+            onClick={() => {
+              if (typeof resetToFreePlan === 'function') resetToFreePlan();
+            }}
+            className="text-[11px] font-extrabold text-[#26658C] hover:text-[#011C40] underline transition-all"
+          >
+            ↺ Switch Back to Starter Free Plan (Clear Local Test Cache)
+          </button>
+        </div>
+      )}
 
       {/* STRIPE CHECKOUT MODAL FALLBACK */}
       {showStripeModal && selectedTier && (

@@ -20,13 +20,14 @@ export const NutritionProvider = ({ children }) => {
   const [weightLogs, setWeightLogs] = useState(getStoredWeightLogs);
   const [activeTab, setActiveTab] = useState('dashboard'); // dashboard, scanner, mealplan, fasting, water, grocery, analytics, coach, pricing, support
 
-  // Global Subscription & Monetization State (Persisted in localStorage, Defaults strictly to Free for all new users)
+  // Global Subscription & Monetization State (Defaults strictly to Free unless Stripe verified)
   const [subscription, setSubscription] = useState(() => {
     try {
       const stored = localStorage.getItem('nouriq_subscription');
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (parsed && (parsed.tier === 'Pro' || parsed.tier === 'Ultimate' || parsed.tier === 'Free')) {
+        // Only keep Pro/Ultimate if verified by Stripe payment return
+        if (parsed && parsed.verified === true && (parsed.tier === 'Pro' || parsed.tier === 'Ultimate')) {
           return parsed;
         }
       }
@@ -34,11 +35,12 @@ export const NutritionProvider = ({ children }) => {
       console.warn('Error reading stored subscription:', e);
     }
     return {
-      tier: 'Free', // Free forever for all new users
+      tier: 'Free', // Free forever for all new visitors
       status: 'active',
       billingCycle: 'annual',
       dailyScansLeft: 5,
-      expiresAt: 'Lifetime'
+      expiresAt: 'Lifetime',
+      verified: false
     };
   });
 
@@ -89,7 +91,8 @@ export const NutritionProvider = ({ children }) => {
           status: 'active',
           billingCycle: 'annual',
           dailyScansLeft: 9999,
-          expiresAt: 'Auto-renews next year'
+          expiresAt: 'Auto-renews next year',
+          verified: true
         };
 
         setSubscription(upgradedState);
@@ -103,7 +106,7 @@ export const NutritionProvider = ({ children }) => {
         }
       }
 
-      // ALWAYS clear pending checkout flag after evaluation so regular page reloads NEVER trigger upgrades
+      // ALWAYS clear pending checkout flag after evaluation
       localStorage.removeItem('nouriq_pending_checkout');
       localStorage.removeItem('nouriq_pending_checkout_time');
     } catch (err) {
@@ -125,7 +128,8 @@ export const NutritionProvider = ({ children }) => {
       status: 'active',
       billingCycle: cycle,
       dailyScansLeft: targetTier === 'Free' ? 5 : 9999,
-      expiresAt: targetTier === 'Free' ? 'Lifetime' : 'Auto-renews next year'
+      expiresAt: targetTier === 'Free' ? 'Lifetime' : 'Auto-renews next year',
+      verified: targetTier !== 'Free'
     };
 
     setSubscription(upgradedState);
@@ -138,10 +142,25 @@ export const NutritionProvider = ({ children }) => {
       status: 'cancelled',
       billingCycle: 'monthly',
       dailyScansLeft: 5,
-      expiresAt: 'Expired'
+      expiresAt: 'Expired',
+      verified: false
     };
     setSubscription(freeState);
     localStorage.setItem('nouriq_subscription', JSON.stringify(freeState));
+  };
+
+  const resetToFreePlan = () => {
+    const freeState = {
+      tier: 'Free',
+      status: 'active',
+      billingCycle: 'annual',
+      dailyScansLeft: 5,
+      expiresAt: 'Lifetime',
+      verified: false
+    };
+    setSubscription(freeState);
+    localStorage.removeItem('nouriq_subscription');
+    localStorage.removeItem('nouriq_pending_checkout');
   };
 
   // Save changes to localStorage
@@ -263,7 +282,7 @@ export const NutritionProvider = ({ children }) => {
       groceryItems, toggleGroceryItem, addGroceryItem, removeGroceryItem,
       weightLogs, setWeightLogs,
       activeTab, setActiveTab,
-      subscription, upgradeSubscription, cancelSubscription, consumeScanQuota,
+      subscription, upgradeSubscription, cancelSubscription, consumeScanQuota, resetToFreePlan,
       showStripeSuccessModal, setShowStripeSuccessModal
     }}>
       {children}
