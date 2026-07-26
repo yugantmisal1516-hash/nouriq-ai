@@ -20,7 +20,7 @@ export const NutritionProvider = ({ children }) => {
   const [weightLogs, setWeightLogs] = useState(getStoredWeightLogs);
   const [activeTab, setActiveTab] = useState('dashboard'); // dashboard, scanner, mealplan, fasting, water, grocery, analytics, coach, pricing, support
 
-  // Global Subscription & Monetization State (Persisted in localStorage)
+  // Global Subscription & Monetization State (Persisted in localStorage, Defaults strictly to Free for all new users)
   const [subscription, setSubscription] = useState(() => {
     try {
       const stored = localStorage.getItem('nouriq_subscription');
@@ -34,7 +34,7 @@ export const NutritionProvider = ({ children }) => {
       console.warn('Error reading stored subscription:', e);
     }
     return {
-      tier: 'Free', // Free, Pro, Ultimate
+      tier: 'Free', // Free forever for all new users
       status: 'active',
       billingCycle: 'annual',
       dailyScansLeft: 5,
@@ -53,17 +53,20 @@ export const NutritionProvider = ({ children }) => {
     }
   }, [subscription]);
 
-  // Detect Stripe Return Redirect & Automatically Upgrade Subscription Tier (FOOLPROOF ENGINE)
+  // Strict Stripe Return Validation & Automatic Tier Upgrade
   useEffect(() => {
     try {
       const search = (window.location.search || '').toLowerCase();
       const href = (window.location.href || '').toLowerCase();
       const referrer = (document.referrer || '').toLowerCase();
       const pendingCheckout = localStorage.getItem('nouriq_pending_checkout');
+      const pendingTime = parseInt(localStorage.getItem('nouriq_pending_checkout_time') || '0', 10);
+      const now = Date.now();
       const urlParams = new URLSearchParams(search);
 
-      const isStripeReturn = 
-        pendingCheckout !== null ||
+      // Must be a recent checkout attempt within 15 minutes AND an explicit return from Stripe
+      const isRecentCheckout = pendingCheckout && (now - pendingTime < 900000);
+      const isExplicitStripeReturn = 
         referrer.includes('stripe.com') ||
         referrer.includes('buy.stripe') ||
         urlParams.get('payment') === 'success' || 
@@ -73,7 +76,7 @@ export const NutritionProvider = ({ children }) => {
         href.includes('success=true') ||
         href.includes('session_id=');
 
-      if (isStripeReturn) {
+      if (isRecentCheckout && isExplicitStripeReturn) {
         let targetTier = 'Pro';
         if (pendingCheckout === 'Ultimate' || search.includes('ultimate') || href.includes('ultimate')) {
           targetTier = 'Ultimate';
@@ -91,9 +94,6 @@ export const NutritionProvider = ({ children }) => {
 
         setSubscription(upgradedState);
         localStorage.setItem('nouriq_subscription', JSON.stringify(upgradedState));
-        localStorage.removeItem('nouriq_pending_checkout');
-        localStorage.removeItem('nouriq_pending_checkout_time');
-
         setShowStripeSuccessModal(true);
         confetti({ particleCount: 160, spread: 95 });
 
@@ -102,8 +102,12 @@ export const NutritionProvider = ({ children }) => {
           window.history.replaceState({}, document.title, window.location.pathname);
         }
       }
+
+      // ALWAYS clear pending checkout flag after evaluation so regular page reloads NEVER trigger upgrades
+      localStorage.removeItem('nouriq_pending_checkout');
+      localStorage.removeItem('nouriq_pending_checkout_time');
     } catch (err) {
-      console.warn('Error checking Stripe return redirect state:', err);
+      console.warn('Error validating Stripe return redirect:', err);
     }
   }, []);
 
