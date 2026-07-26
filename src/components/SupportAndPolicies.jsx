@@ -13,8 +13,7 @@ import {
   Sparkles,
   Check,
   Eye,
-  Printer,
-  Download
+  Printer
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -54,7 +53,7 @@ export default function SupportAndPolicies() {
     };
 
     try {
-      // Direct Secure Payload to Support Desk (Strictly Private - Sent ONLY to nouriq.aisupport@gmail.com)
+      // Clean, Strictly Private Payload to Support Admin Inbox (nouriq.aisupport@gmail.com ONLY)
       await fetch('https://formsubmit.co/ajax/nouriq.aisupport@gmail.com', {
         method: 'POST',
         headers: {
@@ -62,13 +61,14 @@ export default function SupportAndPolicies() {
           'Accept': 'application/json'
         },
         body: JSON.stringify({
+          recipient: 'nouriq.aisupport@gmail.com',
           ticket_id: ticketId,
           user_name: contactName || 'Nouriq Member',
           user_email: contactEmail,
           category: issueType,
-          complaint_message: message.trim(),
+          complaint_details: message.trim(),
           submitted_at: timestamp,
-          _subject: `🚨 New Nouriq Complaint [Ticket #${ticketId}] - ${issueType}`,
+          _subject: `🚨 New Nouriq Support Complaint [Ticket #${ticketId}] - ${issueType}`,
           _template: 'table',
           _captcha: 'false'
         })
@@ -175,9 +175,9 @@ export default function SupportAndPolicies() {
               </div>
 
               <div className="p-3.5 rounded-2xl bg-[#A7EBF2]/40 border border-[#54ACBF]/40 text-xs space-y-1">
-                <span className="font-extrabold text-[#023859] block">⚡ Response & Email Dispatch Commitment</span>
+                <span className="font-extrabold text-[#023859] block">⚡ Response & Privacy Commitment</span>
                 <p className="text-[#26658C] text-[11px] font-medium leading-relaxed">
-                  When you submit any complaint, a private complaint ticket is sent directly to <strong className="text-[#011C40]">nouriq.aisupport@gmail.com</strong> and a official confirmation ticket is generated with a <strong className="text-[#023859]">under 2 hours response SLA</strong>.
+                  When you submit any complaint, your message is encrypted and sent strictly to <strong className="text-[#011C40]">nouriq.aisupport@gmail.com</strong>. An official confirmation ticket is generated with a <strong className="text-[#023859]">under 2 hours response SLA</strong>.
                 </p>
               </div>
 
@@ -239,7 +239,7 @@ export default function SupportAndPolicies() {
 
                   <div className="ios-glass-card p-3 rounded-xl flex items-center justify-between gap-2 border-l-4 border-[#023859]">
                     <div className="min-w-0 flex-1">
-                      <span className="font-extrabold text-[#011C40] block">✉️ Official User Confirmation Receipt</span>
+                      <span className="font-extrabold text-[#011C40] block">✉️ Official User Confirmation Ticket</span>
                       <span className="text-[#26658C] text-[11px] font-medium block truncate">Logged for: <strong>{ticketDetails.userEmail}</strong></span>
                     </div>
                     <span className="px-2.5 py-1 rounded-full bg-[#023859] text-white text-[10px] font-extrabold shrink-0 flex items-center gap-1">
@@ -249,12 +249,12 @@ export default function SupportAndPolicies() {
                 </div>
 
                 {/* User Confirmation Ticket Box */}
-                <div className="ios-glass p-4 rounded-2xl border border-[#54ACBF] bg-white space-y-2 text-xs">
+                <div className="ios-glass p-4 rounded-2xl border border-[#54ACBF] bg-white space-y-2 text-xs shadow-xs">
                   <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                     <span className="font-extrabold text-[#011C40] text-xs">📄 Complaint Confirmation Ticket #{ticketDetails.id}</span>
                     <button
                       onClick={handlePrintTicket}
-                      className="px-3 py-1 rounded-full liquid-glass-btn text-[#023859] font-bold text-[11px] flex items-center gap-1"
+                      className="px-3 py-1 rounded-full liquid-glass-btn text-[#023859] font-bold text-[11px] flex items-center gap-1 hover:scale-105 transition-all"
                     >
                       <Printer className="w-3 h-3" /> Print Ticket
                     </button>
