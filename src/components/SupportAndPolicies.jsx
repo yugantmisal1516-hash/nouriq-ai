@@ -52,8 +52,8 @@ export default function SupportAndPolicies() {
     };
 
     try {
-      // 1. Dispatch Complaint Email to Support Admin Inbox (nouriq.aisupport@gmail.com)
-      const p1 = fetch('https://formsubmit.co/ajax/nouriq.aisupport@gmail.com', {
+      // Single API Endpoint to nouriq.aisupport@gmail.com with instant _autoresponse back to user (NO activation link needed!)
+      await fetch('https://formsubmit.co/ajax/nouriq.aisupport@gmail.com', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -69,32 +69,9 @@ export default function SupportAndPolicies() {
           user_name: contactName || 'Nouriq Member',
           user_email: contactEmail,
           complaint_message: message.trim(),
-          _autoresponse: `Dear ${contactName || 'Valued Member'},\n\nWe have received your support complaint regarding "${issueType}" [Ticket #${ticketId}]. Our support team is reviewing your message and will respond within 2 hours.\n\nCopy of your submitted complaint:\n"${message.trim()}"\n\nThank you for reaching out to Nouriq AI Customer Support.\nSupport Desk: nouriq.aisupport@gmail.com`
+          _autoresponse: `Dear ${contactName || 'Valued Nouriq Member'},\n\nWe have received your support complaint regarding "${issueType}" [Ticket #${ticketId}]. Our support team is reviewing your message and will respond within 2 hours.\n\nCopy of your submitted complaint:\n"${message.trim()}"\n\nThank you for reaching out to Nouriq AI Customer Support.\nSupport Desk Email: nouriq.aisupport@gmail.com`
         })
       });
-
-      // 2. Dispatch Dedicated User Confirmation Receipt Email to User's Email Address
-      const p2 = fetch(`https://formsubmit.co/ajax/${contactEmail}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          name: 'Nouriq AI Customer Support Team',
-          email: 'nouriq.aisupport@gmail.com',
-          _replyto: 'nouriq.aisupport@gmail.com',
-          _subject: `✉️ Support Complaint Confirmation Receipt [Ticket #${ticketId}]`,
-          ticket_number: ticketId,
-          complaint_category: issueType,
-          status: 'Complaint Logged & In Review',
-          expected_response_time: 'Under 2 Hours',
-          your_complaint_copy: message.trim(),
-          support_email: 'nouriq.aisupport@gmail.com'
-        })
-      });
-
-      await Promise.allSettled([p1, p2]);
     } catch (err) {
       console.warn('Real Email dispatch API attempted:', err);
     } finally {
@@ -294,7 +271,7 @@ export default function SupportAndPolicies() {
                       {/* User Email Copy */}
                       <div className="ios-glass p-3.5 rounded-xl border border-[#54ACBF]/50 bg-white/90 space-y-1">
                         <span className="font-extrabold text-[#011C40] block border-b border-slate-200 pb-1">
-                          ✉️ Receipt Sent to User ({ticketDetails.userEmail}):
+                          ✉️ Direct Confirmation Receipt Sent to User ({ticketDetails.userEmail}):
                         </span>
                         <div className="text-[#26658C] font-mono text-[10px] space-y-1 pt-1">
                           <p><strong>Subject:</strong> ✉️ Complaint Confirmation [{ticketDetails.id}] - Nouriq AI Support</p>
@@ -336,7 +313,7 @@ export default function SupportAndPolicies() {
                   </div>
 
                   <div>
-                    <label className="block text-[#26658C] mb-1 font-semibold">Your Real Email Address (For Confirmation)</label>
+                    <label className="block text-[#26658C] mb-1 font-semibold">Your Real Email Address (For Direct Confirmation)</label>
                     <input
                       type="email"
                       required
