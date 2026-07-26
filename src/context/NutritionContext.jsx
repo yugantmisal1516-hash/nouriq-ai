@@ -53,14 +53,19 @@ export const NutritionProvider = ({ children }) => {
     }
   }, [subscription]);
 
-  // Detect Stripe Return Redirect & Automatically Upgrade Subscription Tier
+  // Detect Stripe Return Redirect & Automatically Upgrade Subscription Tier (FOOLPROOF ENGINE)
   useEffect(() => {
     try {
-      const search = window.location.search || '';
-      const href = window.location.href || '';
+      const search = (window.location.search || '').toLowerCase();
+      const href = (window.location.href || '').toLowerCase();
+      const referrer = (document.referrer || '').toLowerCase();
+      const pendingCheckout = localStorage.getItem('nouriq_pending_checkout');
       const urlParams = new URLSearchParams(search);
 
-      const isStripeSuccess = 
+      const isStripeReturn = 
+        pendingCheckout !== null ||
+        referrer.includes('stripe.com') ||
+        referrer.includes('buy.stripe') ||
         urlParams.get('payment') === 'success' || 
         urlParams.get('success') === 'true' || 
         urlParams.get('status') === 'success' ||
@@ -68,11 +73,12 @@ export const NutritionProvider = ({ children }) => {
         href.includes('success=true') ||
         href.includes('session_id=');
 
-      if (isStripeSuccess) {
-        const planParam = (urlParams.get('plan') || href || '').toLowerCase();
+      if (isStripeReturn) {
         let targetTier = 'Pro';
-        if (planParam.includes('ultimate') || planParam.includes('239') || planParam.includes('29')) {
+        if (pendingCheckout === 'Ultimate' || search.includes('ultimate') || href.includes('ultimate')) {
           targetTier = 'Ultimate';
+        } else if (pendingCheckout === 'Pro' || search.includes('pro') || href.includes('pro')) {
+          targetTier = 'Pro';
         }
 
         const upgradedState = {
@@ -85,14 +91,19 @@ export const NutritionProvider = ({ children }) => {
 
         setSubscription(upgradedState);
         localStorage.setItem('nouriq_subscription', JSON.stringify(upgradedState));
+        localStorage.removeItem('nouriq_pending_checkout');
+        localStorage.removeItem('nouriq_pending_checkout_time');
+
         setShowStripeSuccessModal(true);
-        confetti({ particleCount: 150, spread: 90 });
+        confetti({ particleCount: 160, spread: 95 });
 
         // Clean up URL parameters cleanly
-        window.history.replaceState({}, document.title, window.location.pathname);
+        if (window.location.search) {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
       }
     } catch (err) {
-      console.warn('Error checking Stripe redirect URL:', err);
+      console.warn('Error checking Stripe return redirect state:', err);
     }
   }, []);
 

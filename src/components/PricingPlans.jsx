@@ -59,6 +59,15 @@ export default function PricingPlans({ isOpen, onClose }) {
       return;
     }
     
+    // Save pending checkout tier to localStorage before redirecting to Stripe
+    const targetTierName = tier.id === 'ultimate' ? 'Ultimate' : 'Pro';
+    try {
+      localStorage.setItem('nouriq_pending_checkout', targetTierName);
+      localStorage.setItem('nouriq_pending_checkout_time', Date.now().toString());
+    } catch (e) {
+      console.warn('Error saving pending checkout state:', e);
+    }
+
     // Direct Stripe Hosted Payment Link Redirect (100% like CareerForge AI!)
     if (tier.paymentLink) {
       window.location.href = tier.paymentLink;
