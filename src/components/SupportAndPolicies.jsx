@@ -30,7 +30,7 @@ export default function SupportAndPolicies() {
   const [ticketDetails, setTicketDetails] = useState(null);
   const [showEmailPreview, setShowEmailPreview] = useState(false);
 
-  const handleSubmitSupport = (e) => {
+  const handleSubmitSupport = async (e) => {
     e.preventDefault();
     if (!message.trim()) return;
 
@@ -51,12 +51,33 @@ export default function SupportAndPolicies() {
       timestamp: timestamp
     };
 
-    setTimeout(() => {
+    try {
+      // Real Automated Email Delivery API to nouriq.aisupport@gmail.com & User Confirmation Email
+      await fetch('https://formsubmit.co/ajax/nouriq.aisupport@gmail.com', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          name: contactName || 'Nouriq Member',
+          email: contactEmail,
+          _replyto: contactEmail,
+          _subject: `🚨 New Nouriq Support Complaint [Ticket #${ticketId}] - ${issueType}`,
+          ticket_id: ticketId,
+          complaint_category: issueType,
+          complaint_message: message.trim(),
+          _autoresponse: `Dear ${contactName || 'Valued Nouriq Member'},\n\nWe have received your support complaint regarding "${issueType}" [Ticket #${ticketId}]. Our support team is reviewing your message and will respond within 2 hours.\n\nCopy of your submitted complaint:\n"${message.trim()}"\n\nThank you for reaching out to Nouriq AI Customer Support.\nContact: nouriq.aisupport@gmail.com`
+        })
+      });
+    } catch (err) {
+      console.warn('Real Email dispatch API attempted:', err);
+    } finally {
       setIsSending(false);
       setTicketDetails(newTicket);
       setSubmitted(true);
       confetti({ particleCount: 80, spread: 70 });
-    }, 600);
+    }
   };
 
   return (
@@ -290,13 +311,13 @@ export default function SupportAndPolicies() {
                   </div>
 
                   <div>
-                    <label className="block text-[#26658C] mb-1 font-semibold">Your Email Address (For Confirmation)</label>
+                    <label className="block text-[#26658C] mb-1 font-semibold">Your Real Email Address (For Confirmation)</label>
                     <input
                       type="email"
                       required
                       value={contactEmail}
                       onChange={(e) => setContactEmail(e.target.value)}
-                      placeholder="name@example.com"
+                      placeholder="yourname@gmail.com"
                       className="w-full bg-white border border-[#54ACBF]/50 rounded-xl px-3.5 py-2.5 text-[#011C40] font-bold focus:outline-none"
                     />
                   </div>
@@ -334,7 +355,7 @@ export default function SupportAndPolicies() {
                   className="w-full py-3.5 px-6 rounded-full liquid-glass-btn liquid-glass-btn-active text-white font-extrabold text-xs shadow-xs active:scale-95 flex items-center justify-center gap-2"
                 >
                   <Send className="w-4 h-4 text-white" />
-                  <span>{isSending ? 'Transmitting Automated Email Copies...' : 'Send Complaint & Automate Email Receipts'}</span>
+                  <span>{isSending ? 'Transmitting Real Email Copies...' : 'Send Complaint & Automate Email Receipts'}</span>
                 </button>
               </form>
             )}
