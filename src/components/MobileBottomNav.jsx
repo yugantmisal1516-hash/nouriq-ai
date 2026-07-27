@@ -15,7 +15,8 @@ import {
   Crown, 
   HelpCircle,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function MobileBottomNav() {
@@ -39,7 +40,7 @@ export default function MobileBottomNav() {
     { id: 'analytics', label: 'Progress Analytics', icon: TrendingUp, badge: 'Reports' },
     { id: 'coach', label: 'AI Masterclass Chef', icon: Bot, badge: 'Zero-Error' },
     { id: 'pricing', label: 'Pricing & Membership', icon: Crown, badge: isPro ? 'Active' : 'Save 33%' },
-    { id: 'support', label: 'Customer Support', icon: HelpCircle, badge: 'Stripe' },
+    { id: 'support', label: 'Customer Support & Policies', icon: ShieldCheck, badge: 'Help & FAQ' },
   ];
 
   const handleNavClick = (item) => {
@@ -100,7 +101,7 @@ export default function MobileBottomNav() {
       {/* MOBILE APP SLIDE-UP DRAWER MENU */}
       {showDrawer && (
         <div className="fixed inset-0 z-40 lg:hidden flex flex-col justify-end bg-[#011C40]/60 backdrop-blur-md animate-fade-in">
-          <div className="ios-glass rounded-t-[32px] p-5 sm:p-6 space-y-4 max-h-[85vh] overflow-y-auto shadow-2xl border-t border-[#54ACBF] bg-white/95 max-w-lg mx-auto w-full">
+          <div className="ios-glass rounded-t-[32px] p-5 sm:p-6 space-y-4 max-h-[85vh] overflow-y-auto shadow-2xl border-t border-[#54ACBF] bg-white/95 max-w-lg mx-auto w-full pb-28">
             <div className="flex items-center justify-between border-b border-[#54ACBF]/30 pb-3">
               <div className="flex items-center space-x-2">
                 <div className="w-7 h-7 rounded-full bg-[#023859] text-white flex items-center justify-center">
@@ -116,7 +117,7 @@ export default function MobileBottomNav() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 gap-2 pt-1">
+            <div className="grid grid-cols-1 gap-2.5 pt-1">
               {drawerItems.map((item) => {
                 const IconComp = item.icon;
                 const isActive = activeTab === item.id;
