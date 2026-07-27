@@ -20,7 +20,16 @@ export const NutritionProvider = ({ children }) => {
   const [weightLogs, setWeightLogs] = useState(getStoredWeightLogs);
   const [activeTab, setActiveTab] = useState('dashboard'); // dashboard, scanner, mealplan, fasting, water, grocery, analytics, coach, pricing, support
 
-  // Persistent Subscription State Engine (Remembers Pro & Ultimate tier across browser refreshes!)
+  // Helper to read cookie fallback for Mobile Safari / Chrome PWA storage persistence
+  const getSubCookie = () => {
+    try {
+      const match = document.cookie.match(new RegExp('(^| )nouriq_sub_tier=([^;]+)'));
+      if (match) return match[2];
+    } catch (e) {}
+    return null;
+  };
+
+  // Persistent Subscription State Engine (Remembers Pro & Ultimate tier across mobile browser refreshes!)
   const [subscription, setSubscription] = useState(() => {
     try {
       // 1. Check if user is returning directly from Stripe Checkout with payment success URL params
@@ -38,16 +47,31 @@ export const NutritionProvider = ({ children }) => {
           verified: true
         };
         localStorage.setItem('nouriq_subscription', JSON.stringify(upgradedState));
+        document.cookie = `nouriq_sub_tier=${targetTier}; max-age=31536000; path=/; SameSite=Lax`;
         return upgradedState;
       }
 
-      // 2. Check if a paid subscription (Pro or Ultimate) is already saved in localStorage
+      // 2. Check if a paid subscription (Pro or Ultimate) is saved in localStorage OR cookie fallback
       const stored = localStorage.getItem('nouriq_subscription');
       if (stored) {
         const parsed = JSON.parse(stored);
         if (parsed && parsed.verified === true && (parsed.tier === 'Pro' || parsed.tier === 'Ultimate')) {
           return parsed;
         }
+      }
+
+      const cookieTier = getSubCookie();
+      if (cookieTier === 'Pro' || cookieTier === 'Ultimate') {
+        const upgradedState = {
+          tier: cookieTier,
+          status: 'active',
+          billingCycle: 'annual',
+          dailyScansLeft: 9999,
+          expiresAt: 'Auto-renews next year',
+          verified: true
+        };
+        localStorage.setItem('nouriq_subscription', JSON.stringify(upgradedState));
+        return upgradedState;
       }
     } catch (e) {
       console.warn('Error reading stored subscription on initialization:', e);
@@ -66,13 +90,15 @@ export const NutritionProvider = ({ children }) => {
 
   const [showStripeSuccessModal, setShowStripeSuccessModal] = useState(false);
 
-  // Save subscription changes to localStorage whenever state updates
+  // Double-layer persistence to localStorage & cookies whenever subscription state updates
   useEffect(() => {
     try {
       if (subscription && subscription.verified === true && (subscription.tier === 'Pro' || subscription.tier === 'Ultimate')) {
         localStorage.setItem('nouriq_subscription', JSON.stringify(subscription));
+        document.cookie = `nouriq_sub_tier=${subscription.tier}; max-age=31536000; path=/; SameSite=Lax`;
       } else {
         localStorage.removeItem('nouriq_subscription');
+        document.cookie = "nouriq_sub_tier=; max-age=0; path=/;";
       }
     } catch (e) {
       console.warn('Error persisting subscription to localStorage:', e);
@@ -121,6 +147,7 @@ export const NutritionProvider = ({ children }) => {
 
         setSubscription(upgradedState);
         localStorage.setItem('nouriq_subscription', JSON.stringify(upgradedState));
+        document.cookie = `nouriq_sub_tier=${targetTier}; max-age=31536000; path=/; SameSite=Lax`;
         setShowStripeSuccessModal(true);
         confetti({ particleCount: 160, spread: 95 });
 
@@ -159,8 +186,10 @@ export const NutritionProvider = ({ children }) => {
     setSubscription(upgradedState);
     if (targetTier !== 'Free') {
       localStorage.setItem('nouriq_subscription', JSON.stringify(upgradedState));
+      document.cookie = `nouriq_sub_tier=${targetTier}; max-age=31536000; path=/; SameSite=Lax`;
     } else {
       localStorage.removeItem('nouriq_subscription');
+      document.cookie = "nouriq_sub_tier=; max-age=0; path=/;";
     }
   };
 
@@ -175,6 +204,7 @@ export const NutritionProvider = ({ children }) => {
     };
     setSubscription(freeState);
     localStorage.removeItem('nouriq_subscription');
+    document.cookie = "nouriq_sub_tier=; max-age=0; path=/;";
   };
 
   const resetToFreePlan = () => {
@@ -190,6 +220,7 @@ export const NutritionProvider = ({ children }) => {
     localStorage.removeItem('nouriq_subscription');
     localStorage.removeItem('nouriq_pending_checkout');
     localStorage.removeItem('nouriq_pending_checkout_time');
+    document.cookie = "nouriq_sub_tier=; max-age=0; path=/;";
   };
 
   // Fasting Timer State Controls
