@@ -13,6 +13,7 @@ import AICoachChat from './components/AICoachChat';
 import SupportAndPolicies from './components/SupportAndPolicies';
 import PricingPlans from './components/PricingPlans';
 import DietitianConsult from './components/DietitianConsult';
+import MobileBottomNav from './components/MobileBottomNav';
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -106,21 +107,23 @@ export default function App() {
   return (
     <ErrorBoundary>
       <NutritionProvider>
-        <div className="min-h-screen bg-[#EBF9FA] text-[#011C40] font-sans relative overflow-x-hidden selection:bg-[#023859] selection:text-white">
+        <div className="min-h-screen bg-[#EBF9FA] text-[#011C40] font-sans relative overflow-x-hidden selection:bg-[#023859] selection:text-white pb-24 lg:pb-0">
           {/* Ambient Floating Orbs */}
           <div className="ios-bg-orb-1" />
           <div className="ios-bg-orb-2" />
           <div className="ios-bg-orb-3" />
 
           {/* Master Alignment Grid Container */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 relative z-10">
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 space-y-4 sm:space-y-6 relative z-10">
             <Navbar />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-              <div className="lg:col-span-3 w-full lg:sticky lg:top-24 z-20">
+              {/* Desktop Sidebar (Visible on desktop lg+) */}
+              <div className="hidden lg:block lg:col-span-3 w-full lg:sticky lg:top-24 z-20">
                 <Sidebar />
               </div>
               
+              {/* Main App Workspace */}
               <main className="lg:col-span-9 w-full min-w-0 space-y-6">
                 <ErrorBoundary>
                   <MainContent />
@@ -128,6 +131,9 @@ export default function App() {
               </main>
             </div>
           </div>
+
+          {/* Native Mobile App Bottom Dock & Drawer (Visible on screens < lg) */}
+          <MobileBottomNav />
 
           <StripePaymentSuccessModal />
         </div>

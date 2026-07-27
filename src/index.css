@@ -7,6 +7,12 @@
 @layer base {
   * {
     font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body {
+    touch-action: manipulation;
+    -webkit-overflow-scrolling: touch;
   }
 
   body {
@@ -150,23 +156,6 @@
   right: 0;
   height: 3px;
   background: linear-gradient(90deg, transparent, #54ACBF, #A7EBF2, #54ACBF, transparent);
-  box-shadow: 0 0 15px 2px rgba(84, 172, 191, 0.6);
-  animation: scan-line 2.2s infinite ease-in-out alternate;
-}
-
-/* Liquid wave animation - Luna Aqua */
-@keyframes wave {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.water-wave {
-  position: absolute;
-  width: 200%;
-  height: 200%;
-  top: -150%;
-  left: -50%;
-  background-color: rgba(84, 172, 191, 0.4);
-  border-radius: 40%;
-  animation: wave 10s infinite linear;
+  box-shadow: 0 0 15px #A7EBF2, 0 0 25px #54ACBF;
+  animation: scan-line 2.5s ease-in-out infinite;
 }
