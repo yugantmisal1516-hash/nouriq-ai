@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNutrition } from '../context/NutritionContext';
-import { Droplet, Plus, RefreshCw, Sparkles, Volume2 } from 'lucide-react';
+import { Droplet, Plus, RefreshCw, Sparkles, Volume2, Target, Check, Edit3 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export default function WaterTracker() {
@@ -9,13 +9,31 @@ export default function WaterTracker() {
     waterIntake = { currentMl: 0, history: [] }, 
     addWater = () => {}, 
     resetWater = () => {}, 
-    goals = { dailyWaterGoal: 3000 } 
+    goals = { dailyWaterGoal: 3000 },
+    setGoals = () => {}
   } = nutrition;
 
   const [customMl, setCustomMl] = useState(300);
   const [soundAlert, setSoundAlert] = useState(true);
+  const [customGoalInput, setCustomGoalInput] = useState(goals?.dailyWaterGoal || 3000);
+  const [isEditingGoal, setIsEditingGoal] = useState(false);
 
-  const percent = Math.min(100, Math.round(((waterIntake?.currentMl || 0) / (goals?.dailyWaterGoal || 3000)) * 100));
+  const currentTarget = goals?.dailyWaterGoal || 3000;
+  const currentMl = waterIntake?.currentMl || 0;
+  const percent = Math.min(100, Math.round((currentMl / currentTarget) * 100));
+
+  const presetGoals = [2000, 2500, 3000, 3500, 4000];
+
+  const handleUpdateGoal = (newGoal) => {
+    const validGoal = Math.max(500, Math.min(10000, Number(newGoal) || 3000));
+    setGoals(prev => ({
+      ...prev,
+      dailyWaterGoal: validGoal
+    }));
+    setCustomGoalInput(validGoal);
+    setIsEditingGoal(false);
+    confetti({ particleCount: 50, spread: 50 });
+  };
 
   const handleAdd = (ml) => {
     addWater(ml);
@@ -37,7 +55,7 @@ export default function WaterTracker() {
       } catch (e) {}
     }
 
-    if ((waterIntake?.currentMl || 0) + ml >= (goals?.dailyWaterGoal || 3000)) {
+    if (currentMl + ml >= currentTarget) {
       confetti({ particleCount: 90, spread: 60 });
     }
   };
@@ -50,6 +68,7 @@ export default function WaterTracker() {
   return (
     <div className="space-y-6">
       
+      {/* Header Banner */}
       <div className="ios-glass p-6 rounded-[32px] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-2xl">
         <div>
           <div className="flex items-center space-x-2 mb-1">
@@ -58,7 +77,7 @@ export default function WaterTracker() {
             </span>
           </div>
           <h1 className="text-2xl font-extrabold text-stone-900 tracking-tight">Liquid Hydration & Reminders</h1>
-          <p className="text-stone-500 text-xs mt-1 font-medium">Log water intake, set reminder intervals, and optimize cellular hydration.</p>
+          <p className="text-stone-500 text-xs mt-1 font-medium">Log water intake, customize target volume, and optimize cellular hydration.</p>
         </div>
 
         <div className="flex items-center space-x-3">
@@ -79,8 +98,72 @@ export default function WaterTracker() {
         </div>
       </div>
 
+      {/* CUSTOMIZABLE DAILY WATER GOAL SELECTOR BAR */}
+      <div className="ios-glass p-5 rounded-[28px] space-y-3 shadow-md border border-[#54ACBF]/40">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-[#54ACBF]/30 pb-3">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 rounded-full bg-[#023859] text-white flex items-center justify-center">
+              <Target className="w-4 h-4 text-[#A7EBF2]" />
+            </div>
+            <div>
+              <h2 className="text-xs font-extrabold text-[#011C40] uppercase tracking-wider">Customize Preferred Daily Hydration Target</h2>
+              <span className="text-[11px] text-[#26658C] font-semibold">Active Goal: <strong className="text-[#023859]">{currentTarget} ml</strong> per day</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {!isEditingGoal ? (
+              <button
+                onClick={() => setIsEditingGoal(true)}
+                className="px-3.5 py-1.5 rounded-full liquid-glass-btn text-[#023859] font-extrabold text-xs flex items-center gap-1.5 shadow-xs hover:scale-105 transition-all"
+              >
+                <Edit3 className="w-3.5 h-3.5 text-[#023859]" /> Custom Goal
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <input
+                  type="number"
+                  min="500"
+                  max="10000"
+                  step="100"
+                  value={customGoalInput}
+                  onChange={(e) => setCustomGoalInput(e.target.value)}
+                  placeholder="e.g. 3200"
+                  className="bg-white border border-[#54ACBF] rounded-full px-3.5 py-1 text-xs text-[#011C40] font-extrabold focus:outline-none w-28"
+                />
+                <button
+                  onClick={() => handleUpdateGoal(customGoalInput)}
+                  className="px-3 py-1 rounded-full bg-[#023859] text-white font-extrabold text-xs flex items-center gap-1 hover:bg-[#011C40]"
+                >
+                  <Check className="w-3.5 h-3.5 text-[#A7EBF2]" /> Save
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Quick Goal Preset Buttons */}
+        <div className="flex items-center space-x-2 overflow-x-auto pb-1 pt-1">
+          <span className="text-[11px] text-[#26658C] font-bold shrink-0 mr-1">Presets:</span>
+          {presetGoals.map((val) => (
+            <button
+              key={val}
+              onClick={() => handleUpdateGoal(val)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all shrink-0 active:scale-95 ${
+                currentTarget === val
+                  ? 'bg-[#023859] text-white shadow-sm ring-2 ring-[#023859]/30'
+                  : 'ios-glass-card text-[#011C40] hover:bg-[#A7EBF2]/50 border-[#54ACBF]/30'
+              }`}
+            >
+              {val} ml
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
+        {/* Animated Water Cylinder Gauge */}
         <div className="lg:col-span-5 ios-glass p-8 rounded-[32px] flex flex-col items-center justify-center text-center relative overflow-hidden shadow-2xl">
           <div className="w-44 h-64 rounded-3xl border-4 border-sky-300/80 bg-white/40 relative overflow-hidden flex flex-col justify-end shadow-inner">
             <div 
@@ -92,17 +175,18 @@ export default function WaterTracker() {
 
             <div className="absolute inset-0 flex flex-col items-center justify-center text-stone-900 drop-shadow-sm z-10">
               <Droplet className="w-8 h-8 text-sky-600 animate-bounce mb-1" />
-              <span className="text-3xl font-black">{waterIntake?.currentMl || 0}</span>
-              <span className="text-xs font-semibold text-stone-600">of {goals?.dailyWaterGoal || 3000} ml</span>
+              <span className="text-3xl font-black">{currentMl}</span>
+              <span className="text-xs font-semibold text-stone-600">of {currentTarget} ml</span>
               <span className="mt-2 text-xs font-extrabold bg-white/90 px-3 py-1 rounded-full text-sky-700 border border-sky-200 shadow-sm">{percent}% Completed</span>
             </div>
           </div>
 
           <p className="text-xs text-stone-500 mt-4 font-semibold">
-            {percent >= 100 ? '🎉 Daily Target Reached!' : `${(goals?.dailyWaterGoal || 3000) - (waterIntake?.currentMl || 0)} ml remaining today.`}
+            {percent >= 100 ? '🎉 Daily Target Reached!' : `${currentTarget - currentMl} ml remaining today.`}
           </p>
         </div>
 
+        {/* Portion Logging Actions */}
         <div className="lg:col-span-7 space-y-6">
           <div className="ios-glass p-6 rounded-[32px] space-y-4 shadow-2xl">
             <h3 className="text-xs font-extrabold text-stone-900 uppercase tracking-wider">Quick Log Portion</h3>
