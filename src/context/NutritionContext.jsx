@@ -215,6 +215,14 @@ export const NutritionProvider = ({ children }) => {
     saveStoredFastingState(newState);
   };
 
+  // Water Tracker Reset Handler
+  const resetWater = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const resetData = { date: today, currentMl: 0, history: [] };
+    setWaterIntake(resetData);
+    saveStoredWaterIntake(resetData);
+  };
+
   // Save changes to localStorage
   useEffect(() => { saveStoredGoals(goals); }, [goals]);
   useEffect(() => { saveStoredLoggedMeals(loggedMeals); }, [loggedMeals]);
@@ -301,7 +309,7 @@ export const NutritionProvider = ({ children }) => {
     <NutritionContext.Provider value={{
       goals, setGoals,
       loggedMeals, logMeal, deleteMeal, todayTotals,
-      waterIntake, addWater,
+      waterIntake, addWater, resetWater,
       fastingState, setFastingState, startFast, stopFast,
       groceryItems, toggleGroceryItem, addGroceryItem,
       weightLogs, logWeight,

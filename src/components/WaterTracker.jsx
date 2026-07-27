@@ -4,11 +4,18 @@ import { Droplet, Plus, RefreshCw, Sparkles, Volume2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export default function WaterTracker() {
-  const { waterIntake, addWater, resetWater, goals } = useNutrition();
+  const nutrition = useNutrition() || {};
+  const { 
+    waterIntake = { currentMl: 0, history: [] }, 
+    addWater = () => {}, 
+    resetWater = () => {}, 
+    goals = { dailyWaterGoal: 3000 } 
+  } = nutrition;
+
   const [customMl, setCustomMl] = useState(300);
   const [soundAlert, setSoundAlert] = useState(true);
 
-  const percent = Math.min(100, Math.round((waterIntake.currentMl / goals.dailyWaterGoal) * 100));
+  const percent = Math.min(100, Math.round(((waterIntake?.currentMl || 0) / (goals?.dailyWaterGoal || 3000)) * 100));
 
   const handleAdd = (ml) => {
     addWater(ml);
@@ -30,9 +37,14 @@ export default function WaterTracker() {
       } catch (e) {}
     }
 
-    if (waterIntake.currentMl + ml >= goals.dailyWaterGoal) {
+    if ((waterIntake?.currentMl || 0) + ml >= (goals?.dailyWaterGoal || 3000)) {
       confetti({ particleCount: 90, spread: 60 });
     }
+  };
+
+  const handleResetLog = () => {
+    resetWater();
+    confetti({ particleCount: 40, spread: 40 });
   };
 
   return (
@@ -59,8 +71,8 @@ export default function WaterTracker() {
             <Volume2 className="w-4 h-4 text-sky-600" /> {soundAlert ? 'Sound On' : 'Muted'}
           </button>
           <button
-            onClick={resetWater}
-            className="px-4 py-2.5 rounded-full text-xs font-extrabold liquid-glass-btn text-stone-700 flex items-center gap-1.5 shadow-sm active:scale-95"
+            onClick={handleResetLog}
+            className="px-4 py-2.5 rounded-full text-xs font-extrabold liquid-glass-btn text-stone-700 flex items-center gap-1.5 shadow-sm active:scale-95 hover:bg-rose-50 hover:text-rose-700 transition-all"
           >
             <RefreshCw className="w-3.5 h-3.5" /> Reset Log
           </button>
@@ -80,14 +92,14 @@ export default function WaterTracker() {
 
             <div className="absolute inset-0 flex flex-col items-center justify-center text-stone-900 drop-shadow-sm z-10">
               <Droplet className="w-8 h-8 text-sky-600 animate-bounce mb-1" />
-              <span className="text-3xl font-black">{waterIntake.currentMl}</span>
-              <span className="text-xs font-semibold text-stone-600">of {goals.dailyWaterGoal} ml</span>
+              <span className="text-3xl font-black">{waterIntake?.currentMl || 0}</span>
+              <span className="text-xs font-semibold text-stone-600">of {goals?.dailyWaterGoal || 3000} ml</span>
               <span className="mt-2 text-xs font-extrabold bg-white/90 px-3 py-1 rounded-full text-sky-700 border border-sky-200 shadow-sm">{percent}% Completed</span>
             </div>
           </div>
 
           <p className="text-xs text-stone-500 mt-4 font-semibold">
-            {percent >= 100 ? '🎉 Daily Target Reached!' : `${goals.dailyWaterGoal - waterIntake.currentMl} ml remaining today.`}
+            {percent >= 100 ? '🎉 Daily Target Reached!' : `${(goals?.dailyWaterGoal || 3000) - (waterIntake?.currentMl || 0)} ml remaining today.`}
           </p>
         </div>
 
