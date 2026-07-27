@@ -30,21 +30,21 @@ export default function Navbar() {
 
   return (
     <header className="relative z-50">
-      <div className="w-full beige-dock rounded-[28px] px-5 py-3 flex items-center justify-between gap-3 flex-wrap shadow-sm border border-[#54ACBF]/40">
+      <div className="w-full beige-dock rounded-[24px] sm:rounded-[28px] px-3.5 sm:px-5 py-2.5 sm:py-3 flex items-center justify-between gap-2 shadow-sm border border-[#54ACBF]/40">
         
         {/* Brand Logo */}
         <div 
           onClick={() => setActiveTab('dashboard')}
-          className="flex items-center space-x-3 cursor-pointer group shrink-0"
+          className="flex items-center space-x-2.5 cursor-pointer group shrink-0"
         >
           <img 
             src="/nouriq_logo.jpg" 
             alt="Nouriq Logo" 
-            className="w-10 h-10 rounded-full object-cover border border-[#54ACBF]/50 shadow-xs group-hover:scale-105 transition-transform" 
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-[#54ACBF]/50 shadow-xs group-hover:scale-105 transition-transform" 
           />
           <div>
             <div className="flex items-center space-x-2">
-              <span className="font-extrabold text-lg tracking-tight text-[#011C40] font-sans">
+              <span className="font-extrabold text-base sm:text-lg tracking-tight text-[#011C40] font-sans">
                 Nouriq
               </span>
             </div>
@@ -52,7 +52,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Interactive Stats Badges */}
+        {/* Interactive Stats Badges (Desktop MD+) */}
         <div className="hidden md:flex items-center gap-2.5 flex-wrap">
           
           {/* Calorie Pill */}
@@ -116,23 +116,34 @@ export default function Navbar() {
         </div>
 
         {/* User Account & Login / Signup Trigger */}
-        <div className="flex items-center space-x-3 shrink-0">
+        <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
+          
+          {/* Mobile Upgrade Badge */}
+          <button
+            onClick={() => setActiveTab('pricing')}
+            className="md:hidden flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-400 to-amber-600 text-slate-950 shadow-xs active:scale-95 shrink-0"
+          >
+            <Crown className="w-3 h-3 text-slate-950 fill-slate-950 shrink-0" />
+            <span>{isPro ? 'PRO' : 'UPGRADE'}</span>
+          </button>
+
           <button 
             onClick={() => setShowSettings(!showSettings)}
-            className="w-9 h-9 liquid-glass-btn hover:scale-105 active:scale-95 text-[#011C40] flex items-center justify-center shadow-xs shrink-0"
+            className="w-8 h-8 sm:w-9 sm:h-9 liquid-glass-btn hover:scale-105 active:scale-95 text-[#011C40] flex items-center justify-center shadow-xs shrink-0"
             title="Adjust Goal Settings"
           >
-            <SlidersHorizontal className="w-4 h-4" />
+            <SlidersHorizontal className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
 
           {/* Login / Sign Up Button & Profile Pill */}
-          <div className="flex items-center space-x-2 pl-2 border-l border-[#54ACBF]/40">
+          <div className="flex items-center space-x-1.5 sm:space-x-2 pl-1.5 sm:pl-2 border-l border-[#54ACBF]/40">
             <button
               onClick={() => setShowAuthModal(true)}
-              className="flex items-center space-x-2 px-3 py-1.5 liquid-glass-btn liquid-glass-btn-active text-white hover:scale-105 active:scale-95 transition-all text-xs font-bold shadow-xs shrink-0"
+              className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 liquid-glass-btn liquid-glass-btn-active text-white hover:scale-105 active:scale-95 transition-all text-[11px] sm:text-xs font-bold shadow-xs shrink-0"
             >
               <UserPlus className="w-3.5 h-3.5 text-[#A7EBF2] shrink-0" />
-              <span className="whitespace-nowrap">Log In / Sign Up</span>
+              <span className="whitespace-nowrap hidden xs:inline">Log In / Sign Up</span>
+              <span className="whitespace-nowrap xs:hidden">Log In</span>
             </button>
 
             <div 
@@ -143,7 +154,7 @@ export default function Navbar() {
               <img 
                 src={goals.avatar} 
                 alt={goals.name}
-                className="w-8 h-8 rounded-full object-cover ring-2 ring-[#54ACBF]/50 shadow-xs group-hover:scale-105 transition-transform shrink-0" 
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover ring-2 ring-[#54ACBF]/50 shadow-xs group-hover:scale-105 transition-transform shrink-0" 
               />
               <div className="text-left hidden xl:block">
                 <p className="text-xs font-bold text-[#011C40] truncate max-w-[100px]">{goals.name}</p>
@@ -170,29 +181,28 @@ export default function Navbar() {
 
           <div className="space-y-3 text-xs">
             <div>
-              <label className="block text-[#26658C] mb-1 font-semibold">Daily Calorie Goal (kcal)</label>
-              <input 
-                type="number" 
+              <label className="block text-[#26658C] font-semibold mb-1">Daily Calorie Target (kcal)</label>
+              <input
+                type="number"
                 value={goals.dailyCalorieGoal}
                 onChange={(e) => setGoals({ ...goals, dailyCalorieGoal: Number(e.target.value) })}
-                className="w-full bg-white border border-[#54ACBF]/50 rounded-xl px-3 py-2 text-[#011C40] font-bold focus:outline-none focus:ring-2 focus:ring-[#023859]/30"
+                className="w-full bg-white/80 border border-[#54ACBF]/40 rounded-xl px-3 py-2 font-bold text-[#011C40] focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-[#26658C] mb-1 font-semibold">Daily Protein Target (g)</label>
-              <input 
-                type="number" 
+              <label className="block text-[#26658C] font-semibold mb-1">Daily Protein Target (g)</label>
+              <input
+                type="number"
                 value={goals.dailyProteinGoal}
                 onChange={(e) => setGoals({ ...goals, dailyProteinGoal: Number(e.target.value) })}
-                className="w-full bg-white border border-[#54ACBF]/50 rounded-xl px-3 py-2 text-[#011C40] font-bold focus:outline-none focus:ring-2 focus:ring-[#023859]/30"
+                className="w-full bg-white/80 border border-[#54ACBF]/40 rounded-xl px-3 py-2 font-bold text-[#011C40] focus:outline-none"
               />
             </div>
-            <button 
+            <button
               onClick={() => setShowSettings(false)}
-              className="w-full mt-2 py-2.5 liquid-glass-btn liquid-glass-btn-active font-extrabold text-xs transition-all shadow-xs active:scale-95 flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 rounded-full liquid-glass-btn liquid-glass-btn-active text-white text-xs font-bold shadow-xs mt-2"
             >
-              <CheckCircle2 className="w-4 h-4 text-white" />
-              <span>Save Goal Preferences</span>
+              Save Targets
             </button>
           </div>
         </div>
@@ -200,96 +210,90 @@ export default function Navbar() {
 
       {/* Health Score Breakdown Modal */}
       {showScoreModal && (
-        <div className="absolute right-12 top-14 w-80 ios-glass p-5 rounded-[24px] shadow-lg z-50 text-[#011C40] border border-[#54ACBF]/40">
-          <div className="flex justify-between items-center mb-3 border-b border-[#54ACBF]/30 pb-2.5">
-            <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#011C40] flex items-center gap-2">
-              <Award className="w-4 h-4 text-[#023859]" /> Health Rating Score Breakdown
-            </h3>
-            <button onClick={() => setShowScoreModal(false)} className="text-xs text-[#26658C] hover:text-[#011C40]">✕</button>
-          </div>
-
-          <div className="space-y-3 text-xs">
-            <div className="flex items-center justify-between p-3 rounded-2xl liquid-glass-btn liquid-glass-btn-active">
-              <div>
-                <span className="text-2xl font-black text-white">{averageHealthScore}/100</span>
-                <p className="text-[10px] text-[#A7EBF2] font-semibold">Nutri-Score Grade A+ Average</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#011C40]/60 backdrop-blur-md animate-fade-in">
+          <div className="ios-glass w-full max-w-md rounded-[32px] p-6 space-y-4 border border-[#54ACBF]/50 text-xs text-[#011C40] relative shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#54ACBF]/30 pb-3">
+              <div className="flex items-center space-x-2">
+                <Award className="w-5 h-5 text-[#023859]" />
+                <span className="font-extrabold text-sm text-[#011C40]">Health Rating Engine Score</span>
               </div>
-              <Sparkles className="w-6 h-6 text-[#A7EBF2]" />
+              <button 
+                onClick={() => setShowScoreModal(false)}
+                className="w-7 h-7 rounded-full liquid-glass-btn flex items-center justify-center text-[#26658C] font-bold text-xs"
+              >
+                ✕
+              </button>
             </div>
 
-            <p className="text-[11px] text-[#26658C] leading-relaxed font-medium">
-              Calculated dynamically from logged meal nutrient densities, fiber-to-carb ratios, and anti-inflammatory whole food scores.
-            </p>
+            <div className="p-4 rounded-2xl bg-[#A7EBF2]/40 border border-[#54ACBF]/40 text-center space-y-1">
+              <span className="text-3xl font-black text-[#011C40] block">{averageHealthScore} / 100</span>
+              <span className="text-xs text-[#023859] font-extrabold block">
+                {averageHealthScore >= 90 ? '🌟 Optimal Nutritional Density' : '👍 Good Balance - Increase Whole Foods'}
+              </span>
+            </div>
 
-            <button 
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowScoreModal(false);
-                setActiveTab('analytics');
-              }}
-              className="w-full mt-2 py-2.5 liquid-glass-btn text-[#011C40] font-extrabold text-xs flex items-center justify-center gap-1 shadow-xs hover:scale-105 active:scale-95 cursor-pointer transition-all"
+            <div className="space-y-2 text-[#26658C] font-medium leading-relaxed">
+              <p>Your Health Rating score evaluates glycemic index, protein bioavailability, fiber density, and processing level across your logged meals.</p>
+            </div>
+
+            <button
+              onClick={() => setShowScoreModal(false)}
+              className="w-full py-3 rounded-full liquid-glass-btn liquid-glass-btn-active text-white font-extrabold text-xs shadow-xs"
             >
-              <span>View Full Analytics Report</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+              Got It
             </button>
           </div>
         </div>
       )}
 
-      {/* Fasting Quick Protocol Switcher Modal */}
+      {/* Fasting Quick Controls Modal */}
       {showFastingModal && (
-        <div className="absolute right-24 top-14 w-80 ios-glass p-5 rounded-[24px] shadow-lg z-50 text-[#011C40] border border-[#54ACBF]/40">
-          <div className="flex justify-between items-center mb-3 border-b border-[#54ACBF]/30 pb-2.5">
-            <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#011C40] flex items-center gap-2">
-              <Clock className="w-4 h-4 text-[#023859]" /> Fasting Window Protocol
-            </h3>
-            <button onClick={() => setShowFastingModal(false)} className="text-xs text-[#26658C] hover:text-[#011C40]">✕</button>
-          </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#011C40]/60 backdrop-blur-md animate-fade-in">
+          <div className="ios-glass w-full max-w-md rounded-[32px] p-6 space-y-4 border border-[#54ACBF]/50 text-xs text-[#011C40] relative shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#54ACBF]/30 pb-3">
+              <div className="flex items-center space-x-2">
+                <Clock className="w-5 h-5 text-[#023859]" />
+                <span className="font-extrabold text-sm text-[#011C40]">Intermittent Fasting Status</span>
+              </div>
+              <button 
+                onClick={() => setShowFastingModal(false)}
+                className="w-7 h-7 rounded-full liquid-glass-btn flex items-center justify-center text-[#26658C] font-bold text-xs"
+              >
+                ✕
+              </button>
+            </div>
 
-          <div className="space-y-3 text-xs">
-            <div className="p-3 rounded-2xl bg-[#A7EBF2]/40 border border-[#54ACBF]/40 text-center">
-              <span className="text-xs font-extrabold text-[#011C40] block">Current Status</span>
-              <span className="text-sm font-black text-[#023859]">
-                {fastingState?.isFasting ? `● FASTING (${fastingState?.protocol || '16:8'})` : '○ EATING WINDOW'}
+            <div className="p-4 rounded-2xl bg-white/80 border border-[#54ACBF]/40 space-y-2 text-center">
+              <span className="text-xs text-[#26658C] font-bold block">Active Protocol: {fastingState?.protocol || '16:8'}</span>
+              <span className={`px-3 py-1 rounded-full text-xs font-extrabold inline-block ${
+                fastingState?.isFasting ? 'bg-[#023859] text-white' : 'bg-[#A7EBF2] text-[#023859]'
+              }`}>
+                {fastingState?.isFasting ? '● Fast in Progress' : '○ Eating Window Active'}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 font-bold">
-              <button 
-                onClick={() => { startFast('16:8', 16); setShowFastingModal(false); }}
-                className={`p-2.5 rounded-xl text-center border transition-all ${
-                  fastingState?.protocol === '16:8' && fastingState?.isFasting ? 'liquid-glass-btn-active text-white' : 'liquid-glass-btn text-[#011C40]'
-                }`}
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                onClick={() => {
+                  if (fastingState?.isFasting) stopFast();
+                  else startFast('16:8', 16);
+                  setShowFastingModal(false);
+                }}
+                className="flex-1 py-3 rounded-full liquid-glass-btn liquid-glass-btn-active text-white font-extrabold text-xs shadow-xs"
               >
-                16:8 LeanGains (16h)
+                {fastingState?.isFasting ? 'Stop Fasting' : 'Start 16:8 Fast'}
               </button>
 
-              <button 
-                onClick={() => { startFast('18:6', 18); setShowFastingModal(false); }}
-                className={`p-2.5 rounded-xl text-center border transition-all ${
-                  fastingState?.protocol === '18:6' && fastingState?.isFasting ? 'liquid-glass-btn-active text-white' : 'liquid-glass-btn text-[#011C40]'
-                }`}
+              <button
+                onClick={() => {
+                  setShowFastingModal(false);
+                  setActiveTab('fasting');
+                }}
+                className="flex-1 py-3 rounded-full liquid-glass-btn text-[#011C40] font-extrabold text-xs shadow-xs"
               >
-                18:6 Fat Loss (18h)
+                Open Fasting Tracker
               </button>
             </div>
-
-            {fastingState?.isFasting ? (
-              <button 
-                onClick={() => { stopFast(); setShowFastingModal(false); }}
-                className="w-full py-2.5 rounded-full bg-rose-600 text-white font-extrabold text-xs shadow-xs"
-              >
-                End Current Fasting Window
-              </button>
-            ) : (
-              <button 
-                onClick={() => { startFast('16:8', 16); setShowFastingModal(false); }}
-                className="w-full py-2.5 liquid-glass-btn liquid-glass-btn-active font-extrabold text-xs shadow-xs"
-              >
-                Start 16:8 Fasting Window
-              </button>
-            )}
           </div>
         </div>
       )}
