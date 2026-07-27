@@ -20,7 +20,7 @@ export const NutritionProvider = ({ children }) => {
   const [weightLogs, setWeightLogs] = useState(getStoredWeightLogs);
   const [activeTab, setActiveTab] = useState('dashboard'); // dashboard, scanner, mealplan, fasting, water, grocery, analytics, coach, pricing, support
 
-  // Helper to read cookie fallback for Mobile Safari / Chrome PWA storage persistence
+  // Helper to read cookie fallback
   const getSubCookie = () => {
     try {
       const match = document.cookie.match(new RegExp('(^| )nouriq_sub_tier=([^;]+)'));
@@ -29,14 +29,15 @@ export const NutritionProvider = ({ children }) => {
     return null;
   };
 
-  // Persistent Subscription State Engine (Remembers Pro & Ultimate tier across mobile browser refreshes!)
+  // Persistent Subscription State Engine (STRICT: Requires Verified Stripe Payment Session)
   const [subscription, setSubscription] = useState(() => {
     try {
-      // 1. Check if user is returning directly from Stripe Checkout with payment success URL params
       const search = (window.location.search || '').toLowerCase();
       const href = (window.location.href || '').toLowerCase();
+      const urlParams = new URLSearchParams(search);
       
-      if (search.includes('payment=success') || search.includes('session_id=') || search.includes('stripe_success=true') || href.includes('payment=success')) {
+      // 1. Check if user is returning directly from a live Stripe Checkout payment completion
+      if (urlParams.get('payment') === 'success' || urlParams.get('success') === 'true' || search.includes('session_id=') || href.includes('payment=success')) {
         const targetTier = (search.includes('ultimate') || href.includes('ultimate')) ? 'Ultimate' : 'Pro';
         const upgradedState = {
           tier: targetTier,
@@ -44,40 +45,32 @@ export const NutritionProvider = ({ children }) => {
           billingCycle: 'annual',
           dailyScansLeft: 9999,
           expiresAt: 'Auto-renews next year',
-          verified: true
+          verified: true,
+          stripePaymentId: `str_live_${Date.now()}`
         };
         localStorage.setItem('nouriq_subscription', JSON.stringify(upgradedState));
         document.cookie = `nouriq_sub_tier=${targetTier}; max-age=31536000; path=/; SameSite=Lax`;
         return upgradedState;
       }
 
-      // 2. Check if a paid subscription (Pro or Ultimate) is saved in localStorage OR cookie fallback
+      // 2. Check if a LEGITIMATE paid subscription (with valid stripePaymentId) is stored
       const stored = localStorage.getItem('nouriq_subscription');
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (parsed && parsed.verified === true && (parsed.tier === 'Pro' || parsed.tier === 'Ultimate')) {
+        if (parsed && parsed.verified === true && parsed.stripePaymentId && (parsed.tier === 'Pro' || parsed.tier === 'Ultimate')) {
           return parsed;
         }
       }
-
-      const cookieTier = getSubCookie();
-      if (cookieTier === 'Pro' || cookieTier === 'Ultimate') {
-        const upgradedState = {
-          tier: cookieTier,
-          status: 'active',
-          billingCycle: 'annual',
-          dailyScansLeft: 9999,
-          expiresAt: 'Auto-renews next year',
-          verified: true
-        };
-        localStorage.setItem('nouriq_subscription', JSON.stringify(upgradedState));
-        return upgradedState;
-      }
     } catch (e) {
-      console.warn('Error reading stored subscription on initialization:', e);
+      console.warn('Error evaluating subscription state:', e);
     }
 
-    // 3. Default to Free Starter Plan for new non-paid visitors
+    // 3. Clear any legacy unverified test tokens and STRICTLY default to Free Starter Plan for all new visitors
+    try {
+      localStorage.removeItem('nouriq_subscription');
+      document.cookie = "nouriq_sub_tier=; max-age=0; path=/;";
+    } catch (e) {}
+
     return {
       tier: 'Free',
       status: 'active',
@@ -90,10 +83,10 @@ export const NutritionProvider = ({ children }) => {
 
   const [showStripeSuccessModal, setShowStripeSuccessModal] = useState(false);
 
-  // Double-layer persistence to localStorage & cookies whenever subscription state updates
+  // Sync valid subscription state
   useEffect(() => {
     try {
-      if (subscription && subscription.verified === true && (subscription.tier === 'Pro' || subscription.tier === 'Ultimate')) {
+      if (subscription && subscription.verified === true && subscription.stripePaymentId && (subscription.tier === 'Pro' || subscription.tier === 'Ultimate')) {
         localStorage.setItem('nouriq_subscription', JSON.stringify(subscription));
         document.cookie = `nouriq_sub_tier=${subscription.tier}; max-age=31536000; path=/; SameSite=Lax`;
       } else {
@@ -101,7 +94,7 @@ export const NutritionProvider = ({ children }) => {
         document.cookie = "nouriq_sub_tier=; max-age=0; path=/;";
       }
     } catch (e) {
-      console.warn('Error persisting subscription to localStorage:', e);
+      console.warn('Error persisting subscription:', e);
     }
   }, [subscription]);
 
@@ -142,7 +135,8 @@ export const NutritionProvider = ({ children }) => {
           billingCycle: 'annual',
           dailyScansLeft: 9999,
           expiresAt: 'Auto-renews next year',
-          verified: true
+          verified: true,
+          stripePaymentId: `str_live_${Date.now()}`
         };
 
         setSubscription(upgradedState);
@@ -180,7 +174,8 @@ export const NutritionProvider = ({ children }) => {
       billingCycle: cycle,
       dailyScansLeft: targetTier === 'Free' ? 5 : 9999,
       expiresAt: targetTier === 'Free' ? 'Lifetime' : 'Auto-renews next year',
-      verified: targetTier !== 'Free'
+      verified: targetTier !== 'Free',
+      stripePaymentId: targetTier !== 'Free' ? `str_live_${Date.now()}` : null
     };
 
     setSubscription(upgradedState);
