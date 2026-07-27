@@ -20,16 +20,16 @@ export const NutritionProvider = ({ children }) => {
   const [weightLogs, setWeightLogs] = useState(getStoredWeightLogs);
   const [activeTab, setActiveTab] = useState('dashboard'); // dashboard, scanner, mealplan, fasting, water, grocery, analytics, coach, pricing, support
 
-  // Global Subscription & Monetization State (STRICT: Defaults to Free for all users unless returning from Stripe)
+  // Persistent Subscription State Engine (Remembers Pro & Ultimate tier across browser refreshes!)
   const [subscription, setSubscription] = useState(() => {
     try {
+      // 1. Check if user is returning directly from Stripe Checkout with payment success URL params
       const search = (window.location.search || '').toLowerCase();
       const href = (window.location.href || '').toLowerCase();
       
-      // Check if user is returning directly from a completed Stripe checkout session
       if (search.includes('payment=success') || search.includes('session_id=') || search.includes('stripe_success=true') || href.includes('payment=success')) {
         const targetTier = (search.includes('ultimate') || href.includes('ultimate')) ? 'Ultimate' : 'Pro';
-        return {
+        const upgradedState = {
           tier: targetTier,
           status: 'active',
           billingCycle: 'annual',
@@ -37,11 +37,23 @@ export const NutritionProvider = ({ children }) => {
           expiresAt: 'Auto-renews next year',
           verified: true
         };
+        localStorage.setItem('nouriq_subscription', JSON.stringify(upgradedState));
+        return upgradedState;
+      }
+
+      // 2. Check if a paid subscription (Pro or Ultimate) is already saved in localStorage
+      const stored = localStorage.getItem('nouriq_subscription');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.verified === true && (parsed.tier === 'Pro' || parsed.tier === 'Ultimate')) {
+          return parsed;
+        }
       }
     } catch (e) {
-      console.warn('Error evaluating Stripe return:', e);
+      console.warn('Error reading stored subscription on initialization:', e);
     }
-    // FREE STARTER PLAN FOR ALL NEW USERS & VISITORS
+
+    // 3. Default to Free Starter Plan for new non-paid visitors
     return {
       tier: 'Free',
       status: 'active',
@@ -54,7 +66,20 @@ export const NutritionProvider = ({ children }) => {
 
   const [showStripeSuccessModal, setShowStripeSuccessModal] = useState(false);
 
-  // Clear any stale local test subscriptions on app load to enforce Free Starter Plan
+  // Save subscription changes to localStorage whenever state updates
+  useEffect(() => {
+    try {
+      if (subscription && subscription.verified === true && (subscription.tier === 'Pro' || subscription.tier === 'Ultimate')) {
+        localStorage.setItem('nouriq_subscription', JSON.stringify(subscription));
+      } else {
+        localStorage.removeItem('nouriq_subscription');
+      }
+    } catch (e) {
+      console.warn('Error persisting subscription to localStorage:', e);
+    }
+  }, [subscription]);
+
+  // Handle Stripe Return Redirect Validation
   useEffect(() => {
     try {
       const search = (window.location.search || '').toLowerCase();
@@ -95,6 +120,7 @@ export const NutritionProvider = ({ children }) => {
         };
 
         setSubscription(upgradedState);
+        localStorage.setItem('nouriq_subscription', JSON.stringify(upgradedState));
         setShowStripeSuccessModal(true);
         confetti({ particleCount: 160, spread: 95 });
 
@@ -102,9 +128,6 @@ export const NutritionProvider = ({ children }) => {
         if (window.location.search) {
           window.history.replaceState({}, document.title, window.location.pathname);
         }
-      } else if (!isExplicitStripeReturn && subscription.verified !== true) {
-        // Enforce Free Starter Plan for all non-Stripe visitors
-        localStorage.removeItem('nouriq_subscription');
       }
 
       // Always clean up temporary checkout flags
@@ -134,6 +157,11 @@ export const NutritionProvider = ({ children }) => {
     };
 
     setSubscription(upgradedState);
+    if (targetTier !== 'Free') {
+      localStorage.setItem('nouriq_subscription', JSON.stringify(upgradedState));
+    } else {
+      localStorage.removeItem('nouriq_subscription');
+    }
   };
 
   const cancelSubscription = () => {
