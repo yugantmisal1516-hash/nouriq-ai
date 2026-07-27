@@ -192,6 +192,29 @@ export const NutritionProvider = ({ children }) => {
     localStorage.removeItem('nouriq_pending_checkout_time');
   };
 
+  // Fasting Timer State Controls
+  const startFast = (protocolName = '16:8', customTargetHours = 16) => {
+    const newState = {
+      isFasting: true,
+      protocol: protocolName,
+      startTime: Date.now(),
+      targetHours: customTargetHours,
+      completedFasts: fastingState?.completedFasts || 0
+    };
+    setFastingState(newState);
+    saveStoredFastingState(newState);
+  };
+
+  const stopFast = () => {
+    const newState = {
+      ...fastingState,
+      isFasting: false,
+      completedFasts: (fastingState?.completedFasts || 0) + 1
+    };
+    setFastingState(newState);
+    saveStoredFastingState(newState);
+  };
+
   // Save changes to localStorage
   useEffect(() => { saveStoredGoals(goals); }, [goals]);
   useEffect(() => { saveStoredLoggedMeals(loggedMeals); }, [loggedMeals]);
@@ -279,7 +302,7 @@ export const NutritionProvider = ({ children }) => {
       goals, setGoals,
       loggedMeals, logMeal, deleteMeal, todayTotals,
       waterIntake, addWater,
-      fastingState, setFastingState,
+      fastingState, setFastingState, startFast, stopFast,
       groceryItems, toggleGroceryItem, addGroceryItem,
       weightLogs, logWeight,
       activeTab, setActiveTab,

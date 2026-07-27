@@ -6,11 +6,19 @@ import confetti from 'canvas-confetti';
 
 export default function FastingTimer() {
   const nutrition = useNutrition() || {};
-  const { fastingState, startFast, stopFast, subscription = { tier: 'Free' }, setActiveTab = () => {} } = nutrition;
+  const { 
+    fastingState = { isFasting: false, protocol: '16:8', startTime: Date.now(), targetHours: 16 }, 
+    startFast = () => {}, 
+    stopFast = () => {}, 
+    subscription = { tier: 'Free' }, 
+    setActiveTab = () => {} 
+  } = nutrition;
+
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const isPro = subscription?.tier === 'Pro' || subscription?.tier === 'Ultimate';
 
+  // Live Timer Ticker Interval (Calculates exact elapsed time continuously)
   useEffect(() => {
     let interval = null;
     if (fastingState?.isFasting && fastingState?.startTime) {
@@ -23,7 +31,9 @@ export default function FastingTimer() {
     } else {
       setElapsedSeconds(0);
     }
-    return () => clearInterval(interval);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [fastingState]);
 
   const targetHours = fastingState?.targetHours || 16;
@@ -48,6 +58,12 @@ export default function FastingTimer() {
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  const handleStartFast = (protocolId = '16:8', hours = 16) => {
+    setElapsedSeconds(0);
+    startFast(protocolId, hours);
+    confetti({ particleCount: 70, spread: 60 });
+  };
+
   const handleEndFast = () => {
     stopFast();
     confetti({ particleCount: 100, spread: 70 });
@@ -70,7 +86,7 @@ export default function FastingTimer() {
     <div className="space-y-6">
       
       {/* Header Banner */}
-      <div className="ios-glass p-6 rounded-[28px] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
+      <div className="ios-glass p-6 rounded-[28px] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm border border-[#54ACBF]/40">
         <div>
           <div className="flex items-center space-x-2 mb-1">
             <span className="px-3 py-1 rounded-full liquid-glass-btn liquid-glass-btn-active text-xs font-bold flex items-center gap-1.5 backdrop-blur-xl">
@@ -86,7 +102,7 @@ export default function FastingTimer() {
           {protocolsList.map((p) => (
             <button
               key={p.id}
-              onClick={() => { setElapsedSeconds(0); startFast(p.id, p.fastHours); }}
+              onClick={() => handleStartFast(p.id, p.fastHours)}
               className={`px-4 py-2.5 rounded-full text-xs font-extrabold transition-all shrink-0 shadow-xs active:scale-95 liquid-glass-btn ${
                 fastingState?.protocol === p.id && fastingState?.isFasting
                   ? 'liquid-glass-btn-active scale-105'
@@ -102,7 +118,7 @@ export default function FastingTimer() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Timer Main Panel */}
-        <div className="lg:col-span-7 ios-glass p-8 rounded-[28px] flex flex-col items-center justify-between text-center space-y-6 shadow-sm">
+        <div className="lg:col-span-7 ios-glass p-8 rounded-[28px] flex flex-col items-center justify-between text-center space-y-6 shadow-sm border border-[#54ACBF]/40">
           <div className="w-full flex items-center justify-between border-b border-[#54ACBF]/30 pb-4">
             <div className="text-left">
               <span className="text-xs text-[#26658C] font-semibold block">Active Fasting Window</span>
@@ -147,7 +163,7 @@ export default function FastingTimer() {
           <div className="w-full max-w-sm grid grid-cols-2 gap-3">
             {!fastingState?.isFasting ? (
               <button
-                onClick={() => { setElapsedSeconds(0); startFast(fastingState?.protocol || '16:8', targetHours); }}
+                onClick={() => handleStartFast(fastingState?.protocol || '16:8', targetHours)}
                 className="col-span-2 py-3.5 px-6 rounded-full liquid-glass-btn liquid-glass-btn-active text-white font-extrabold text-xs flex items-center justify-center space-x-2 shadow-sm active:scale-95"
               >
                 <Play className="w-4 h-4 fill-white" />
