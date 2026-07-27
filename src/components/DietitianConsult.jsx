@@ -29,7 +29,8 @@ import {
   AlertTriangle,
   FileText,
   TrendingUp,
-  ShieldAlert
+  ShieldAlert,
+  Copy
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { generateAINutritionistResponse } from '../utils/aiNutritionistKnowledge';
@@ -98,6 +99,7 @@ export default function DietitianConsult() {
   const [userEmail, setUserEmail] = useState('alex.rivera@example.com');
   const [confirmedBooking, setConfirmedBooking] = useState(null);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   // Advanced AI Biomarker Lab Parser State
   const [uploadedLabName, setUploadedLabName] = useState(null);
@@ -122,6 +124,44 @@ export default function DietitianConsult() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages, isAiThinking]);
+
+  // Ensure confirmedBooking exists whenever modal is requested
+  const handleOpenInviteModal = () => {
+    let booking = confirmedBooking;
+    if (!booking) {
+      const roomToken = `NQ-ROOM-${Math.floor(1000 + Math.random() * 9000)}`;
+      const redirectUrl = `https://nouriq-ai.onrender.com?tab=consult&room=${roomToken}&coach=${currentDietitian.id}`;
+      booking = {
+        roomToken,
+        redirectUrl,
+        coach: currentDietitian,
+        date: selectedDate,
+        time: selectedTime,
+        timezone: selectedTimezone,
+        topic: consultTopic,
+        email: userEmail
+      };
+      setConfirmedBooking(booking);
+    }
+    setShowCalendarModal(true);
+  };
+
+  const handleCopyInviteLink = () => {
+    const linkToCopy = confirmedBooking?.redirectUrl || `https://nouriq-ai.onrender.com?tab=consult&room=NQ-ROOM-7841&coach=${currentDietitian.id}`;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(linkToCopy);
+    } else {
+      const el = document.createElement('textarea');
+      el.value = linkToCopy;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+    }
+    setCopySuccess(true);
+    confetti({ particleCount: 60, spread: 60 });
+    setTimeout(() => setCopySuccess(false), 2500);
+  };
 
   // Handle Changing AI Coach
   const handleSelectCoach = (coach) => {
@@ -168,29 +208,43 @@ export default function DietitianConsult() {
   };
 
   const getGoogleCalendarUrl = () => {
-    if (!confirmedBooking) return '#';
-    const title = encodeURIComponent(`1-on-1 AI Chat Consultation with ${confirmedBooking.coach.name}`);
-    const details = encodeURIComponent(`Live 1-on-1 AI Clinical Consultation regarding ${confirmedBooking.topic}.\n\n🚀 Direct Consultation Room Redirect Link:\n${confirmedBooking.redirectUrl}\n\nTime Zone: ${confirmedBooking.timezone}\nOrganizer: Nouriq AI Support (nouriq.aisupport@gmail.com)`);
-    const location = encodeURIComponent(confirmedBooking.redirectUrl);
-    const cleanDate = confirmedBooking.date.replace(/-/g, '');
-    const ctz = confirmedBooking.timezone === 'IST' ? 'Asia/Kolkata' : 'America/New_York';
+    const booking = confirmedBooking || {
+      coach: currentDietitian,
+      topic: consultTopic,
+      redirectUrl: `https://nouriq-ai.onrender.com?tab=consult&room=NQ-ROOM-7841&coach=${currentDietitian.id}`,
+      timezone: selectedTimezone,
+      date: selectedDate
+    };
+
+    const title = encodeURIComponent(`1-on-1 AI Chat Consultation with ${booking.coach.name}`);
+    const details = encodeURIComponent(`Live 1-on-1 AI Clinical Consultation regarding ${booking.topic}.\n\n🚀 Direct Consultation Room Redirect Link:\n${booking.redirectUrl}\n\nTime Zone: ${booking.timezone}\nOrganizer: Nouriq AI Support (nouriq.aisupport@gmail.com)`);
+    const location = encodeURIComponent(booking.redirectUrl);
+    const cleanDate = booking.date.replace(/-/g, '');
+    const ctz = booking.timezone === 'IST' ? 'Asia/Kolkata' : 'America/New_York';
     const dates = `${cleanDate}T140000Z/${cleanDate}T143000Z`;
 
     return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}&ctz=${ctz}`;
   };
 
   const downloadIcsFile = () => {
-    if (!confirmedBooking) return;
+    const booking = confirmedBooking || {
+      coach: currentDietitian,
+      topic: consultTopic,
+      redirectUrl: `https://nouriq-ai.onrender.com?tab=consult&room=NQ-ROOM-7841&coach=${currentDietitian.id}`,
+      timezone: selectedTimezone,
+      date: selectedDate
+    };
+
     const icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Nouriq AI Nutrition//Nouriq AI Consultation//EN
 BEGIN:VEVENT
-SUMMARY:1-on-1 AI Chat Consultation with ${confirmedBooking.coach.name} (${confirmedBooking.timezone})
-DESCRIPTION:Live 1-on-1 AI Clinical Consultation regarding ${confirmedBooking.topic}. Join Room: ${confirmedBooking.redirectUrl}
-LOCATION:${confirmedBooking.redirectUrl}
-URL:${confirmedBooking.redirectUrl}
-DTSTART:${confirmedBooking.date.replace(/-/g, '')}T140000Z
-DTEND:${confirmedBooking.date.replace(/-/g, '')}T143000Z
+SUMMARY:1-on-1 AI Chat Consultation with ${booking.coach.name} (${booking.timezone})
+DESCRIPTION:Live 1-on-1 AI Clinical Consultation regarding ${booking.topic}. Join Room: ${booking.redirectUrl}
+LOCATION:${booking.redirectUrl}
+URL:${booking.redirectUrl}
+DTSTART:${booking.date.replace(/-/g, '')}T140000Z
+DTEND:${booking.date.replace(/-/g, '')}T143000Z
 STATUS:CONFIRMED
 END:VEVENT
 END:VCALENDAR`;
@@ -199,7 +253,7 @@ END:VCALENDAR`;
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `Nouriq_1on1_AI_Consultation_${confirmedBooking.date}_${confirmedBooking.timezone}.ics`);
+    link.setAttribute('download', `Nouriq_1on1_AI_Consultation_${booking.date}_${booking.timezone}.ics`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -603,7 +657,7 @@ END:VCALENDAR`;
 
                   <div className="flex items-center gap-2 pt-1">
                     <button
-                      onClick={() => setShowCalendarModal(true)}
+                      onClick={handleOpenInviteModal}
                       className="flex-1 py-2.5 rounded-full liquid-glass-btn liquid-glass-btn-active text-white font-extrabold text-xs shadow-xs"
                     >
                       📅 Open Calendar Sync Modal
@@ -640,10 +694,11 @@ END:VCALENDAR`;
 
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setShowCalendarModal(true)}
-                className="px-3 py-1.5 rounded-full liquid-glass-btn text-[#023859] font-extrabold text-[11px] flex items-center gap-1"
+                onClick={handleOpenInviteModal}
+                className="px-3.5 py-1.5 rounded-full liquid-glass-btn text-[#023859] font-extrabold text-[11px] flex items-center gap-1.5 hover:scale-105 active:scale-95 transition-all shadow-xs"
               >
-                <Calendar className="w-3.5 h-3.5" /> Invite Link
+                <Calendar className="w-3.5 h-3.5 text-[#023859]" />
+                <span>Invite Link & Calendar Sync</span>
               </button>
               <span className="text-[10px] font-extrabold text-white bg-[#023859] px-3 py-1 rounded-full">
                 NIH & USDA Standard
@@ -816,7 +871,7 @@ END:VCALENDAR`;
       )}
 
       {/* CALENDAR INVITE & DIRECT REDIRECT LINK MODAL */}
-      {showCalendarModal && confirmedBooking && (
+      {showCalendarModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#011C40]/70 backdrop-blur-md animate-fade-in">
           <div className="ios-glass w-full max-w-md rounded-[32px] p-6 sm:p-7 space-y-5 relative shadow-2xl border border-[#54ACBF]/50 text-xs text-[#011C40]">
             <button
@@ -831,8 +886,8 @@ END:VCALENDAR`;
                 <Mail className="w-4.5 h-4.5 text-white" />
               </div>
               <div>
-                <span className="font-extrabold text-sm text-[#011C40] block">📅 Calendar Invite & Redirect Link Delivered!</span>
-                <span className="text-[10px] text-[#26658C]">Sent to {confirmedBooking.email}</span>
+                <span className="font-extrabold text-sm text-[#011C40] block">📅 Calendar Invite & Redirect Link</span>
+                <span className="text-[10px] text-[#26658C]">Synced for {userEmail}</span>
               </div>
             </div>
 
@@ -840,26 +895,35 @@ END:VCALENDAR`;
             <div className="ios-glass-card p-4 sm:p-5 rounded-2xl space-y-3 border border-[#54ACBF]/40 bg-white/90">
               <div className="border-b border-[#54ACBF]/30 pb-2 space-y-1 text-[11px]">
                 <div><strong className="text-[#023859]">Organizer:</strong> Nouriq AI &lt;nouriq.aisupport@gmail.com&gt;</div>
-                <div><strong className="text-[#023859]">Attendee:</strong> {goals?.name || 'Alex Rivera'} &lt;{confirmedBooking.email}&gt;</div>
-                <div><strong className="text-[#023859]">Coach:</strong> {confirmedBooking.coach.name} ({confirmedBooking.coach.title})</div>
-                <div><strong className="text-[#023859]">Topic:</strong> {confirmedBooking.topic}</div>
-                <div><strong className="text-[#023859]">When:</strong> {confirmedBooking.date} at {confirmedBooking.time} ({confirmedBooking.timezone})</div>
+                <div><strong className="text-[#023859]">Attendee:</strong> {goals?.name || 'Alex Rivera'} &lt;{userEmail}&gt;</div>
+                <div><strong className="text-[#023859]">Coach:</strong> {currentDietitian.name} ({currentDietitian.title})</div>
+                <div><strong className="text-[#023859]">Topic:</strong> {consultTopic}</div>
+                <div><strong className="text-[#023859]">When:</strong> {selectedDate} at {selectedTime} ({selectedTimezone})</div>
               </div>
 
               <div className="space-y-2 text-xs leading-relaxed text-[#011C40] font-medium">
-                <div className="p-3 rounded-xl bg-[#A7EBF2]/40 border border-[#54ACBF]/40 space-y-1">
-                  <span className="font-extrabold text-[#023859] flex items-center gap-1">
-                    <LinkIcon className="w-3.5 h-3.5 text-[#023859]" /> 🚀 Live Consultation Room Redirect Link:
-                  </span>
+                <div className="p-3 rounded-xl bg-[#A7EBF2]/40 border border-[#54ACBF]/40 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold text-[#023859] flex items-center gap-1">
+                      <LinkIcon className="w-3.5 h-3.5 text-[#023859]" /> 🚀 Live Room Redirect Link:
+                    </span>
+                    <button
+                      onClick={handleCopyInviteLink}
+                      className="px-2.5 py-1 rounded-full bg-[#023859] text-white text-[10px] font-bold flex items-center gap-1 hover:bg-[#011C40]"
+                    >
+                      <Copy className="w-3 h-3 text-[#A7EBF2]" />
+                      <span>{copySuccess ? '✓ Copied!' : 'Copy Link'}</span>
+                    </button>
+                  </div>
+                  
                   <a
-                    href={confirmedBooking.redirectUrl}
+                    href={confirmedBooking?.redirectUrl || `https://nouriq-ai.onrender.com?tab=consult&room=NQ-ROOM-7841&coach=${currentDietitian.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[#023859] font-mono text-[10px] underline block truncate"
+                    className="text-[#023859] font-mono text-[10px] underline block truncate bg-white/80 p-2 rounded-lg border border-[#54ACBF]/30"
                   >
-                    {confirmedBooking.redirectUrl}
+                    {confirmedBooking?.redirectUrl || `https://nouriq-ai.onrender.com?tab=consult&room=NQ-ROOM-7841&coach=${currentDietitian.id}`}
                   </a>
-                  <p className="text-[10px] text-[#26658C] pt-0.5">This direct redirect link is automatically embedded inside your Google & Apple Calendar events!</p>
                 </div>
               </div>
             </div>
