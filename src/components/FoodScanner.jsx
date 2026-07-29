@@ -36,6 +36,13 @@ export default function FoodScanner() {
   const streamRef = useRef(null);
   const viewfinderRef = useRef(null);
 
+  // Auto-show quota modal on mount / refresh if free scans are exhausted (0 left)
+  useEffect(() => {
+    if (subscription?.tier === 'Free' && (subscription?.dailyScansLeft <= 0 || subscription?.dailyScansLeft === undefined)) {
+      setShowQuotaModal(true);
+    }
+  }, [subscription]);
+
   // Initialize Web Camera stream with video element binding
   useEffect(() => {
     if (isCameraActive) {

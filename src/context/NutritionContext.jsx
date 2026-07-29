@@ -11,6 +11,26 @@ import {
 
 const NutritionContext = createContext(null);
 
+// Helper for Free Starter Plan persistent daily scan quota (Remembers 0 scans left across browser refreshes!)
+const getStoredFreeDailyScans = () => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const savedDate = localStorage.getItem('nouriq_scans_date');
+    const savedLeft = localStorage.getItem('nouriq_scans_left');
+
+    if (savedDate === today && savedLeft !== null) {
+      return parseInt(savedLeft, 10);
+    }
+
+    // New day reset
+    localStorage.setItem('nouriq_scans_date', today);
+    localStorage.setItem('nouriq_scans_left', '5');
+    return 5;
+  } catch (e) {
+    return 5;
+  }
+};
+
 export const NutritionProvider = ({ children }) => {
   const [goals, setGoals] = useState(getStoredGoals);
   const [loggedMeals, setLoggedMeals] = useState(getStoredLoggedMeals);
@@ -75,7 +95,7 @@ export const NutritionProvider = ({ children }) => {
       tier: 'Free',
       status: 'active',
       billingCycle: 'annual',
-      dailyScansLeft: 5,
+      dailyScansLeft: getStoredFreeDailyScans(),
       expiresAt: 'Lifetime',
       verified: false
     };
@@ -172,7 +192,7 @@ export const NutritionProvider = ({ children }) => {
       tier: targetTier,
       status: 'active',
       billingCycle: cycle,
-      dailyScansLeft: targetTier === 'Free' ? 5 : 9999,
+      dailyScansLeft: targetTier === 'Free' ? getStoredFreeDailyScans() : 9999,
       expiresAt: targetTier === 'Free' ? 'Lifetime' : 'Auto-renews next year',
       verified: targetTier !== 'Free',
       stripePaymentId: targetTier !== 'Free' ? `str_live_${Date.now()}` : null
@@ -193,7 +213,7 @@ export const NutritionProvider = ({ children }) => {
       tier: 'Free',
       status: 'cancelled',
       billingCycle: 'monthly',
-      dailyScansLeft: 5,
+      dailyScansLeft: getStoredFreeDailyScans(),
       expiresAt: 'Expired',
       verified: false
     };
@@ -207,7 +227,7 @@ export const NutritionProvider = ({ children }) => {
       tier: 'Free',
       status: 'active',
       billingCycle: 'annual',
-      dailyScansLeft: 5,
+      dailyScansLeft: getStoredFreeDailyScans(),
       expiresAt: 'Lifetime',
       verified: false
     };
@@ -279,14 +299,25 @@ export const NutritionProvider = ({ children }) => {
   useEffect(() => { saveStoredGroceryItems(groceryItems); }, [groceryItems]);
   useEffect(() => { saveStoredWeightLogs(weightLogs); }, [weightLogs]);
 
+  // Persistent Daily Scan Quota Consumer for Free Starter Plan
   const consumeScanQuota = () => {
     if (subscription.tier === 'Free') {
-      if (subscription.dailyScansLeft <= 0) {
+      const today = new Date().toISOString().split('T')[0];
+      const currentScans = subscription.dailyScansLeft;
+
+      if (currentScans <= 0) {
+        localStorage.setItem('nouriq_scans_date', today);
+        localStorage.setItem('nouriq_scans_left', '0');
         return false;
       }
+
+      const nextScans = Math.max(0, currentScans - 1);
+      localStorage.setItem('nouriq_scans_date', today);
+      localStorage.setItem('nouriq_scans_left', nextScans.toString());
+
       setSubscription(prev => ({
         ...prev,
-        dailyScansLeft: prev.dailyScansLeft - 1
+        dailyScansLeft: nextScans
       }));
       return true;
     }
