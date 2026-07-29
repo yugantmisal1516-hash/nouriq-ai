@@ -337,7 +337,10 @@ END:VCALENDAR`;
                 `• Fasting Glucose: ${extractedMetrics.glucose.val} mg/dL (${extractedMetrics.glucose.status})\n` +
                 `• Total Cholesterol: ${extractedMetrics.cholesterol.val} mg/dL (${extractedMetrics.cholesterol.status})\n` +
                 `• Vitamin D3: ${extractedMetrics.vitD.val} ng/mL (${extractedMetrics.vitD.status})\n\n` +
-                `💡 Clinical Protocol: ${extractedMetrics.recommendation}`,
+                `🔬 Clinical Risk & Biomarker Analysis:\n${extractedMetrics.clinicalRiskAnalysis}\n\n` +
+                `💡 Therapeutic Intervention Protocol:\n${extractedMetrics.recommendation}\n\n` +
+                `⭐ Clinical Diagnostic Questions (Please reply in chat):\n` +
+                extractedMetrics.questions.map((q, i) => `${i + 1}. ${q}`).join('\n'),
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
       ]);
@@ -352,7 +355,14 @@ END:VCALENDAR`;
         glucose: { val: 86, status: 'Optimal (70-99 mg/dL)' },
         cholesterol: { val: 215, status: 'Borderline Elevated (>200 mg/dL)' },
         vitD: { val: 38, status: 'Sufficient (30-100 ng/mL)' },
-        recommendation: 'Incorporate 35g daily soluble fiber (psyllium husk, oat beta-glucan) & wild Atlantic salmon Omega-3s to optimize LDL particles.'
+        clinicalRiskAnalysis: 'Borderline total cholesterol (215 mg/dL) with normal fasting glucose (86 mg/dL) indicates intact glycemic control, but requires ApoB & particle size evaluation to assess cardiovascular risk.',
+        recommendation: 'Incorporate 35g daily soluble fiber (psyllium husk, oat beta-glucan), 2g EPA/DHA Omega-3s, and reduce ultra-processed seed oils.',
+        questions: [
+          'What was your exact fasting duration (e.g. 10h, 12h, 14h) prior to blood collection?',
+          'Do you have a family history of early cardiovascular disease or hypercholesterolemia?',
+          'Are you currently taking any lipid-lowering medications or statins?',
+          'What is your average daily intake of saturated fats versus monounsaturated fats (EVOO/Avocado)?'
+        ]
       };
     } else if (fn.includes('thyroid') || fn.includes('tsh')) {
       return {
@@ -360,7 +370,14 @@ END:VCALENDAR`;
         glucose: { val: 84, status: 'Optimal (70-99 mg/dL)' },
         cholesterol: { val: 185, status: 'Optimal (<200 mg/dL)' },
         vitD: { val: 45, status: 'Optimal (30-100 ng/mL)' },
-        recommendation: 'Thyroid panel TSH: 1.8 uIU/mL (Optimal). Ensure adequate selenium (Brazil nuts) & iodine to support T4-to-T3 conversion.'
+        clinicalRiskAnalysis: 'Thyroid Panel TSH: 1.8 uIU/mL (Optimal 0.5 - 2.5). Intact pituitary-thyroid feedback loop with robust peripheral T4-to-T3 monodeiodination capacity.',
+        recommendation: 'Ensure adequate selenium (2 Brazil nuts/day ~ 100µg) and dietary iodine (seaweed/iodized salt) to support 5\'-deiodinase enzymatic conversion.',
+        questions: [
+          'Do you experience symptoms like cold intolerance, dry skin, or unexplained lethargy?',
+          'Have Free T3, Free T4, or Reverse T3 markers been tested alongside TSH?',
+          'Are you taking any thyroid hormone therapy (e.g. Levothyroxine / Synthroid)?',
+          'What is your daily stress and sleep latency score?'
+        ]
       };
     }
     // Default High-Precision Metabolic Panel
@@ -369,7 +386,14 @@ END:VCALENDAR`;
       glucose: { val: 88, status: 'Optimal (70-99 mg/dL)' },
       cholesterol: { val: 178, status: 'Optimal (<200 mg/dL)' },
       vitD: { val: 42, status: 'Sufficient (30-100 ng/mL)' },
-      recommendation: 'All core biomarkers are in optimal range. Continue your high-protein, fiber-dense clinical protocol.'
+      clinicalRiskAnalysis: 'All metabolic biomarkers (HbA1c 5.4%, Fasting Glucose 88 mg/dL) demonstrate excellent insulin sensitivity and healthy glycemic control.',
+      recommendation: 'Maintain your current fiber-rich, high-protein clinical protocol. Re-test complete metabolic panel in 6-12 months.',
+      questions: [
+        'What was your fasting duration prior to blood collection?',
+        'Do you experience morning brain fog or post-prandial energy dips after meals?',
+        'Are you taking any daily vitamin or mineral supplements (e.g. Vitamin D3, B-Complex, Zinc)?',
+        'What is your average daily water & electrolyte intake?'
+      ]
     };
   };
 
