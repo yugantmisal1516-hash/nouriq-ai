@@ -249,6 +249,28 @@ export const NutritionProvider = ({ children }) => {
     saveStoredWaterIntake(resetData);
   };
 
+  // Grocery List State Controls
+  const toggleGroceryItem = (id) => {
+    setGroceryItems(prev => prev.map(item => item.id === id ? { ...item, bought: !item.bought } : item));
+  };
+
+  const addGroceryItem = (item) => {
+    const itemObj = typeof item === 'string' ? { name: item } : item;
+    const newItem = {
+      name: itemObj.name || 'Meal Prep Ingredient',
+      category: itemObj.category || 'Meal Prep Ingredients',
+      quantity: itemObj.quantity || '1 Set',
+      recommendedReason: itemObj.recommendedReason || 'Added from Meal Plan',
+      id: `g-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      bought: false
+    };
+    setGroceryItems(prev => [newItem, ...prev]);
+  };
+
+  const removeGroceryItem = (id) => {
+    setGroceryItems(prev => prev.filter(item => item.id !== id));
+  };
+
   // Save changes to localStorage
   useEffect(() => { saveStoredGoals(goals); }, [goals]);
   useEffect(() => { saveStoredLoggedMeals(loggedMeals); }, [loggedMeals]);
@@ -297,19 +319,6 @@ export const NutritionProvider = ({ children }) => {
     });
   };
 
-  const toggleGroceryItem = (id) => {
-    setGroceryItems(prev => prev.map(item => item.id === id ? { ...item, bought: !item.bought } : item));
-  };
-
-  const addGroceryItem = (item) => {
-    const newItem = {
-      ...item,
-      id: `g-${Date.now()}`,
-      bought: false
-    };
-    setGroceryItems(prev => [newItem, ...prev]);
-  };
-
   const logWeight = (weight) => {
     const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     setWeightLogs(prev => [...prev, { date: todayStr, weight: parseFloat(weight) }]);
@@ -337,7 +346,7 @@ export const NutritionProvider = ({ children }) => {
       loggedMeals, logMeal, deleteMeal, todayTotals,
       waterIntake, addWater, resetWater,
       fastingState, setFastingState, startFast, stopFast,
-      groceryItems, toggleGroceryItem, addGroceryItem,
+      groceryItems, toggleGroceryItem, addGroceryItem, removeGroceryItem,
       weightLogs, logWeight,
       activeTab, setActiveTab,
       averageHealthScore,

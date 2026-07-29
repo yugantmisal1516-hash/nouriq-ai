@@ -12,19 +12,28 @@ import {
   Utensils,
   ChevronDown,
   ChevronUp,
-  Zap
+  Zap,
+  ArrowRight
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export default function MealPlanner() {
-  const { goals, logMeal, addGroceryItem, addGrocery, subscription, setActiveTab } = useNutrition();
+  const nutrition = useNutrition() || {};
+  const { 
+    goals = { dailyCalorieGoal: 2200 }, 
+    logMeal = () => {}, 
+    addGroceryItem = () => {}, 
+    subscription = { tier: 'Free' }, 
+    setActiveTab = () => {} 
+  } = nutrition;
   
   const [selectedDiet, setSelectedDiet] = useState('High Protein');
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
   const [addedGroceryNames, setAddedGroceryNames] = useState([]);
   const [loggedMealNames, setLoggedMealNames] = useState([]);
+  const [lastAddedGroceryItem, setLastAddedGroceryItem] = useState(null);
 
   // Custom Meal Form State with Food Portion Weight (Grams) & AI Auto-Calculate
   const [showCustomForm, setShowCustomForm] = useState(false);
@@ -99,21 +108,42 @@ export default function MealPlanner() {
   const handleAddToGrocery = (meal) => {
     if (addedGroceryNames.includes(meal.name)) return;
 
-    if (typeof addGroceryItem === 'function') {
-      addGroceryItem({
-        name: meal.name,
-        category: meal.type || 'Meal Prep Ingredients',
-        quantity: '1 Meal Set',
-        recommendedReason: `Derived from 7-Day ${selectedDiet} Meal Plan (${meal.type})`
-      });
-    }
-
-    if (typeof addGrocery === 'function') {
-      addGrocery(meal.name, meal.type || 'Meal Prep Ingredients', '1 Meal Set');
-    }
+    addGroceryItem({
+      name: meal.name,
+      category: meal.type || 'Meal Prep Ingredients',
+      quantity: '1 Meal Set',
+      recommendedReason: `Derived from 7-Day ${selectedDiet} Meal Plan (${meal.type})`
+    });
 
     setAddedGroceryNames(prev => [...prev, meal.name]);
-    confetti({ particleCount: 50, spread: 50 });
+    setLastAddedGroceryItem(meal.name);
+    confetti({ particleCount: 60, spread: 60 });
+
+    setTimeout(() => {
+      setLastAddedGroceryItem(null);
+    }, 4500);
+  };
+
+  const handleExportAllDayGrocery = () => {
+    let newlyAddedCount = 0;
+    combinedMeals.forEach(meal => {
+      if (!addedGroceryNames.includes(meal.name)) {
+        addGroceryItem({
+          name: meal.name,
+          category: meal.type || 'Meal Prep Ingredients',
+          quantity: '1 Meal Set',
+          recommendedReason: `Derived from 7-Day ${selectedDiet} Meal Plan (${dayName})`
+        });
+        setAddedGroceryNames(prev => [...prev, meal.name]);
+        newlyAddedCount++;
+      }
+    });
+
+    if (newlyAddedCount > 0) {
+      setLastAddedGroceryItem(`All ${dayName} (${newlyAddedCount} Meals)`);
+      confetti({ particleCount: 100, spread: 80 });
+      setTimeout(() => setLastAddedGroceryItem(null), 5000);
+    }
   };
 
   const handleLogPlanMeal = (meal) => {
@@ -143,7 +173,7 @@ export default function MealPlanner() {
     <div className="space-y-6">
       
       {/* Header Banner */}
-      <div className="ios-glass p-6 rounded-[28px] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
+      <div className="ios-glass p-6 rounded-[28px] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm border border-[#54ACBF]/40">
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-1">
             <span className="px-3 py-1 rounded-full liquid-glass-btn liquid-glass-btn-active text-xs font-bold flex items-center gap-1.5 backdrop-blur-xl">
@@ -192,6 +222,28 @@ export default function MealPlanner() {
         </div>
       </div>
 
+      {/* GROCERY ADD CONFIRMATION TOAST NOTIFICATION */}
+      {lastAddedGroceryItem && (
+        <div className="p-4 rounded-2xl bg-[#A7EBF2]/60 border border-[#54ACBF] shadow-md flex items-center justify-between gap-3 text-xs text-[#011C40] animate-bounce">
+          <div className="flex items-center space-x-2">
+            <div className="w-7 h-7 rounded-full bg-[#023859] text-white flex items-center justify-center shrink-0">
+              <Check className="w-4 h-4 text-[#A7EBF2]" />
+            </div>
+            <div>
+              <span className="font-extrabold text-[#011C40] block">Added to Smart Grocery List!</span>
+              <span className="text-[11px] text-[#26658C] font-semibold">{lastAddedGroceryItem}</span>
+            </div>
+          </div>
+          <button
+            onClick={() => setActiveTab('grocery')}
+            className="px-3.5 py-1.5 rounded-full bg-[#023859] text-white font-extrabold text-xs flex items-center gap-1 hover:bg-[#011C40] shrink-0"
+          >
+            <span>View Grocery List</span>
+            <ArrowRight className="w-3.5 h-3.5 text-[#A7EBF2]" />
+          </button>
+        </div>
+      )}
+
       {/* 7-Day Day Selector Bar */}
       <div className="ios-glass p-3 rounded-[24px] shadow-sm flex items-center space-x-2 overflow-x-auto">
         <div className="flex items-center space-x-1.5 px-3 py-1.5 text-[#26658C] font-extrabold text-xs shrink-0 border-r border-[#54ACBF]/30 mr-1">
@@ -214,7 +266,7 @@ export default function MealPlanner() {
         ))}
       </div>
 
-      {/* Day Overview Summary Badge & Custom Meal Add Button */}
+      {/* Day Overview Summary Badge & Actions */}
       <div className="ios-glass px-5 py-4 rounded-[24px] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs bg-[#A7EBF2]/30 border border-[#54ACBF]/40">
         <div>
           <span className="text-xs font-extrabold text-[#011C40]">
@@ -225,14 +277,24 @@ export default function MealPlanner() {
           </p>
         </div>
 
-        <button
-          onClick={() => setShowCustomForm(!showCustomForm)}
-          className="px-4 py-2 rounded-full liquid-glass-btn liquid-glass-btn-active text-white text-xs font-extrabold flex items-center gap-1.5 shadow-xs transition-all active:scale-95 shrink-0"
-        >
-          <Plus className="w-3.5 h-3.5 text-white" />
-          <span>Add Custom Meal</span>
-          {showCustomForm ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-        </button>
+        <div className="flex items-center space-x-2 w-full sm:w-auto">
+          <button
+            onClick={handleExportAllDayGrocery}
+            className="flex-1 sm:flex-none px-3.5 py-2 rounded-full liquid-glass-btn text-[#011C40] text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95 hover:bg-[#A7EBF2]/50"
+          >
+            <ShoppingCart className="w-3.5 h-3.5 text-[#023859]" />
+            <span>Export Day to Grocery</span>
+          </button>
+
+          <button
+            onClick={() => setShowCustomForm(!showCustomForm)}
+            className="flex-1 sm:flex-none px-4 py-2 rounded-full liquid-glass-btn liquid-glass-btn-active text-white text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95 shrink-0"
+          >
+            <Plus className="w-3.5 h-3.5 text-white" />
+            <span>Add Custom Meal</span>
+            {showCustomForm ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </button>
+        </div>
       </div>
 
       {/* Custom Meal Creator Form with Weight (g) & AI Auto-Calculator */}
@@ -409,7 +471,7 @@ export default function MealPlanner() {
                   className={`py-2.5 px-3 rounded-full font-extrabold text-xs flex items-center justify-center space-x-1.5 transition-all active:scale-95 ${
                     isGroceryAdded
                       ? 'liquid-glass-btn text-[#011C40] bg-[#A7EBF2]/60 cursor-default'
-                      : 'liquid-glass-btn text-[#011C40]'
+                      : 'liquid-glass-btn text-[#011C40] hover:bg-[#E0F7FA]'
                   }`}
                 >
                   {isGroceryAdded ? <Check className="w-3.5 h-3.5 text-[#023859]" /> : <ShoppingCart className="w-3.5 h-3.5 text-[#023859]" />}
