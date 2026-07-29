@@ -605,6 +605,10 @@ export default function FoodScanner() {
                 )}
               </button>
 
+              <p className="text-[10px] text-[#26658C]/80 font-medium text-center pt-2">
+                Nouriq AI can make mistakes. Check important nutrition & macro info.
+              </p>
+
             </>
           ) : null}
 

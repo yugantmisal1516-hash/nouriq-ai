@@ -483,6 +483,10 @@ export default function MealPlanner() {
         })}
       </div>
 
+      <p className="text-[10px] text-[#26658C]/80 font-medium text-center pt-2">
+        Nouriq AI can make mistakes. Check important diet & macro info.
+      </p>
+
       {/* Pro Upgrade Pop-Out Modal for Custom Meal Form */}
       {showProUpgradeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#011C40]/80 backdrop-blur-md">

@@ -189,6 +189,9 @@ export default function AICoachChat() {
             <Send className="w-4 h-4 text-white" />
           </button>
         </form>
+        <p className="text-[10px] text-[#26658C]/80 font-medium text-center pt-1">
+          Nouriq AI can make mistakes. Check important medical & dietary info.
+        </p>
       </div>
 
     </div>
