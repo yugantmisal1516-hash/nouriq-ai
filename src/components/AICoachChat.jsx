@@ -1,16 +1,31 @@
 import React, { useState } from 'react';
 import { useNutrition } from '../context/NutritionContext';
 import { generateAINutritionistResponse } from '../utils/aiNutritionistKnowledge';
-import { Bot, Send, User, RefreshCw, Lightbulb, Sparkles } from 'lucide-react';
+import { Bot, Send, User, RefreshCw, Lightbulb, Sparkles, Globe, ShieldCheck } from 'lucide-react';
 
 export default function AICoachChat() {
-  const { goals, todayTotals, averageHealthScore, subscription } = useNutrition();
+  const nutrition = useNutrition() || {};
+  const { 
+    goals = { name: 'Alex' }, 
+    todayTotals = { calories: 0 }, 
+    averageHealthScore = 92, 
+    subscription = { tier: 'Free' } 
+  } = nutrition;
+
+  const isPro = subscription?.tier === 'Pro' || subscription?.tier === 'Ultimate';
+  const isUltimate = subscription?.tier === 'Ultimate';
 
   const [messages, setMessages] = useState([
     {
       id: '1',
       sender: 'ai',
-      text: `Hello ${goals.name}! I am your Nouriq AI Global Culinary & Nutrition Coach. Today you've consumed ${todayTotals.calories} kcal with an average Health Rating of ${averageHealthScore}/100. Ask me any recipe, macro guidance, cooking instruction, or diet question!`,
+      text: `Hello ${goals.name || 'Alex'}! I am your Nouriq AI Global Culinary & Clinical Nutrition Coach.\nToday you've consumed ${todayTotals.calories || 0} kcal with an average Health Rating of ${averageHealthScore}/100.\n\n${
+        isUltimate 
+          ? '⭐ [VIP Ultimate Mode Active]: Ask me any clinical dietetics, disease protocol, biomarker optimization, or Michelin-star recipe question. I will ask diagnostic questions to craft your world-class personalized plan!' 
+          : isPro 
+          ? '👑 [Nouriq Pro Mode Active]: Ask me for detailed USDA macro science, clinical meal portioning, and step-by-step masterclass recipes with custom follow-up questions!' 
+          : '⚡ [Starter Mode Active]: Ask me any recipe, macro guidance, or cooking tip!'
+      }`,
       time: 'Just now'
     }
   ]);
@@ -40,7 +55,7 @@ export default function AICoachChat() {
     setIsTyping(true);
 
     setTimeout(() => {
-      const aiResponse = generateAINutritionistResponse(text, goals, todayTotals);
+      const aiResponse = generateAINutritionistResponse(text, goals, todayTotals, subscription);
 
       const aiMsg = {
         id: `msg-ai-${Date.now()}`,
@@ -58,7 +73,7 @@ export default function AICoachChat() {
     <div className="space-y-6 max-w-4xl mx-auto">
       
       {/* Header Banner */}
-      <div className="ios-glass p-6 rounded-[28px] flex items-center justify-between shadow-sm">
+      <div className="ios-glass p-6 rounded-[28px] flex items-center justify-between shadow-sm border border-[#54ACBF]/40">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-full liquid-glass-btn liquid-glass-btn-active flex items-center justify-center text-white shadow-xs">
             <Bot className="w-5 h-5 text-white" />
@@ -66,11 +81,11 @@ export default function AICoachChat() {
           <div>
             <div className="flex items-center space-x-2">
               <h1 className="text-xl font-extrabold text-[#011C40] tracking-tight">AI Nutritionist & Masterclass Chef</h1>
-              {subscription?.tier === 'Ultimate' ? (
+              {isUltimate ? (
                 <span className="text-[10px] uppercase font-black tracking-wider px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 text-slate-950 shadow-xs">
-                  ⭐ VIP 1-on-1 Dietitian Desk
+                  ⭐ VIP 1-on-1 Clinical Desk
                 </span>
-              ) : subscription?.tier === 'Pro' ? (
+              ) : isPro ? (
                 <span className="text-[10px] uppercase font-extrabold tracking-wider px-2.5 py-0.5 rounded-full bg-[#023859] text-white">
                   👑 Pro Masterclass Engine
                 </span>
@@ -84,9 +99,11 @@ export default function AICoachChat() {
           </div>
         </div>
 
-        <span className="px-3.5 py-1 rounded-full liquid-glass-btn liquid-glass-btn-active text-white text-xs font-bold flex items-center gap-1.5 backdrop-blur-xl shrink-0">
-          <Sparkles className="w-3.5 h-3.5 text-[#A7EBF2]" /> Knowledge Engine Active
-        </span>
+        <div className="flex items-center space-x-2 shrink-0">
+          <span className="px-3.5 py-1 rounded-full liquid-glass-btn liquid-glass-btn-active text-white text-xs font-bold items-center gap-1.5 backdrop-blur-xl hidden sm:flex">
+            <Globe className="w-3.5 h-3.5 text-[#A7EBF2]" /> World AI Search Active
+          </span>
+        </div>
       </div>
 
       {/* Preset Prompts */}
@@ -104,7 +121,7 @@ export default function AICoachChat() {
       </div>
 
       {/* Chat Conversation Box */}
-      <div className="ios-glass rounded-[28px] p-6 space-y-4 min-h-[420px] max-h-[540px] overflow-y-auto flex flex-col justify-between shadow-sm">
+      <div className="ios-glass rounded-[28px] p-6 space-y-4 min-h-[420px] max-h-[540px] overflow-y-auto flex flex-col justify-between shadow-sm border border-[#54ACBF]/40">
         <div className="space-y-4">
           {messages.map((msg) => (
             <div
@@ -117,9 +134,9 @@ export default function AICoachChat() {
                 {msg.sender === 'ai' ? <Bot className="w-4 h-4 text-white" /> : <User className="w-4 h-4 text-white" />}
               </div>
 
-              <div className={`max-w-lg p-4 rounded-2xl text-xs leading-relaxed whitespace-pre-line ${
+              <div className={`max-w-xl p-4 rounded-2xl text-xs leading-relaxed whitespace-pre-line ${
                 msg.sender === 'ai'
-                  ? 'ios-glass-card text-[#011C40] shadow-xs'
+                  ? 'ios-glass-card text-[#011C40] shadow-xs border-[#54ACBF]/40'
                   : 'bg-[#023859] text-white font-medium shadow-xs'
               }`}>
                 <p>{msg.text}</p>
@@ -133,7 +150,13 @@ export default function AICoachChat() {
           {isTyping && (
             <div className="flex items-center space-x-2 text-xs text-[#011C40] bg-[#A7EBF2]/40 p-3 rounded-2xl border border-[#54ACBF]/40 w-fit shadow-xs font-bold">
               <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#023859]" />
-              <span>AI Masterclass Chef is formulating recipe & nutritional science response...</span>
+              <span>
+                {isUltimate 
+                  ? '⭐ AI VIP Clinical Engine & Michelin Masterclass formulating world-class response...' 
+                  : isPro 
+                  ? '👑 AI Pro Clinical Engine calculating exact USDA macros & diagnostic questions...' 
+                  : '⚡ AI Coach formulating response...'}
+              </span>
             </div>
           )}
         </div>
@@ -150,7 +173,13 @@ export default function AICoachChat() {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask AI Nutritionist for any recipe, macro guidance, or cooking tip..."
+            placeholder={
+              isUltimate 
+                ? 'Reply to diagnostic questions or ask any VIP clinical dietetics query...' 
+                : isPro 
+                ? 'Reply to questions or ask for detailed macro science & masterclass recipes...' 
+                : 'Ask AI Nutritionist for any recipe, macro guidance, or cooking tip...'
+            }
             className="flex-1 bg-white border border-[#54ACBF]/50 rounded-2xl px-4 py-3 text-xs text-[#011C40] font-bold focus:outline-none shadow-xs placeholder:text-[#26658C]/70"
           />
           <button
