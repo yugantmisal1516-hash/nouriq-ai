@@ -33,7 +33,13 @@ import {
   Copy
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { generateAINutritionistResponse } from '../utils/aiNutritionistKnowledge';
+import { 
+  generateAINutritionistResponse,
+  generateMetabolicPCOSClinicalResponse,
+  generateHypertrophyPerformanceResponse,
+  generateGutMicrobiomeClinicalResponse,
+  generateAutophagyLongevityResponse
+} from '../utils/aiNutritionistKnowledge';
 
 export default function DietitianConsult() {
   const nutrition = useNutrition() || {};
@@ -379,7 +385,19 @@ END:VCALENDAR`;
     setIsAiThinking(true);
 
     setTimeout(() => {
-      const aiReply = generateAINutritionistResponse(userMsgText);
+      let aiReply = '';
+      if (currentDietitian.id === 'dr-elena-ai') {
+        aiReply = generateMetabolicPCOSClinicalResponse(userMsgText, goals, subscription);
+      } else if (currentDietitian.id === 'marcus-chen-ai') {
+        aiReply = generateHypertrophyPerformanceResponse(userMsgText, goals, subscription);
+      } else if (currentDietitian.id === 'dr-sarah-jenkins-ai') {
+        aiReply = generateGutMicrobiomeClinicalResponse(userMsgText, goals, subscription);
+      } else if (currentDietitian.id === 'master-zen-ai') {
+        aiReply = generateAutophagyLongevityResponse(userMsgText, goals, subscription);
+      } else {
+        aiReply = generateAINutritionistResponse(userMsgText, goals, {}, subscription);
+      }
+
       setIsAiThinking(false);
       setChatMessages(prev => [
         ...prev,

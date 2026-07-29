@@ -1,13 +1,13 @@
 /**
- * UNIVERSAL GLOBAL AI NUTRITIONIST & CULINARY KNOWLEDGE ENGINE (WORLD-CLASS EDITION)
- * Integrates comprehensive global recipe databases, USDA dietetic standards, clinical dietetics,
- * therapeutic nutrition, micronutrient absorption, fasting science, and tier-differentiated AI intelligence.
+ * UNIVERSAL GLOBAL AI NUTRITIONIST & CULINARY KNOWLEDGE ENGINE (WORLD-CLASS VIP CLINICAL EDITION)
+ * Integrates global recipe databases, USDA dietetic standards, clinical metabolic protocols,
+ * gut microbiome science, athletic hypertrophy, autophagy, and diagnostic Q&A engines.
  */
 
 export function calculateAIMacrosByWeight(dishName, weightGrams = 200) {
   const name = (dishName || '').toLowerCase().trim();
   const grams = Number(weightGrams) || 200;
-  const factor = grams / 100; // ratio relative to 100g base
+  const factor = grams / 100;
 
   let base100g = { cal: 180, p: 18, c: 14, f: 6, fiber: 2.0 };
 
@@ -40,6 +40,108 @@ export function calculateAIMacrosByWeight(dishName, weightGrams = 200) {
   };
 }
 
+// 1. DR. ELENA VANCE AI — CLINICAL METABOLIC & PCOS SPECIALIST
+export function generateMetabolicPCOSClinicalResponse(query, userGoals = {}, subscription = { tier: 'Free' }) {
+  const q = (query || '').toLowerCase().trim();
+  const name = userGoals.name || 'Alex';
+  const targetCal = userGoals.dailyCalorieGoal || 2200;
+
+  return `🩺 **Dr. Elena Vance AI — Clinical Metabolic & PCOS Protocol**
+Hi ${name}! Thank you for consulting the Clinical Metabolic Desk regarding "${query}".
+
+🔬 **Clinical Diagnostic Synthesis:**
+• **HOMA-IR & Insulin Dynamics:** Optimizing metabolic flexibility requires suppressing basal hyperinsulinemia to restore GLUT-4 transporter sensitivity in skeletal muscle tissue.
+• **Postprandial Glycemic Load:** Pairing complex carbohydrates with ≥ 8g soluble fiber (beta-glucan, psyllium) blunts postprandial glucose AUC (Area Under Curve) by up to 34%.
+• **Endocrine & Ovarian Signalling:** Inositol isomer ratios (Myo-Inositol to D-Chiro-Inositol 40:1) improve LH/FSH ratios and reduce androgenic markers in PCOS.
+
+💡 **Therapeutic Dietary Interventions:**
+1. **Glucose-Buffering Meal Sequencing:** Consume cruciferous vegetables/salad 8-10 minutes prior to complex carbs.
+2. **Resistant Starch Type 3:** Utilize overnight refrigeration of par-boiled grains to form resistant starch, reducing digestible caloric yield.
+3. **Bioactive Micronutrients:** Chromium Picolinate (200µg), Magnesium Glycinate (400mg), and Berberine (500mg tid) under clinical guidance.
+
+⭐ **VIP Clinical Diagnostic Follow-Up Questions (Please reply below to refine your personalized treatment protocol):**
+1. What was your most recent Fasting Blood Glucose (mg/dL), HbA1c (%), or Fasting Insulin (µIU/mL) reading?
+2. Do you experience post-prandial somnolence (fatigue/brain fog after high-carb meals)?
+3. Are you currently taking any endocrine or glucose-modulating medications (e.g. Metformin, Inositol, Levothyroxine)?
+4. Do you experience menstrual irregularity or androgenic symptoms (acne, hirsutism)?`;
+}
+
+// 2. MARCUS CHEN AI — PERFORMANCE & HYPERTROPHY SPECIALIST
+export function generateHypertrophyPerformanceResponse(query, userGoals = {}, subscription = { tier: 'Free' }) {
+  const q = (query || '').toLowerCase().trim();
+  const name = userGoals.name || 'Alex';
+  const targetProt = userGoals.dailyProteinGoal || 160;
+
+  return `💪 **Marcus Chen AI — Performance & Hypertrophy Protocol**
+Hey ${name}! Let's dial in your athletic recovery and muscle hypertrophy regarding "${query}".
+
+🔬 **Skeletal Muscle Anabolism & MPS Science:**
+• **mTORC1 Activation Threshold:** Achieving maximal Muscle Protein Synthesis (MPS) requires a minimal intracellular Leucine bolus of 3.0g - 3.5g per meal.
+• **Nitrogen Balance & Bioavailability:** Your daily target is set to **${targetProt}g protein** (${(targetProt / 80).toFixed(1)}g/kg body weight ratio).
+• **Intra-Muscular Glycogen Resynthesis:** Post-exercise GLUT-4 non-insulin dependent glucose uptake remains elevated for 120 minutes post-training.
+
+💡 **Athletic Nutrition Interventions:**
+1. **Protein Pulse Timing:** Space protein intakes across 4 distinct feeding windows every 3.5 - 4.5 hours.
+2. **Ergogenic Aid Protocol:** Creatine Monohydrate (5g/day for satellite cell proliferation), Beta-Alanine (3.2g/day for carnosine buffering).
+3. **Pre-Sleep Casein / Slow Protein:** 40g Micellar Casein or Greek Yogurt before bed to prevent nocturnal muscle catabolism.
+
+⭐ **VIP Athletic Diagnostic Follow-Up Questions (Please reply below to customize your training & meal split):**
+1. What is your current weekly resistance training split (e.g. Push/Pull/Legs, Upper/Lower, 4-day Bodybuilding)?
+2. What is your primary immediate goal (pure muscular hypertrophy, strength/power, or recomposition in a calorie deficit)?
+3. What is your current pre-workout and post-workout nutrition window timing?
+4. Do you experience joint inflammation, delayed recovery, or sleep disruptions after intense lifting sessions?`;
+}
+
+// 3. DR. SARAH JENKINS AI — GUT MICROBIOME & GASTROINTESTINAL SPECIALIST
+export function generateGutMicrobiomeClinicalResponse(query, userGoals = {}, subscription = { tier: 'Free' }) {
+  const q = (query || '').toLowerCase().trim();
+  const name = userGoals.name || 'Alex';
+
+  return `🧪 **Dr. Sarah Jenkins AI — Gut Microbiome & Gastrointestinal Protocol**
+Hello ${name}! Welcome to the Gut Microbiome Clinical Desk. Let's analyze your GI barrier function regarding "${query}".
+
+🔬 **Gastrointestinal & Microbiota Analysis:**
+• **Intestinal Mucosal Integrity:** Epithelial tight junction proteins (Zonulin & Occludin) require L-Glutamine and Short-Chain Fatty Acids (SCFAs) to maintain enterocyte barrier health.
+• **Short-Chain Fatty Acid (SCFA) Synthesis:** Fermentation of prebiotic fibers by Bifidobacteria produces Butyrate, Propionate, and Acetate, lowering colonic pH and reducing systemic inflammation.
+• **Microbiome Alpha-Diversity:** Consuming 30+ distinct plant species per week fosters a resilient, diverse microbiome.
+
+💡 **Gut Repair Protocol:**
+1. **Targeted Prebiotic Fermentation:** Introduce cooked & cooled tubers, Acacia fiber, and polyphenol-rich dark berries.
+2. **Fermented Probiotic Foods:** Raw Kefir, Kimchi, Sauerkraut, and Unpasteurized Kombucha (100ml daily).
+3. **Mucosal Support:** Bone Broth (collagen & glycine), L-Glutamine (5g daily), and Zinc L-Carnosine (75mg bid).
+
+⭐ **VIP GI Diagnostic Follow-Up Questions (Please reply below for a customized gut repair protocol):**
+1. Do you experience symptoms like bloating, abdominal distension, gas, or acid reflux after specific meals?
+2. Have you taken oral antibiotics in the past 12-24 months?
+3. What is your average daily intake of fermented foods and leafy green fiber?
+4. Have you ever been tested for SIBO (Small Intestinal Bacterial Overgrowth), Candida, or food sensitivities?`;
+}
+
+// 4. MASTER ZEN AI — AUTOPHAGY & LONGEVITY SPECIALIST
+export function generateAutophagyLongevityResponse(query, userGoals = {}, subscription = { tier: 'Free' }) {
+  const q = (query || '').toLowerCase().trim();
+  const name = userGoals.name || 'Alex';
+
+  return `⛩️ **Master Zen AI — Cellular Autophagy & Longevity Protocol**
+Greetings ${name}. Let's examine cellular repair, mitochondrial health, and autophagy regarding "${query}".
+
+🔬 **Cellular Biology & Longevity Mechanisms:**
+• **AMPK / mTOR Pathway Switch:** Fasting drops intracellular ATP/AMP ratios, suppressing mTOR and activating AMPK to trigger lysosomal degradation of damaged organelles (Autophagy).
+• **Sirtuin (SIRT1 & SIRT3) Activation:** NAD+ dependent deacetylases promote mitochondrial biogenesis, DNA repair, and telomere maintenance.
+• **Ketogenesis & Brain-Derived Neurotrophic Factor (BDNF):** Hepatic conversion of fatty acids into Beta-Hydroxybutyrate (BHB) enhances neuronal plasticity and cognitive clarity.
+
+💡 **Longevity Interventions:**
+1. **Circadian-Aligned Fasting:** Adhere to a 16:8 or 18:6 time-restricted feeding window finishing at least 3 hours before sleep.
+2. **Polyphenol Autophagy Inducers:** Resveratrol, Quercetin, Spermidine (Wheatgerm / Green Tea EGCG), and Fermented Black Coffee.
+3. **Mitochondrial Resilience:** Cold thermogenesis / contrast therapy combined with zone 2 aerobic base training.
+
+⭐ **VIP Longevity Diagnostic Follow-Up Questions (Please reply below to tailor your fasting cycle):**
+1. What is your current typical fasting window (e.g. 14:10, 16:8, 18:6, or 24-hour periodic fasts)?
+2. What are your primary longevity markers of interest (e.g. ApoB, hs-CRP, Fasting Insulin, VO2 Max)?
+3. How is your sleep latency, deep sleep percentage, and morning HRV (Heart Rate Variability)?
+4. Are you utilizing any longevity co-factors like NMN, NAD+, Resveratrol, or Metformin?`;
+}
+
 export function generateAINutritionistResponse(query, userGoals = {}, todayTotals = {}, subscription = { tier: 'Free' }) {
   const q = (query || '').toLowerCase().trim();
   const name = userGoals.name || 'Alex';
@@ -49,7 +151,6 @@ export function generateAINutritionistResponse(query, userGoals = {}, todayTotal
   const loggedProt = (todayTotals.protein || 0).toFixed(0);
   const tier = subscription?.tier || 'Free';
 
-  // Helper to format tier-specific diagnostic questions
   const appendTierQuestions = (tierName) => {
     if (tierName === 'Ultimate') {
       return `\n\n⭐ **VIP Clinical Diagnostic Follow-Up Questions (Please Answer Below for World-Class Customization):**\n1. What is your most recent Fasting Blood Glucose (mg/dL) or HbA1c reading?\n2. What is your target body fat percentage & weekly exercise volume?\n3. Do you experience post-prandial fatigue or energy slumps after high-carb meals?\n4. Are you taking any specific health supplements (e.g. Berberine, Omega-3, Creatine, Vitamin D3)?`;
@@ -60,7 +161,7 @@ export function generateAINutritionistResponse(query, userGoals = {}, todayTotal
     return '';
   };
 
-  // 1. RECIPE & MASTERCLASS CHEF QUERIES
+  // RECIPE & MASTERCLASS CHEF QUERIES
   if (q.includes('recipe') || q.includes('how to make') || q.includes('how to cook') || q.includes('cook') || q.includes('prepare') || q.includes('ingredients')) {
     
     if (q.includes('pomfret') || q.includes('fish') || q.includes('fry') || q.includes('surmai')) {
@@ -69,188 +170,53 @@ export function generateAINutritionistResponse(query, userGoals = {}, todayTotal
 ⏱️ **Prep:** 15 mins | **Cook:** 12 mins
 🔥 **Macros:** 420 kcal | **Protein:** 40g | **Carbs:** 12g | **Fats:** 15g
 
-🛒 **Ingredients:**
-• 2 Whole Silver Pomfret (350g cleaned)
-• 2 tbsp Red Chili Powder & 1 tsp Turmeric
-• 1 tbsp Ginger-Garlic Paste & 1 tbsp Coconut Oil
-• 1.5 tbsp Lemon Juice & Salt
-
-🍳 **Instructions:**
-1. Marinate fish with spices, ginger-garlic & lemon for 15 mins.
-2. Heat coconut oil in a pan and sear fish 5 mins per side until crispy.
-3. Serve hot with fresh lemon slices.`;
+🛒 **Ingredients:** 2 Whole Pomfret (350g), 2 tbsp Chili Powder, 1 tsp Turmeric, 1 tbsp Ginger-Garlic, 1 tbsp Coconut Oil, Lemon & Salt.
+🍳 **Instructions:** Marinate fish with spices & lemon 15 mins. Sear in coconut oil 5 mins per side until crispy.`;
       }
 
-      if (tier === 'Pro') {
-        return `👑 **Nouriq Pro Masterclass Recipe: Precision Crispy Coastal Pomfret Fish Fry**
+      return `👑 **${tier === 'Ultimate' ? 'VIP Ultimate' : 'Nouriq Pro'} Masterclass Recipe: Crispy Coastal Spiced Pomfret Fish Fry**
 ⏱️ **Prep:** 15 mins | **Cook:** 12 mins | **Servings:** 2
 🔥 **Exact USDA Macros:** 420 kcal | **Protein:** 40g | **Net Carbs:** 12g | **Fats:** 15g | **Fiber:** 3.2g
 
-🛒 **Ingredient Weight & Quality Metrics:**
-• 2 Whole Silver Pomfret (350g raw weight, scored 45° across flesh)
-• 15g Kashmiri Red Chili Powder (High Capaicin grade) & 5g Organic Turmeric
-• 15g Fresh Ginger-Garlic Paste & 14g Cold-Pressed Unrefined Coconut Oil
-• 20ml Fresh Lemon Juice (pH 2.2) & 4g Coarse Sea Salt
-• 20g Fine Rice Flour (for crispiness mantle)
+🛒 **Ingredient Weight Breakdown:**
+• 2 Whole Silver Pomfret (350g raw weight, cleaned & scored)
+• 15g Kashmiri Red Chili Powder & 5g Organic Turmeric
+• 15g Fresh Ginger-Garlic Paste & 14g Cold-Pressed Coconut Oil
+• 20ml Lemon Juice & 4g Sea Salt, 20g Rice Flour
 
-🍳 **Michelin Culinary Execution:**
-1. **Osmotic Marination:** Pat fish completely dry. Rub with sea salt & lemon juice first to break down surface proteins. Apply spice paste & rest 15 mins.
-2. **Starch Crust:** Lightly dust scored flesh with rice flour to trap intracellular moisture.
-3. **Maillard Searing:** Heat cast-iron skillet to 195°C (385°F). Sear 4.5 mins on side A, flip once & sear 4 mins on side B until internal temp hits 63°C (145°F).
-4. **Resting:** Rest on wire rack for 2 mins before serving.
-
-🔬 **Clinical Profile:** High EPA/DHA Omega-3 (1.8g), Selenium (45µg), Vitamin D3 (400 IU).${appendTierQuestions('Pro')}`;
-      }
-
-      // ULTIMATE TIER
-      return `⭐ **VIP Ultimate Masterclass & Clinical Protocol: Biomarker-Optimized Coastal Pomfret**
-⏱️ **Prep:** 15 mins | **Cook:** 12 mins | **Servings:** 2
-🔥 **Precision Clinical Bio-Macros:** 420 kcal | **Bioavailable Protein:** 40.2g | **Net Carbs:** 11.8g | **Fats:** 14.8g (EPA/DHA 1.85g) | **Fiber:** 3.2g
-
-🛒 **World-Class Bioactive Ingredients:**
-• 2 Whole Wild-Caught Silver Pomfret (350g, rich in Marine Phospholipids)
-• 15g High-Curcumin Turmeric (Curcuma longa > 5%) & Kashmiri Chili
-• 15g Raw Ginger-Garlic Paste (Alliicin & Gingerol enriched)
-• 14g Virgin Extra Cold-Pressed Coconut Oil (Medium Chain Triglycerides Lauric C12)
-• 20ml Organic Pressed Lemon & 4g Himalayan Pink Salt (84 trace minerals)
-
-🍳 **3-Star Michelin Thermal Science:**
-1. **Cryo-Dry Surface:** Dry fish surface with linen to prevent steam softening.
-2. **Bio-Enzyme Marination:** Apply lemon & salt for 8 mins to hydrolyze myofibrillar proteins.
-3. **Precision Thermal Sear:** Sear on heavy 5mm carbon steel at 200°C. Coconut oil MCTs prevent lipid oxidation. Internal probe target 62.5°C.
-4. **Glycemic & Lipid Protection:** Pairs with raw onion quercetin to enhance endothelial nitric oxide production!${appendTierQuestions('Ultimate')}`;
+🍳 **Step-by-Step Instructions:**
+1. **Marinate:** Pat fish dry. Rub with lemon, salt, ginger-garlic & spices. Rest 15 mins.
+2. **Dust:** Lightly coat scored fish with rice flour to lock in moisture.
+3. **Sear:** Pan-sear in coconut oil at 195°C for 4.5 mins per side until golden crispy.${appendTierQuestions(tier)}`;
     }
 
     if (q.includes('biryani') || q.includes('chicken biryani')) {
-      if (tier === 'Free') {
-        return `⚡ **Starter Recipe: High-Protein Chicken Biryani**
-⏱️ **Prep:** 20 mins | **Cook:** 30 mins
-🔥 **Macros:** 620 kcal | **Protein:** 44g | **Carbs:** 68g | **Fats:** 18g
-
-🛒 **Ingredients:** 600g Chicken Thighs, 300g Basmati Rice, 200g Greek Yogurt, Biryani Spices, Mint & Ghee.
-🍳 **Instructions:** Marinate chicken in yogurt & spices. Boil rice to 70%. Layer chicken & rice in pot, cover and steam on low for 25 mins.`;
-      }
-
-      return `👑 **${tier === 'Ultimate' ? 'VIP Ultimate' : 'Nouriq Pro'} Masterclass Recipe: Hyderabadi Dum Chicken Biryani**
+      return `🍲 **Masterclass Recipe: Hyderabadi Dum Chicken Biryani**
 ⏱️ **Prep:** 25 mins | **Cook:** 35 mins | **Servings:** 4
 🔥 **Exact Macros per Serving:** 620 kcal | **Protein:** 44g | **Net Carbs:** 68g | **Fats:** 18g | **Fiber:** 4.5g
 
 🛒 **Ingredient Weight Breakdown:**
-• 600g Tender Skinless Chicken Thighs (High Myoglobin Muscle)
-• 300g Aged Basmati Rice (Glycemic Index 52, soaked 30 mins)
-• 200g Non-Fat Greek Yogurt (Enzymatic marination base)
-• Whole Spices: Star Anise, Cardamom, Cloves, Ceylon Cinnamon, Kashmiri Saffron
-• Fresh Mint (20g) & Coriander (20g), 1 tbsp Grass-Fed Ghee (14g)
+• 600g Tender Skinless Chicken Thighs
+• 300g Aged Basmati Rice (Soaked 30 mins)
+• 200g Non-Fat Greek Yogurt (Marination base)
+• Whole Spices: Star Anise, Cardamom, Cloves, Cinnamon, Saffron
+• Fresh Mint (20g) & Coriander (20g), 1 tbsp Ghee (14g)
 
 🍳 **Step-by-Step Instructions:**
-1. **Marinate:** Mix chicken with yogurt, ginger-garlic, spices, mint & garam masala. Marinate for 1 hour.
-2. **Par-boil Rice:** Boil Basmati with whole spices until 70% cooked (6 mins). Drain.
-3. **Dum Layering:** Layer marinated chicken at bottom, top with rice, saffron milk & fresh mint.
-4. **Steam (Dum):** Seal lid tightly. Steam on low for 25 mins. Rest 10 mins before fluffing.${appendTierQuestions(tier)}`;
+1. **Marinate:** Mix chicken with yogurt, ginger-garlic, spices, mint & garam masala for 1 hour.
+2. **Par-boil Rice:** Boil Basmati with whole spices until 70% cooked (6 mins).
+3. **Dum Layering:** Layer marinated chicken at bottom, top with rice & saffron milk. Steam 25 mins.${appendTierQuestions(tier)}`;
     }
-
-    // Generic Recipe Output tailored to Tier
-    const customTitle = query.replace(/recipe|how to make|how to cook|prepare|cook/gi, '').trim() || 'Gourmet Wellness Meal';
-    const formattedTitle = customTitle.charAt(0).toUpperCase() + customTitle.slice(1);
-
-    if (tier === 'Free') {
-      return `⚡ **Starter Recipe: Healthy ${formattedTitle}**
-⏱️ **Prep:** 12 mins | **Cook:** 18 mins
-🔥 **Macros:** 450 kcal | **Protein:** 38g | **Carbs:** 35g | **Fats:** 14g
-
-🛒 **Ingredients:** 300g Lean Protein, 150g Mixed Vegetables, 1 tbsp Olive Oil, Herbs & Lemon.
-🍳 **Instructions:** Sear protein 5-7 mins. Add veggies and sauté for 4-5 mins. Season and serve hot!`;
-    }
-
-    return `👑 **${tier === 'Ultimate' ? 'VIP Ultimate Clinical' : 'Nouriq Pro'} Masterclass Recipe: Healthy ${formattedTitle}**
-⏱️ **Prep:** 12 mins | **Cook:** 18 mins | **Servings:** 2
-🔥 **Exact USDA Macros:** 450 kcal | **Protein:** 38g | **Net Carbs:** 35g | **Fats:** 14g | **Fiber:** 6.0g
-
-🛒 **Ingredient Weight Breakdown:**
-• 300g Lean Protein Source (Chicken Breast, Salmon, Tofu, or Fish)
-• 150g Fresh Organic Vegetables (Broccoli, Bell Peppers, Zucchini)
-• 14g Extra Virgin Olive Oil (Polyphenol > 250 mg/kg)
-• Fresh Garlic, Herbs, Lemon Juice & Sea Salt
-
-🍳 **Step-by-Step Culinary Science:**
-1. **Prep & Season:** Cut protein into bite-sized pieces and season with herbs, garlic, and sea salt.
-2. **Thermal Sear:** Heat oil in cast-iron skillet on medium-high. Sear protein 5-7 mins.
-3. **Veggies Sauté:** Add vegetables and toss 4-5 mins until crisp-tender.
-4. **Plate:** Finish with fresh lemon juice to maximize iron bioavailability!${appendTierQuestions(tier)}`;
   }
 
-  // 2. THERAPEUTIC & CLINICAL DIETETICS (Diabetes, PCOS, Renal, Heart Health, Hypertrophy)
-  if (q.includes('diabetes') || q.includes('blood sugar') || q.includes('glycemic')) {
-    if (tier === 'Free') {
-      return `⚡ **Starter Advice: Blood Sugar Optimization**
-Hi ${name}! To manage blood sugar, pair carbs with protein & fiber, choose low-GI foods (oats, legumes, berries), and walk 10 minutes after meals.`;
-    }
-
-    return `🩺 **${tier === 'Ultimate' ? 'VIP Ultimate Clinical Desk' : 'Nouriq Pro Clinical Protocol'}: Endocrine & Glycemic Load Control**
-Hi ${name}! Managing postprandial blood glucose requires optimizing Glycemic Load (GL), GLUT-4 transporter translocation, and insulin sensitivity.
-
-🔬 **Advanced Clinical Protocols:**
-1. **The Fiber-Sequencing Rule:** Consuming leafy green salad or vegetables 10 mins before carbohydrates delays gastric emptying, reducing postprandial glucose peaks by up to 35%.
-2. **Retrogradation (Resistant Starch Type 3):** Cooking & cooling rice, potatoes, or legumes overnight alters amylose structure into resistant starch, lowering digestible carbs by 20%.
-3. **Endothelial Support:** Incorporate 1 tbsp raw Apple Cider Vinegar (with mother) prior to high-carb meals to improve insulin sensitivity by 19-34%.${appendTierQuestions(tier)}`;
-  }
-
-  if (q.includes('pcos') || q.includes('hormone') || q.includes('insulin resistance')) {
-    if (tier === 'Free') {
-      return `⚡ **Starter Advice: PCOS & Hormone Balance**
-Focus on anti-inflammatory fats (olive oil, walnuts), low-GI carbs (quinoa, berries), and high protein to stabilize energy levels.`;
-    }
-
-    return `🌸 **${tier === 'Ultimate' ? 'VIP Ultimate Clinical Desk' : 'Nouriq Pro'} Protocol: Endocrine & Metabolic PCOS Optimization**
-PCOS management centers on mitigating hyperinsulinemia, lowering LH/FSH ratios, and reducing systemic inflammatory markers (hs-CRP).
-
-💡 **Key Bioactive Pillars:**
-• **Anti-Inflammatory Lipids:** Cold-Pressed EVOO, Wild Alaskan Salmon, Walnuts, Avocado.
-• **Myo-Inositol & Magnesium Precursors:** Organic Spinach, Pumpkin seeds (Zinc 7.5mg/30g), Dark Chocolate (85%+).
-• **Low Glycemic Index Carbohydrates:** Sprouted legumes, steel-cut oats, and wild berries.${appendTierQuestions(tier)}`;
-  }
-
-  if (q.includes('protein') || q.includes('muscle') || q.includes('gain') || q.includes('hypertrophy')) {
-    if (tier === 'Free') {
-      return `⚡ **Starter Advice: Muscle Building Protein**
-Hi ${name}! Your daily target is ${targetProt}g protein. Logged today: ${loggedProt}g protein. Top sources: Chicken Breast, Eggs, Greek Yogurt, Fish, Tofu.`;
-    }
-
-    return `💪 **${tier === 'Ultimate' ? 'VIP Ultimate Athletic Desk' : 'Nouriq Pro'} Science: Muscle Protein Synthesis (MPS) & Hypertrophy Engine**
-Hi ${name}! For optimal hypertrophic muscle adaptation, your daily target is **${targetProt}g protein**.
-Current Status Today: Logged **${loggedProt}g protein** (${Math.max(0, targetProt - Number(loggedProt)).toFixed(0)}g remaining).
-
-🔬 **Scientific Leucine Threshold:**
-• **MPS Trigger:** 3.0g Leucine per meal triggers the mTORC1 pathway for maximal protein synthesis.
-• **Pulse Spacing:** Divide total protein across 3-4 meals spaced 3.5 - 5 hours apart.
-• **Top Bioavailable Sources:** Wild Salmon (20g P/100g), Chicken Breast (31g P/100g), Greek Yogurt (10g P/100g), Pasture Eggs.${appendTierQuestions(tier)}`;
-  }
-
-  if (q.includes('fat loss') || q.includes('weight loss') || q.includes('deficit') || q.includes('lose weight')) {
-    if (tier === 'Free') {
-      return `⚡ **Starter Advice: Calorie Deficit & Fat Loss**
-Hi ${name}! Daily Calorie Target: ${targetCal} kcal/day (Logged: ${loggedCal} kcal). Focus on high-protein foods, drinking 3L water, and walking daily.`;
-    }
-
-    return `🔥 **${tier === 'Ultimate' ? 'VIP Ultimate Metabolic Desk' : 'Nouriq Pro'} Science: Lipid Oxidation & Thermogenic Energy Budget**
-Hi ${name}! Daily Calorie Target: **${targetCal} kcal/day** (Logged: **${loggedCal} kcal** | Remaining: **${Math.max(0, targetCal - loggedCal)} kcal**).
-
-⚡ **3 Evidence-Based Accelerators:**
-1. **Thermic Effect of Food (TEF):** Protein consumes 20-30% of its ingested calories during metabolic breakdown.
-2. **Volumetric High-Satiety Index:** Fill 50% of your plate with cruciferous vegetables to activate stretch-receptor satiety signaling (PYY & GLP-1).
-3. **NEAT Optimization:** Target 8,000-10,000 daily steps for steady fatty acid oxidation without appetite rebound.${appendTierQuestions(tier)}`;
-  }
-
-  // 3. DEFAULT HIGH-PRECISION AI ADVICE
+  // DEFAULT AI ADVICE
   if (tier === 'Free') {
-    return `🌱 **Starter AI Advice**
+    return `⚡ **Starter AI Advice**
 Hi ${name}! Regarding "${query}":
-
 Based on your **${userGoals.dietType || 'High Protein'}** profile:
-• **Daily Calorie Target:** ${targetCal} kcal | Logged: ${loggedCal} kcal
-• **Daily Protein Target:** ${targetProt}g | Logged: ${loggedProt}g
-
-💡 **Recommendation:** Stay consistent with daily protein, drink ${userGoals.dailyWaterGoal || 3000} ml water, and ask me for any recipe or nutrition guidance!`;
+• **Daily Target:** ${targetCal} kcal | Logged: ${loggedCal} kcal
+• **Protein Target:** ${targetProt}g | Logged: ${loggedProt}g
+Stay consistent with daily protein and drink ${userGoals.dailyWaterGoal || 3000} ml water!`;
   }
 
   return `🌱 **${tier === 'Ultimate' ? 'VIP Ultimate Clinical & Michelin Masterclass Engine' : 'Nouriq Pro Clinical Analysis'}**
