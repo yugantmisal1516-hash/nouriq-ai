@@ -12,7 +12,8 @@ import {
   KeyRound,
   ArrowLeft,
   Inbox,
-  Check
+  Check,
+  UserPlus
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
