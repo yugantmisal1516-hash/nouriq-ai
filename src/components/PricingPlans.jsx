@@ -297,7 +297,7 @@ export default function PricingPlans({ isOpen, onClose }) {
             <ShieldCheck className="w-5 h-5 text-[#023859]" />
           </div>
           <div>
-            <h4 className="font-extrabold text-[#011C40]">Encrypted Payments via Stripe Inc.</h4>
+            <h4 className="font-extrabold text-[#011C40]">Encrypted Payments via Razorpay Payments</h4>
             <p className="text-[#26658C] font-medium">PCI-DSS Level 1 Compliant. Cancel anytime with 1-click 30-Day Refund Guarantee.</p>
           </div>
         </div>

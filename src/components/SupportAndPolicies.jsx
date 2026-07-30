@@ -319,7 +319,7 @@ export default function SupportAndPolicies() {
                     className="w-full bg-white border border-[#54ACBF]/50 rounded-xl px-3.5 py-2.5 text-[#011C40] font-bold focus:outline-none"
                   >
                     <option value="General Query">General Inquiry / Complaint</option>
-                    <option value="Billing & Stripe">Stripe Billing & Subscription Issue</option>
+                    <option value="Billing & Razorpay">Razorpay Billing & Subscription Issue</option>
                     <option value="Refund Request">Refund Request (30-Day Guarantee)</option>
                     <option value="Technical Support">Technical & Scanner Complaint</option>
                   </select>
@@ -352,7 +352,7 @@ export default function SupportAndPolicies() {
         </div>
       )}
 
-      {/* 2. CANCELLATION & REFUND POLICY FOR STRIPE */}
+      {/* 2. CANCELLATION & REFUND POLICY FOR RAZORPAY */}
       {activeSection === 'refund' && (
         <div className="ios-glass p-6 md:p-8 rounded-[28px] space-y-5 shadow-sm">
           <div className="flex items-center space-x-3 border-b border-[#54ACBF]/30 pb-4">
@@ -361,7 +361,7 @@ export default function SupportAndPolicies() {
             </div>
             <div>
               <h2 className="text-lg font-extrabold text-[#011C40]">30-Day Money-Back Guarantee & Cancellation Policy</h2>
-              <p className="text-xs text-[#26658C] font-medium">Clear, transparent merchant cancellation terms compliant with Stripe guidelines.</p>
+              <p className="text-xs text-[#26658C] font-medium">Clear, transparent merchant cancellation terms compliant with Razorpay Payments guidelines.</p>
             </div>
           </div>
 
@@ -401,7 +401,7 @@ export default function SupportAndPolicies() {
               At Nouriq.ai, we treat your nutritional logs, food scanner photos, and biometric goals with HIPAA-grade confidentiality. We do not sell your personal data to third-party advertisers.
             </p>
             <p>
-              All payment transactions are encrypted using 256-Bit TLS via Stripe Inc. Payment card details are never stored on Nouriq servers.
+              All payment transactions are encrypted using 256-Bit TLS via Razorpay Payments India Pvt. Ltd. Payment card and banking details are processed through PCI-DSS Level 1 compliant Razorpay infrastructure.
             </p>
           </div>
         </div>

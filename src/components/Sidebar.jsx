@@ -31,7 +31,7 @@ export default function Sidebar() {
     { id: 'dietitian', label: 'VIP Dietitian & Lab', icon: Stethoscope, badge: '⭐ Ultimate' },
     { id: 'coach', label: 'AI Nutritionist', icon: Bot, badge: 'Zero-Error' },
     { id: 'pricing', label: 'Pricing & Pro', icon: Crown, badge: isPro ? 'Active' : 'Save 33%' },
-    { id: 'support', label: 'Support & Policies', icon: HelpCircle, badge: 'Stripe' },
+    { id: 'support', label: 'Support & Policies', icon: HelpCircle, badge: 'Razorpay' },
   ];
 
   return (
