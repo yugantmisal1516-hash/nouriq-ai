@@ -129,19 +129,23 @@ export const NutritionProvider = ({ children }) => {
       const now = Date.now();
       const urlParams = new URLSearchParams(search);
 
-      // Must be a recent checkout attempt within 15 minutes AND an explicit return from Stripe
+      // Must be a recent checkout attempt within 15 minutes AND an explicit return from Razorpay or Stripe
       const isRecentCheckout = pendingCheckout && (now - pendingTime < 900000);
-      const isExplicitStripeReturn = 
+      const isExplicitPaymentReturn = 
+        referrer.includes('razorpay.com') ||
+        referrer.includes('rzp.io') ||
         referrer.includes('stripe.com') ||
         referrer.includes('buy.stripe') ||
         urlParams.get('payment') === 'success' || 
         urlParams.get('success') === 'true' || 
         urlParams.get('status') === 'success' ||
+        urlParams.get('razorpay_payment_id') ||
         href.includes('payment=success') ||
         href.includes('success=true') ||
-        href.includes('session_id=');
+        href.includes('session_id=') ||
+        href.includes('razorpay');
 
-      if (isRecentCheckout && isExplicitStripeReturn) {
+      if (isRecentCheckout && isExplicitPaymentReturn) {
         let targetTier = 'Pro';
         if (pendingCheckout === 'Ultimate' || search.includes('ultimate') || href.includes('ultimate')) {
           targetTier = 'Ultimate';
@@ -156,7 +160,7 @@ export const NutritionProvider = ({ children }) => {
           dailyScansLeft: 9999,
           expiresAt: 'Auto-renews next year',
           verified: true,
-          stripePaymentId: `str_live_${Date.now()}`
+          stripePaymentId: `rzp_live_${Date.now()}`
         };
 
         setSubscription(upgradedState);

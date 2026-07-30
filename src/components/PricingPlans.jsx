@@ -22,15 +22,15 @@ export const STRIPE_PRICE_IDS = {
   }
 };
 
-// Official Stripe Hosted Payment Links (Direct Redirect like CareerForge AI)
-export const STRIPE_PAYMENT_LINKS = {
+// Official Razorpay Live Hosted Payment Links (Direct Redirect)
+export const RAZORPAY_PAYMENT_LINKS = {
   pro: {
-    monthly: 'https://buy.stripe.com/test_00w6oJbEB8XYgtI7al0RG00',
-    annual: 'https://buy.stripe.com/test_14A5kFaAxgqqa5k0LX0RG01'
+    monthly: 'https://rzp.io/rzp/tklHu19',
+    annual: 'https://rzp.io/rzp/mSck4JgC'
   },
   ultimate: {
-    monthly: 'https://buy.stripe.com/test_14A00leQN2zAgtI8ep0RG02',
-    annual: 'https://buy.stripe.com/test_9B6dRbbEB8XYdhwamx0RG03'
+    monthly: 'https://rzp.io/rzp/lGbCMQ8',
+    annual: 'https://rzp.io/rzp/bYfPJDCv'
   }
 };
 
@@ -40,7 +40,7 @@ export default function PricingPlans({ isOpen, onClose }) {
   const [showStripeModal, setShowStripeModal] = useState(false);
   const [selectedTier, setSelectedTier] = useState(null);
 
-  // Stripe Checkout Form Inputs
+  // Stripe/Razorpay Checkout Form Inputs
   const [cardNumber, setCardNumber] = useState('4242 •••• •••• 4242');
   const [cardExpiry, setCardExpiry] = useState('12/28');
   const [cardCvc, setCardCvc] = useState('888');
@@ -59,7 +59,7 @@ export default function PricingPlans({ isOpen, onClose }) {
       return;
     }
     
-    // Save pending checkout tier to localStorage before redirecting to Stripe
+    // Save pending checkout tier to localStorage before redirecting to Razorpay
     const targetTierName = tier.id === 'ultimate' ? 'Ultimate' : 'Pro';
     try {
       localStorage.setItem('nouriq_pending_checkout', targetTierName);
@@ -68,7 +68,7 @@ export default function PricingPlans({ isOpen, onClose }) {
       console.warn('Error saving pending checkout state:', e);
     }
 
-    // Direct Stripe Hosted Payment Link Redirect (100% like CareerForge AI!)
+    // Direct Razorpay Hosted Payment Link Redirect
     if (tier.paymentLink) {
       window.location.href = tier.paymentLink;
       return;
@@ -80,58 +80,54 @@ export default function PricingPlans({ isOpen, onClose }) {
 
   const handleProcessStripePayment = (e) => {
     e.preventDefault();
-    if (!selectedTier) return;
-
     setIsProcessing(true);
-
-    const targetTierName = selectedTier.id === 'ultimate' ? 'Ultimate' : 'Pro';
 
     setTimeout(() => {
       setIsProcessing(false);
       setPaymentSuccess(true);
-
-      if (typeof upgradeSubscription === 'function') {
-        upgradeSubscription(targetTierName, billingCycle);
-      }
-      confetti({ particleCount: 120, spread: 80 });
+      
+      const targetTierName = selectedTier?.id === 'ultimate' ? 'Ultimate' : 'Pro';
+      upgradeSubscription(targetTierName, billingCycle);
 
       setTimeout(() => {
         setPaymentSuccess(false);
         setShowStripeModal(false);
         if (onClose) onClose();
-      }, 1400);
-    }, 800);
+      }, 1200);
+    }, 1500);
   };
 
   const tiers = [
     {
       id: 'free',
-      name: 'Starter Plan',
+      name: 'Starter Free',
       priceMonthly: 0,
       priceAnnual: 0,
+      annualTotal: 0,
       badge: 'Free Forever',
-      desc: 'Essential tracking tools for fitness beginners',
+      desc: 'Essential AI food logging & basic meal architect',
       stripePriceId: null,
       paymentLink: null,
       features: [
-        '5 AI Food Scans per day',
-        'Basic 7-Day Meal Planner',
-        'Fasting & Hydration Tracker',
-        'Standard Food Database'
+        '5 Daily Multi-Modal AI Food Scans',
+        'Basic Meal Logger & Water Tracker',
+        'Intermittent Fasting Timer',
+        'Smart Grocery List Generator',
+        'Community Support Desk'
       ],
       isPopular: false,
-      cta: subscription?.tier === 'Free' ? 'Current Starter Plan' : 'Switch to Starter Free Plan'
+      cta: isPro || isUltimate ? 'Downgrade to Starter' : 'Current Plan'
     },
     {
       id: 'pro',
       name: 'Nouriq Pro',
       priceMonthly: 14.99,
-      priceAnnual: 9.91, // $119/year
+      priceAnnual: 9.91, // $119/year (~₹9,999/yr)
       annualTotal: 119,
       badge: '👑 Most Popular (Save 33%)',
       desc: 'Full power for high-performing fitness enthusiasts',
-      stripePriceId: billingCycle === 'annual' ? STRIPE_PRICE_IDS.pro.annual : STRIPE_PRICE_IDS.pro.monthly,
-      paymentLink: billingCycle === 'annual' ? STRIPE_PAYMENT_LINKS.pro.annual : STRIPE_PAYMENT_LINKS.pro.monthly,
+      stripePriceId: null,
+      paymentLink: billingCycle === 'annual' ? RAZORPAY_PAYMENT_LINKS.pro.annual : RAZORPAY_PAYMENT_LINKS.pro.monthly,
       features: [
         'Unlimited Multi-Modal AI Food Scans',
         'Custom 7-Day Architect with Portion Weight (g)',
@@ -139,7 +135,7 @@ export default function PricingPlans({ isOpen, onClose }) {
         '24/7 AI Masterclass Chef & Clinical Nutritionist',
         'Metabolic Autophagy Stages Tracker',
         'AI Micronutrient Deficit Grocery Insights',
-        'Stripe 30-Day Money-Back Guarantee'
+        'Razorpay 30-Day Money-Back Guarantee'
       ],
       isPopular: true,
       cta: isPro ? '👑 Active Pro Plan' : 'Subscribe to Pro'
@@ -148,12 +144,12 @@ export default function PricingPlans({ isOpen, onClose }) {
       id: 'ultimate',
       name: 'Pro+ Ultimate Coach',
       priceMonthly: 29.99,
-      priceAnnual: 19.91, // $239/year
+      priceAnnual: 19.91, // $239/year (~₹19,999/yr)
       annualTotal: 239,
       badge: '⭐ VIP Metabolic Suite',
       desc: 'White-glove clinical guidance & human dietitian sync',
-      stripePriceId: billingCycle === 'annual' ? STRIPE_PRICE_IDS.ultimate.annual : STRIPE_PRICE_IDS.ultimate.monthly,
-      paymentLink: billingCycle === 'annual' ? STRIPE_PAYMENT_LINKS.ultimate.annual : STRIPE_PAYMENT_LINKS.ultimate.monthly,
+      stripePriceId: null,
+      paymentLink: billingCycle === 'annual' ? RAZORPAY_PAYMENT_LINKS.ultimate.annual : RAZORPAY_PAYMENT_LINKS.ultimate.monthly,
       features: [
         'Everything in Nouriq Pro',
         '1-on-1 Certified Clinical Dietitian Consultation',
