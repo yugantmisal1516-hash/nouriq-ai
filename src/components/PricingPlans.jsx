@@ -22,15 +22,15 @@ export const STRIPE_PRICE_IDS = {
   }
 };
 
-// Official Razorpay Live Hosted Payment Links (Direct Redirect)
+// Official Razorpay 24/7 Live Payment Pages (Unlimited Recurring Payments)
 export const RAZORPAY_PAYMENT_LINKS = {
   pro: {
-    monthly: 'https://rzp.io/rzp/tklHu19',
-    annual: 'https://rzp.io/rzp/mSck4JgC'
+    monthly: 'https://rzp.io/rzp/MqwuZ6r',
+    annual: 'https://rzp.io/rzp/nr8OwUh'
   },
   ultimate: {
-    monthly: 'https://rzp.io/rzp/lGbCMQ8',
-    annual: 'https://rzp.io/rzp/bYfPJDCv'
+    monthly: 'https://rzp.io/rzp/ldvMrIF',
+    annual: 'https://rzp.io/rzp/2LBXwyG'
   }
 };
 
