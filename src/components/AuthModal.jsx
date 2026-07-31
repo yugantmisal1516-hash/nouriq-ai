@@ -298,17 +298,24 @@ export default function AuthModal({ isOpen, onClose }) {
             </span>
           </div>
 
-          <div>
-            <h2 className="text-2xl font-black text-[#011C40] tracking-tight">
-              {mode === 'signup' ? 'Create Your Nouriq Account' : mode === 'signin' ? 'Welcome Back to Nouriq' : 'Reset Your Password'}
-            </h2>
-            <p className="text-[#26658C] text-xs mt-1 font-medium">
-              {mode === 'signup' 
-                ? 'Join thousands optimizing daily nutrition, glucose curves & macros.' 
-                : mode === 'signin' 
-                ? 'Access your saved meal logs, water goals, and AI diet plans.'
-                : 'Enter your registered email to receive a secure reset link.'}
-            </p>
+          <div className="flex items-center space-x-3 border-b border-[#54ACBF]/30 pb-3">
+            <img 
+              src="/nouriq_logo.jpg" 
+              alt="Nouriq Logo" 
+              className="w-10 h-10 rounded-full object-cover border border-[#54ACBF] shadow-xs shrink-0" 
+            />
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black text-[#011C40] tracking-tight">
+                {mode === 'signup' ? 'Create Your Nouriq Account' : mode === 'signin' ? 'Welcome Back to Nouriq' : 'Reset Your Password'}
+              </h2>
+              <p className="text-[#26658C] text-xs mt-0.5 font-medium">
+                {mode === 'signup' 
+                  ? 'Join thousands optimizing daily nutrition, glucose curves & macros.' 
+                  : mode === 'signin' 
+                  ? 'Access your saved meal logs, water goals, and AI diet plans.'
+                  : 'Enter your registered email to receive a secure reset link.'}
+              </p>
+            </div>
           </div>
 
           {/* Mode Switcher Tabs */}

@@ -103,10 +103,12 @@ export default function MobileBottomNav() {
         <div className="fixed inset-0 z-40 lg:hidden flex flex-col justify-end bg-[#011C40]/60 backdrop-blur-md animate-fade-in">
           <div className="ios-glass rounded-t-[32px] p-5 sm:p-6 space-y-4 max-h-[85vh] overflow-y-auto shadow-2xl border-t border-[#54ACBF] bg-white/95 max-w-lg mx-auto w-full pb-28">
             <div className="flex items-center justify-between border-b border-[#54ACBF]/30 pb-3">
-              <div className="flex items-center space-x-2">
-                <div className="w-7 h-7 rounded-full bg-[#023859] text-white flex items-center justify-center">
-                  <Sparkles className="w-3.5 h-3.5 text-[#A7EBF2]" />
-                </div>
+              <div className="flex items-center space-x-2.5">
+                <img 
+                  src="/nouriq_logo.jpg" 
+                  alt="Nouriq Logo" 
+                  className="w-7 h-7 rounded-full object-cover border border-[#54ACBF]" 
+                />
                 <span className="font-extrabold text-sm text-[#011C40]">Nouriq Features & Tools</span>
               </div>
               <button
