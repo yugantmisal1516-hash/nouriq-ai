@@ -360,25 +360,37 @@ export const NutritionProvider = ({ children }) => {
   };
 
   const todayStr = new Date().toISOString().split('T')[0];
-  const todayMeals = loggedMeals.filter(m => m.date === todayStr);
+  const todayMeals = loggedMeals.filter(m => {
+    if (!m.date) return true;
+    return m.date === todayStr || m.date === new Date().toLocaleDateString();
+  });
+
   const todayTotals = todayMeals.reduce((acc, curr) => {
-    const f = curr.food || {};
+    const cal = Number(curr.calories || curr.food?.calories || curr.kcal || 0);
+    const prot = Number(curr.protein || curr.food?.protein || curr.food?.macros?.protein || 0);
+    const carb = Number(curr.carbs || curr.food?.carbs || curr.food?.macros?.carbs || 0);
+    const fat = Number(curr.fats || curr.food?.fats || curr.fat || curr.food?.macros?.fats || 0);
+    const fib = Number(curr.fiber || curr.food?.fiber || curr.food?.macros?.fiber || 0);
+
     return {
-      calories: acc.calories + (f.calories || 0),
-      protein: acc.protein + (f.protein || 0),
-      carbs: acc.carbs + (f.carbs || 0),
-      fats: acc.fats + (f.fats || 0),
-      fiber: acc.fiber + (f.fiber || 0)
+      calories: Math.round(acc.calories + cal),
+      protein: Math.round((acc.protein + prot) * 10) / 10,
+      carbs: Math.round((acc.carbs + carb) * 10) / 10,
+      fats: Math.round((acc.fats + fat) * 10) / 10,
+      fiber: Math.round((acc.fiber + fib) * 10) / 10
     };
   }, { calories: 0, protein: 0, carbs: 0, fats: 0, fiber: 0 });
 
-  const totalMealScores = loggedMeals.reduce((sum, m) => sum + (m.food?.healthRating || 90), 0);
+  const totalMealScores = loggedMeals.reduce((sum, m) => {
+    const score = m.healthRating || m.healthScore || m.food?.healthRating || m.food?.healthScore || 90;
+    return sum + Number(score);
+  }, 0);
   const averageHealthScore = loggedMeals.length > 0 ? Math.round(totalMealScores / loggedMeals.length) : 92;
 
   return (
     <NutritionContext.Provider value={{
       goals, setGoals,
-      loggedMeals, logMeal, deleteMeal, todayTotals,
+      loggedMeals, logMeal, deleteMeal, removeMeal: deleteMeal, todayTotals, todayMeals,
       waterIntake, addWater, resetWater,
       fastingState, setFastingState, startFast, stopFast,
       groceryItems, toggleGroceryItem, addGroceryItem, removeGroceryItem,
