@@ -359,6 +359,17 @@ export const NutritionProvider = ({ children }) => {
     setWeightLogs(prev => [...prev, { date: todayStr, weight: parseFloat(weight) }]);
   };
 
+  const getMacroVal = (obj, key) => {
+    if (!obj) return 0;
+    if (typeof obj[key] === 'number' && !isNaN(obj[key])) return obj[key];
+    if (obj.macros && typeof obj.macros[key] === 'number' && !isNaN(obj.macros[key])) return obj.macros[key];
+    if (obj.food) {
+      if (typeof obj.food[key] === 'number' && !isNaN(obj.food[key])) return obj.food[key];
+      if (obj.food.macros && typeof obj.food.macros[key] === 'number' && !isNaN(obj.food.macros[key])) return obj.food.macros[key];
+    }
+    return 0;
+  };
+
   const todayStr = new Date().toISOString().split('T')[0];
   const todayMeals = loggedMeals.filter(m => {
     if (!m.date) return true;
@@ -367,10 +378,10 @@ export const NutritionProvider = ({ children }) => {
 
   const todayTotals = todayMeals.reduce((acc, curr) => {
     const cal = Number(curr.calories || curr.food?.calories || curr.kcal || 0);
-    const prot = Number(curr.protein || curr.food?.protein || curr.food?.macros?.protein || 0);
-    const carb = Number(curr.carbs || curr.food?.carbs || curr.food?.macros?.carbs || 0);
-    const fat = Number(curr.fats || curr.food?.fats || curr.fat || curr.food?.macros?.fats || 0);
-    const fib = Number(curr.fiber || curr.food?.fiber || curr.food?.macros?.fiber || 0);
+    const prot = Number(getMacroVal(curr, 'protein'));
+    const carb = Number(getMacroVal(curr, 'carbs'));
+    const fat = Number(getMacroVal(curr, 'fats') || getMacroVal(curr, 'fat'));
+    const fib = Number(getMacroVal(curr, 'fiber'));
 
     return {
       calories: Math.round(acc.calories + cal),
