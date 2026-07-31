@@ -373,11 +373,22 @@ export default function SupportAndPolicies() {
               </p>
             </div>
 
-            <div className="ios-glass-card p-4 rounded-2xl space-y-1">
+            <div className="ios-glass-card p-4 rounded-2xl space-y-2">
               <h3 className="font-extrabold text-[#023859] text-sm">2. 1-Click Subscription Cancellation</h3>
               <p className="text-[#26658C]">
-                You can cancel your auto-renewing subscription at any time directly from the Pricing & Membership tab or by emailing support. Once cancelled, your premium features remain active until the end of your paid billing period.
+                You can cancel your auto-renewing subscription at any time directly with 1-click. When cancelled, your account is immediately returned to the Free Starter Plan on the Dashboard.
               </p>
+              {subscription?.tier !== 'Free' && (
+                <button
+                  onClick={() => {
+                    if (typeof cancelSubscription === 'function') cancelSubscription();
+                  }}
+                  className="mt-2 px-4 py-2 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold text-xs border border-rose-200 transition-all active:scale-95 flex items-center gap-1.5"
+                >
+                  <X className="w-3.5 h-3.5 text-rose-600" />
+                  <span>Cancel Active {subscription.tier} Subscription & Return to Free Starter Plan</span>
+                </button>
+              )}
             </div>
           </div>
         </div>

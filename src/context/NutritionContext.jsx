@@ -215,31 +215,23 @@ export const NutritionProvider = ({ children }) => {
   const cancelSubscription = () => {
     const freeState = {
       tier: 'Free',
-      status: 'cancelled',
+      status: 'active',
       billingCycle: 'monthly',
       dailyScansLeft: getStoredFreeDailyScans(),
-      expiresAt: 'Expired',
-      verified: false
-    };
-    setSubscription(freeState);
-    localStorage.removeItem('nouriq_subscription');
-    document.cookie = "nouriq_sub_tier=; max-age=0; path=/;";
-  };
-
-  const resetToFreePlan = () => {
-    const freeState = {
-      tier: 'Free',
-      status: 'active',
-      billingCycle: 'annual',
-      dailyScansLeft: getStoredFreeDailyScans(),
       expiresAt: 'Lifetime',
-      verified: false
+      verified: false,
+      stripePaymentId: null
     };
     setSubscription(freeState);
     localStorage.removeItem('nouriq_subscription');
     localStorage.removeItem('nouriq_pending_checkout');
     localStorage.removeItem('nouriq_pending_checkout_time');
     document.cookie = "nouriq_sub_tier=; max-age=0; path=/;";
+    setActiveTab('dashboard'); // Directly redirect to Free Starter Plan on Dashboard
+  };
+
+  const resetToFreePlan = () => {
+    cancelSubscription();
   };
 
   // Fasting Timer State Controls

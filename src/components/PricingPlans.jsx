@@ -262,11 +262,24 @@ export default function PricingPlans({ isOpen, onClose }) {
                 </div>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-2 space-y-2">
                 {isCurrentTier ? (
-                  <div className="w-full py-3 rounded-full bg-[#A7EBF2]/60 text-[#023859] font-extrabold text-xs text-center border border-[#54ACBF]/40">
-                    ✓ Current Plan Active
-                  </div>
+                  <>
+                    <div className="w-full py-3 rounded-full bg-[#A7EBF2]/60 text-[#023859] font-extrabold text-xs text-center border border-[#54ACBF]/40">
+                      ✓ Current Plan Active
+                    </div>
+                    {tier.id !== 'free' && (
+                      <button
+                        onClick={() => {
+                          if (typeof cancelSubscription === 'function') cancelSubscription();
+                        }}
+                        className="w-full py-2.5 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold text-xs text-center border border-rose-200 transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                      >
+                        <X className="w-3.5 h-3.5 text-rose-600" />
+                        <span>Cancel & Return to Free Plan</span>
+                      </button>
+                    )}
+                  </>
                 ) : (
                   <button
                     onClick={() => handleOpenStripe(tier)}
@@ -305,16 +318,16 @@ export default function PricingPlans({ isOpen, onClose }) {
         </div>
       </div>
 
-      {/* Reset Cache Option for Testing */}
+      {/* Direct Cancellation Option */}
       {subscription?.tier !== 'Free' && (
         <div className="text-center pt-2">
           <button
             onClick={() => {
-              if (typeof resetToFreePlan === 'function') resetToFreePlan();
+              if (typeof cancelSubscription === 'function') cancelSubscription();
             }}
-            className="text-[11px] font-extrabold text-[#26658C] hover:text-[#011C40] underline transition-all"
+            className="text-xs font-extrabold text-rose-700 hover:text-rose-900 underline transition-all"
           >
-            ↺ Switch Back to Starter Free Plan (Clear Local Test Cache)
+            ↺ Cancel Active {subscription.tier} Subscription & Return to Free Starter Plan
           </button>
         </div>
       )}
