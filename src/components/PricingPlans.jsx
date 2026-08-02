@@ -35,7 +35,7 @@ export const RAZORPAY_PAYMENT_LINKS = {
 };
 
 export default function PricingPlans({ isOpen, onClose }) {
-  const { subscription, upgradeSubscription, resetToFreePlan, goals } = useNutrition();
+  const { subscription, upgradeSubscription, cancelSubscription, cancelAutoPay, resetToFreePlan, goals } = useNutrition();
   const [billingCycle, setBillingCycle] = useState('annual'); // 'monthly' or 'annual'
   const [showStripeModal, setShowStripeModal] = useState(false);
   const [selectedTier, setSelectedTier] = useState(null);
@@ -265,19 +265,48 @@ export default function PricingPlans({ isOpen, onClose }) {
               <div className="pt-2 space-y-2">
                 {isCurrentTier ? (
                   <>
-                    <div className="w-full py-3 rounded-full bg-[#A7EBF2]/60 text-[#023859] font-extrabold text-xs text-center border border-[#54ACBF]/40">
-                      ✓ Current Plan Active
-                    </div>
-                    {tier.id !== 'free' && (
-                      <button
-                        onClick={() => {
-                          if (typeof cancelSubscription === 'function') cancelSubscription();
-                        }}
-                        className="w-full py-2.5 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold text-xs text-center border border-rose-200 transition-all active:scale-95 flex items-center justify-center gap-1.5"
-                      >
-                        <X className="w-3.5 h-3.5 text-rose-600" />
-                        <span>Cancel & Return to Free Plan</span>
-                      </button>
+                    {subscription?.autoPayActive !== false ? (
+                      <>
+                        <div className="w-full py-2.5 rounded-full bg-[#A7EBF2]/60 text-[#023859] font-extrabold text-xs text-center border border-[#54ACBF]/40">
+                          ✓ Active AutoPay ({subscription?.expiresAt || 'Auto-renews'})
+                        </div>
+                        {tier.id !== 'free' && (
+                          <>
+                            <button
+                              onClick={() => {
+                                if (typeof cancelAutoPay === 'function') cancelAutoPay();
+                              }}
+                              className="w-full py-2 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-900 font-extrabold text-xs text-center border border-amber-300 transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                              title="Cancels recurring payment. Pro remains active until period ends, then automatically reverts to Free"
+                            >
+                              <Clock className="w-3.5 h-3.5 text-amber-700" />
+                              <span>Cancel AutoPay (Downgrade after period)</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (typeof cancelSubscription === 'function') cancelSubscription();
+                              }}
+                              className="w-full py-2 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold text-xs text-center border border-rose-200 transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                            >
+                              <X className="w-3.5 h-3.5 text-rose-600" />
+                              <span>Downgrade Immediately to Free</span>
+                            </button>
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-full py-2.5 rounded-full bg-amber-100 text-amber-950 font-extrabold text-xs text-center border border-amber-300">
+                          ⚠️ AutoPay Cancelled ({subscription?.expiresAt})
+                        </div>
+                        <button
+                          onClick={() => handleOpenStripe(tier)}
+                          className="w-full py-2.5 rounded-full liquid-glass-btn liquid-glass-btn-active text-white font-extrabold text-xs text-center shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                        >
+                          <span>Resume {tier.name} Payment</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </>
                     )}
                   </>
                 ) : (

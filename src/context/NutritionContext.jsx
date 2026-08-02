@@ -147,20 +147,32 @@ export const NutritionProvider = ({ children }) => {
 
       if (isRecentCheckout && isExplicitPaymentReturn) {
         let targetTier = 'Pro';
+        let cycle = 'annual';
+        if (search.includes('cycle=monthly') || href.includes('monthly')) {
+          cycle = 'monthly';
+        }
         if (pendingCheckout === 'Ultimate' || search.includes('ultimate') || href.includes('ultimate')) {
           targetTier = 'Ultimate';
         } else if (pendingCheckout === 'Pro' || search.includes('pro') || href.includes('pro')) {
           targetTier = 'Pro';
         }
 
+        const now = Date.now();
+        const durationMs = cycle === 'monthly' ? 30 * 24 * 60 * 60 * 1000 : 365 * 24 * 60 * 60 * 1000;
+        const expiresAtTimestamp = now + durationMs;
+        const expiresDateStr = new Date(expiresAtTimestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
         const upgradedState = {
           tier: targetTier,
           status: 'active',
-          billingCycle: 'annual',
+          billingCycle: cycle,
           dailyScansLeft: 9999,
-          expiresAt: 'Auto-renews next year',
+          purchasedAt: now,
+          expiresAtTimestamp: expiresAtTimestamp,
+          expiresAt: `Auto-renews on ${expiresDateStr}`,
+          autoPayActive: true,
           verified: true,
-          stripePaymentId: `rzp_live_${Date.now()}`
+          stripePaymentId: `rzp_live_${now}`
         };
 
         setSubscription(upgradedState);
@@ -183,6 +195,40 @@ export const NutritionProvider = ({ children }) => {
     }
   }, []);
 
+  // Automated Subscription Expiry & AutoPay Revocation Validator
+  useEffect(() => {
+    const validateSubscriptionLifecycle = () => {
+      try {
+        const savedSubData = localStorage.getItem('nouriq_subscription');
+        if (savedSubData) {
+          const parsed = JSON.parse(savedSubData);
+          if (parsed && parsed.tier !== 'Free') {
+            const now = Date.now();
+            if (parsed.autoPayActive === false && parsed.expiresAtTimestamp && now > parsed.expiresAtTimestamp) {
+              const expiredState = {
+                tier: 'Free',
+                status: 'expired',
+                billingCycle: 'monthly',
+                dailyScansLeft: getStoredFreeDailyScans(),
+                expiresAt: 'Expired (AutoPay Revoked)',
+                autoPayActive: false,
+                autoPayExpired: true,
+                verified: false
+              };
+              setSubscription(expiredState);
+              localStorage.removeItem('nouriq_subscription');
+              document.cookie = "nouriq_sub_tier=; max-age=0; path=/;";
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Subscription lifecycle validation error:', e);
+      }
+    };
+
+    validateSubscriptionLifecycle();
+  }, [activeTab]);
+
   const upgradeSubscription = (tierName, cycle = 'annual') => {
     const nameLower = (tierName || '').toLowerCase();
     let targetTier = 'Free';
@@ -192,14 +238,22 @@ export const NutritionProvider = ({ children }) => {
       targetTier = 'Pro';
     }
 
+    const now = Date.now();
+    const durationMs = cycle === 'monthly' ? 30 * 24 * 60 * 60 * 1000 : 365 * 24 * 60 * 60 * 1000;
+    const expiresAtTimestamp = now + durationMs;
+    const expiresDateStr = new Date(expiresAtTimestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
     const upgradedState = {
       tier: targetTier,
       status: 'active',
       billingCycle: cycle,
       dailyScansLeft: targetTier === 'Free' ? getStoredFreeDailyScans() : 9999,
-      expiresAt: targetTier === 'Free' ? 'Lifetime' : 'Auto-renews next year',
+      purchasedAt: now,
+      expiresAtTimestamp: targetTier === 'Free' ? null : expiresAtTimestamp,
+      expiresAt: targetTier === 'Free' ? 'Lifetime' : `Auto-renews on ${expiresDateStr}`,
+      autoPayActive: targetTier !== 'Free',
       verified: targetTier !== 'Free',
-      stripePaymentId: targetTier !== 'Free' ? `str_live_${Date.now()}` : null
+      stripePaymentId: targetTier !== 'Free' ? `rzp_live_${now}` : null
     };
 
     setSubscription(upgradedState);
@@ -210,6 +264,24 @@ export const NutritionProvider = ({ children }) => {
       localStorage.removeItem('nouriq_subscription');
       document.cookie = "nouriq_sub_tier=; max-age=0; path=/;";
     }
+  };
+
+  const cancelAutoPay = () => {
+    setSubscription(prev => {
+      if (prev.tier === 'Free') return prev;
+      const expiresDateStr = prev.expiresAtTimestamp 
+        ? new Date(prev.expiresAtTimestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : 'end of paid period';
+
+      const updated = {
+        ...prev,
+        autoPayActive: false,
+        status: 'cancelling',
+        expiresAt: `Access ends on ${expiresDateStr} (AutoPay Cancelled)`
+      };
+      localStorage.setItem('nouriq_subscription', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const cancelSubscription = () => {
@@ -467,7 +539,7 @@ export const NutritionProvider = ({ children }) => {
       weightLogs, logWeight,
       activeTab, setActiveTab,
       averageHealthScore,
-      subscription, upgradeSubscription, cancelSubscription, resetToFreePlan, consumeScanQuota,
+      subscription, upgradeSubscription, cancelSubscription, cancelAutoPay, resetToFreePlan, consumeScanQuota,
       showStripeSuccessModal, setShowStripeSuccessModal
     }}>
       {children}
