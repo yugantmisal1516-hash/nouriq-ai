@@ -19,7 +19,7 @@ import confetti from 'canvas-confetti';
 
 export default function AuthModal({ isOpen, onClose }) {
   const nutrition = useNutrition() || {};
-  const { goals = {}, setGoals = () => {}, resetToFreePlan = () => {} } = nutrition;
+  const { goals = {}, setGoals = () => {}, resetToFreePlan = () => {}, createNewUserSession = () => {} } = nutrition;
   const [mode, setMode] = useState('signup'); // 'signin', 'signup', or 'forgot'
   
   // Login State
@@ -103,10 +103,8 @@ export default function AuthModal({ isOpen, onClose }) {
     e.preventDefault();
     if (!name.trim() || !email.trim()) return;
 
-    // Enforce Starter Free Plan for new account creation
-    resetToFreePlan();
-
-    setGoals({
+    // Create fresh user session with 0 logged meals & clean stats
+    createNewUserSession({
       name: name.trim(),
       avatar: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80`,
       dietType: dietType,
@@ -136,16 +134,18 @@ export default function AuthModal({ isOpen, onClose }) {
   };
 
   const handleSelectGoogleAccount = (acc) => {
-    // Enforce Starter Free Plan for new Google account creation
-    resetToFreePlan();
-
-    setGoals(prev => ({
-      ...prev,
+    // Create fresh user session for Google account with 0 logged meals & clean stats
+    createNewUserSession({
       name: acc.name,
-      avatar: acc.avatar,
-      dietType: acc.dietType || prev.dietType,
-      dailyCalorieGoal: acc.cal || prev.dailyCalorieGoal
-    }));
+      avatar: acc.avatar || `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80`,
+      dietType: acc.dietType || 'High Protein / Lean Gain',
+      dailyCalorieGoal: acc.cal || 2200,
+      dailyProteinGoal: 160,
+      dailyCarbGoal: 200,
+      dailyFatGoal: 70,
+      dailyWaterGoal: 3000,
+      dailyFiberGoal: 30
+    });
 
     setShowGooglePicker(false);
     setIsSubmitted(true);

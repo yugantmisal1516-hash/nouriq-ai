@@ -234,6 +234,55 @@ export const NutritionProvider = ({ children }) => {
     cancelSubscription();
   };
 
+  const createNewUserSession = (userGoals) => {
+    // 1. Clear all logged meals to start completely fresh (0 kcal, 0g macros)
+    setLoggedMeals([]);
+    saveStoredLoggedMeals([]);
+
+    // 2. Reset water intake to 0ml
+    const today = new Date().toISOString().split('T')[0];
+    const resetWaterData = { date: today, currentMl: 0, history: [] };
+    setWaterIntake(resetWaterData);
+    saveStoredWaterIntake(resetWaterData);
+
+    // 3. Reset 5 free daily scan quota
+    localStorage.setItem('nouriq_scans_date', today);
+    localStorage.setItem('nouriq_scans_left', '5');
+
+    // 4. Enforce Starter Free Plan for new account
+    const freeState = {
+      tier: 'Free',
+      status: 'active',
+      billingCycle: 'monthly',
+      dailyScansLeft: 5,
+      expiresAt: 'Lifetime',
+      verified: false,
+      stripePaymentId: null
+    };
+    setSubscription(freeState);
+    localStorage.removeItem('nouriq_subscription');
+    localStorage.removeItem('nouriq_pending_checkout');
+    localStorage.removeItem('nouriq_pending_checkout_time');
+    document.cookie = "nouriq_sub_tier=; max-age=0; path=/;";
+
+    // 5. Apply clean user goals
+    if (userGoals) {
+      const mergedGoals = {
+        name: userGoals.name || 'New Member',
+        avatar: userGoals.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+        dietType: userGoals.dietType || 'High Protein / Lean Gain',
+        dailyCalorieGoal: Number(userGoals.dailyCalorieGoal || 2200),
+        dailyProteinGoal: Number(userGoals.dailyProteinGoal || 160),
+        dailyCarbGoal: Number(userGoals.dailyCarbGoal || 200),
+        dailyFatGoal: Number(userGoals.dailyFatGoal || 70),
+        dailyWaterGoal: Number(userGoals.dailyWaterGoal || 3000),
+        dailyFiberGoal: Number(userGoals.dailyFiberGoal || 30)
+      };
+      setGoals(mergedGoals);
+      saveStoredGoals(mergedGoals);
+    }
+  };
+
   // Fasting Timer State Controls
   const startFast = (protocolName = '16:8', customTargetHours = 16) => {
     const newState = {
@@ -410,7 +459,7 @@ export const NutritionProvider = ({ children }) => {
 
   return (
     <NutritionContext.Provider value={{
-      goals, setGoals,
+      goals, setGoals, createNewUserSession,
       loggedMeals, logMeal, deleteMeal, removeMeal: deleteMeal, todayTotals, todayMeals,
       waterIntake, addWater, resetWater,
       fastingState, setFastingState, startFast, stopFast,
