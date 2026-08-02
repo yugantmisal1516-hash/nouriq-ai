@@ -289,7 +289,7 @@ export default function Dashboard() {
             <div className="flex items-center space-x-3">
               <Award className="w-5 h-5 text-[#023859] shrink-0" />
               <div className="text-xs">
-                <span className="font-extrabold text-[#011C40]">Health Rating: Grade A Superfood</span>
+                <span className="font-extrabold text-[#011C40]">Health Rating: {averageHealthScore}/100 ({averageHealthScore >= 90 ? 'Grade A+ Superfood' : averageHealthScore >= 80 ? 'Grade A Healthy Choice' : 'Balanced Macro Mix'})</span>
                 <p className="text-[#26658C] text-[11px] font-medium">Optimal anti-inflammatory balance and high protein ratio.</p>
               </div>
             </div>

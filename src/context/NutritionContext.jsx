@@ -523,11 +523,16 @@ export const NutritionProvider = ({ children }) => {
     };
   }, { calories: 0, protein: 0, carbs: 0, fats: 0, fiber: 0 });
 
-  const totalMealScores = loggedMeals.reduce((sum, m) => {
-    const score = m.healthRating || m.healthScore || m.food?.healthRating || m.food?.healthScore || 90;
-    return sum + Number(score);
+  const todayMealScores = todayMeals.reduce((sum, m) => {
+    const score = Number(m.healthScore || m.healthRating || m.food?.healthScore || m.food?.healthRating || 92);
+    return sum + score;
   }, 0);
-  const averageHealthScore = loggedMeals.length > 0 ? Math.round(totalMealScores / loggedMeals.length) : 92;
+
+  const averageHealthScore = todayMeals.length > 0 
+    ? Math.round(todayMealScores / todayMeals.length) 
+    : (loggedMeals.length > 0 
+        ? Math.round(loggedMeals.reduce((sum, m) => sum + Number(m.healthScore || m.healthRating || m.food?.healthScore || m.food?.healthRating || 92), 0) / loggedMeals.length)
+        : 92);
 
   return (
     <NutritionContext.Provider value={{
