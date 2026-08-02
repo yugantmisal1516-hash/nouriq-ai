@@ -19,6 +19,11 @@ import confetti from 'canvas-confetti';
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+const getCurrentDayIndex = () => {
+  const day = new Date().getDay(); // 0 is Sunday, 1 is Monday, ..., 6 is Saturday
+  return day === 0 ? 6 : day - 1;
+};
+
 export default function MealPlanner() {
   const nutrition = useNutrition() || {};
   const { 
@@ -30,7 +35,7 @@ export default function MealPlanner() {
   } = nutrition;
   
   const [selectedDiet, setSelectedDiet] = useState('High Protein');
-  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+  const [selectedDayIndex, setSelectedDayIndex] = useState(getCurrentDayIndex);
   const [addedGroceryNames, setAddedGroceryNames] = useState([]);
   const [loggedMealNames, setLoggedMealNames] = useState([]);
   const [lastAddedGroceryItem, setLastAddedGroceryItem] = useState(null);
@@ -149,11 +154,18 @@ export default function MealPlanner() {
   const handleLogPlanMeal = (meal) => {
     if (loggedMealNames.includes(meal.name)) return;
 
+    const todayDateStr = new Date().toISOString().split('T')[0];
+
     logMeal({
       id: `plan-${Date.now()}`,
       name: meal.name,
       calories: Number(meal.calories),
+      protein: Number(meal.protein || 0),
+      carbs: Number(meal.carbs || 0),
+      fats: Number(meal.fat || meal.fats || 0),
+      fiber: 6.5,
       category: meal.type || 'Meal Plan',
+      date: todayDateStr,
       healthScore: 96,
       grade: 'A+',
       image: meal.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',

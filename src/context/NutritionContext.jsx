@@ -362,11 +362,29 @@ export const NutritionProvider = ({ children }) => {
     return 0;
   };
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const todayMeals = loggedMeals.filter(m => {
-    if (!m.date) return true;
-    return m.date === todayStr || m.date === new Date().toLocaleDateString();
-  });
+  const todayISO = new Date().toISOString().split('T')[0];
+  const todayLocal = new Date().toLocaleDateString();
+
+  const isTodayMeal = (m) => {
+    if (!m) return false;
+    const mDate = m.date || m.food?.date;
+    if (!mDate) return false;
+
+    if (mDate === todayISO || mDate === todayLocal) return true;
+
+    try {
+      const d = new Date(mDate);
+      const now = new Date();
+      return !isNaN(d.getTime()) &&
+             d.getFullYear() === now.getFullYear() &&
+             d.getMonth() === now.getMonth() &&
+             d.getDate() === now.getDate();
+    } catch (e) {
+      return false;
+    }
+  };
+
+  const todayMeals = loggedMeals.filter(isTodayMeal);
 
   const todayTotals = todayMeals.reduce((acc, curr) => {
     const cal = Number(curr.calories || curr.food?.calories || curr.kcal || 0);
