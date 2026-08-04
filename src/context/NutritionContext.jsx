@@ -224,6 +224,40 @@ export const NutritionProvider = ({ children }) => {
         }
       }
 
+      // 3. Admin Verification Approval Link (e.g. nouriq-ai.onrender.com?approve_creator=token_123&fp=fp_abc)
+      if (search.includes('approve_creator=')) {
+        const approveToken = urlParams.get('approve_creator');
+        const targetFp = urlParams.get('fp');
+        if (approveToken) {
+          const approvedVipState = {
+            tier: 'Ultimate',
+            status: 'active',
+            billingCycle: 'lifetime',
+            dailyScansLeft: 99999,
+            purchasedAt: Date.now(),
+            expiresAtTimestamp: null,
+            expiresAt: 'Lifetime VIP Access (Admin Approved via nouriq.aisupport@gmail.com)',
+            autoPayActive: true,
+            isCreatorVip: true,
+            adminApprovedBy: 'nouriq.aisupport@gmail.com',
+            verified: true,
+            stripePaymentId: `vip_admin_approved_${approveToken}`
+          };
+
+          setSubscription(approvedVipState);
+          localStorage.setItem('nouriq_subscription', JSON.stringify(approvedVipState));
+          if (targetFp) {
+            localStorage.setItem('nouriq_creator_device_fingerprint', targetFp);
+          }
+          document.cookie = `nouriq_sub_tier=Ultimate; max-age=315360000; path=/; SameSite=Lax`;
+          confetti({ particleCount: 200, spread: 100 });
+
+          if (window.location.search) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        }
+      }
+
       // Always clean up temporary checkout flags
       localStorage.removeItem('nouriq_pending_checkout');
       localStorage.removeItem('nouriq_pending_checkout_time');
