@@ -303,21 +303,7 @@ export const NutritionProvider = ({ children }) => {
     }
   };
 
-  const redeemVipPromoCode = (codeStr) => {
-    const codeUpper = (codeStr || '').trim().toUpperCase();
-
-    if (codeUpper !== 'NOURIQPASS') {
-      return { success: false, message: 'Invalid code. Only NOURIQPASS is authorized for Creator Access.' };
-    }
-
-    const isAlreadyRedeemed = localStorage.getItem('nouriq_nouriqpass_redeemed');
-    if (isAlreadyRedeemed === 'true') {
-      return { 
-        success: false, 
-        message: '🔒 Security Alert: NOURIQPASS has already been redeemed. Single-use VIP Creator passes cannot be reused or shared across devices.' 
-      };
-    }
-
+  const activateVerifiedCreatorPass = (payload) => {
     const vipState = {
       tier: 'Ultimate',
       status: 'active',
@@ -325,20 +311,44 @@ export const NutritionProvider = ({ children }) => {
       dailyScansLeft: 99999,
       purchasedAt: Date.now(),
       expiresAtTimestamp: null,
-      expiresAt: 'Lifetime VIP Access (NOURIQPASS Master Pass)',
+      expiresAt: `Lifetime VIP Access (Creator: ${payload.creatorName})`,
       autoPayActive: true,
       isCreatorVip: true,
+      creatorEmail: payload.creatorEmail,
+      deviceFingerprint: payload.deviceFingerprint,
       verified: true,
-      stripePaymentId: `vip_creator_nouriqpass_${Date.now()}`
+      stripePaymentId: `vip_creator_verified_${Date.now()}`
     };
 
     setSubscription(vipState);
     localStorage.setItem('nouriq_subscription', JSON.stringify(vipState));
-    localStorage.setItem('nouriq_nouriqpass_redeemed', 'true');
-    localStorage.setItem('nouriq_nouriqpass_redeemed_timestamp', Date.now().toString());
+    localStorage.setItem('nouriq_nouriqpass_nullified', 'true');
+    localStorage.setItem('nouriq_creator_device_fingerprint', payload.deviceFingerprint);
     document.cookie = `nouriq_sub_tier=Ultimate; max-age=315360000; path=/; SameSite=Lax`;
-    confetti({ particleCount: 160, spread: 95 });
-    return { success: true, message: '🎉 Lifetime VIP Creator Access Activated for NOURIQPASS!' };
+    confetti({ particleCount: 180, spread: 100 });
+  };
+
+  const redeemVipPromoCode = (codeStr) => {
+    const codeUpper = (codeStr || '').trim().toUpperCase();
+
+    if (codeUpper !== 'NOURIQPASS') {
+      return { success: false, message: 'Invalid code. Only NOURIQPASS is authorized for Creator Access.' };
+    }
+
+    const isNullified = localStorage.getItem('nouriq_nouriqpass_nullified');
+    if (isNullified === 'true') {
+      return { 
+        success: false, 
+        isNullified: true,
+        message: '❌ Security Violation: NOURIQPASS has already been NULLIFIED & consumed. Code is expired for 2nd time use.' 
+      };
+    }
+
+    return { 
+      success: true, 
+      requiresVerification: true, 
+      message: 'Identity Proof Verification Required' 
+    };
   };
 
   const cancelAutoPay = () => {
@@ -619,7 +629,7 @@ export const NutritionProvider = ({ children }) => {
       weightLogs, logWeight,
       activeTab, setActiveTab,
       averageHealthScore,
-      subscription, upgradeSubscription, cancelSubscription, cancelAutoPay, resetToFreePlan, consumeScanQuota, redeemVipPromoCode,
+      subscription, upgradeSubscription, cancelSubscription, cancelAutoPay, resetToFreePlan, consumeScanQuota, redeemVipPromoCode, activateVerifiedCreatorPass,
       showStripeSuccessModal, setShowStripeSuccessModal
     }}>
       {children}

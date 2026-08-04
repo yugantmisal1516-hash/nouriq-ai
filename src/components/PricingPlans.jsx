@@ -12,6 +12,7 @@ import {
   X
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import CreatorVerificationModal from './CreatorVerificationModal';
 
 export const STRIPE_PRICE_IDS = {
   pro: {
@@ -37,23 +38,37 @@ export const RAZORPAY_PAYMENT_LINKS = {
 };
 
 export default function PricingPlans({ isOpen, onClose }) {
-  const { subscription, upgradeSubscription, cancelSubscription, cancelAutoPay, resetToFreePlan, goals, redeemVipPromoCode } = useNutrition();
+  const { subscription, upgradeSubscription, cancelSubscription, cancelAutoPay, resetToFreePlan, goals, redeemVipPromoCode, activateVerifiedCreatorPass } = useNutrition();
   const [billingCycle, setBillingCycle] = useState('annual'); // 'monthly' or 'annual'
   const [showStripeModal, setShowStripeModal] = useState(false);
   const [selectedTier, setSelectedTier] = useState(null);
 
-  // Creator VIP Code State
+  // Creator VIP Code State & Mandatory Identity Verification
   const [vipCodeInput, setVipCodeInput] = useState('');
   const [vipMsg, setVipMsg] = useState('');
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
 
   const handleRedeemVip = (e) => {
     e.preventDefault();
     if (!vipCodeInput.trim()) return;
     if (typeof redeemVipPromoCode === 'function') {
       const res = redeemVipPromoCode(vipCodeInput.trim());
-      setVipMsg(res.message);
-      if (res.success) setVipCodeInput('');
+      if (res.requiresVerification) {
+        setShowVerificationModal(true);
+        setVipMsg('Identity Verification Required — Complete Proof Form below.');
+      } else {
+        setVipMsg(res.message);
+      }
     }
+  };
+
+  const handleVerificationComplete = (payload) => {
+    if (typeof activateVerifiedCreatorPass === 'function') {
+      activateVerifiedCreatorPass(payload);
+    }
+    setShowVerificationModal(false);
+    setVipCodeInput('');
+    setVipMsg('🎉 Identity Verified! Lifetime VIP Creator Access Activated for NOURIQPASS!');
   };
 
   // Stripe/Razorpay Checkout Form Inputs
@@ -512,6 +527,13 @@ export default function PricingPlans({ isOpen, onClose }) {
           </div>
         </div>
       )}
+
+      {/* CREATOR VERIFICATION PROOF MODAL */}
+      <CreatorVerificationModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        onVerificationComplete={handleVerificationComplete}
+      />
 
     </div>
   );
