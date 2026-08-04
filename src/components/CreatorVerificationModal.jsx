@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Lock, AlertCircle, Sparkles, Send, Check, X, Mail, Clock } from 'lucide-react';
+import { ShieldCheck, Lock, AlertCircle, Sparkles, Send, Check, X, Mail, Clock, Copy } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 // Generate unique hardware device fingerprint
@@ -23,13 +23,15 @@ export default function CreatorVerificationModal({ isOpen, onClose, onVerificati
   const [socialLink, setSocialLink] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmittedPending, setIsSubmittedPending] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [pendingPayload, setPendingPayload] = useState(null);
 
   if (!isOpen) return null;
 
   const currentDeviceFp = getDeviceFingerprint();
 
-  const handleSubmitProof = async (e) => {
+  const handleSubmitProof = (e) => {
     e.preventDefault();
     setErrorMsg('');
 
@@ -49,59 +51,86 @@ export default function CreatorVerificationModal({ isOpen, onClose, onVerificati
 
     setIsSubmitting(true);
 
+    const verificationToken = `token_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const verificationPayload = {
+      adminRecipient: 'nouriq.aisupport@gmail.com',
+      code: 'NOURIQPASS',
+      verificationToken,
+      status: 'PENDING_ADMIN_VERIFICATION',
+      creatorName: creatorName.trim(),
+      creatorEmail: creatorEmail.trim(),
+      socialProfileUrl: socialLink.trim(),
+      deviceFingerprint: currentDeviceFp,
+      timestamp: new Date().toISOString(),
+      approvalLink: `https://nouriq-ai.onrender.com?approve_creator=${verificationToken}&fp=${currentDeviceFp}`,
+      locationLocale: Intl.DateTimeFormat().resolvedOptions().timeZone
+    };
+
+    // 1. Store pending verification request & burn NOURIQPASS for 2nd time use
+    localStorage.setItem('nouriq_nouriqpass_nullified', 'true');
+    localStorage.setItem('nouriq_creator_device_fingerprint', currentDeviceFp);
+    localStorage.setItem('nouriq_pending_creator_request', JSON.stringify(verificationPayload));
+    setPendingPayload(verificationPayload);
+
+    // 2. Launch Native Mailto App to nouriq.aisupport@gmail.com
+    const subject = encodeURIComponent(`🚨 CREATOR VIP VERIFICATION REQUEST — NOURIQPASS (${creatorName.trim()})`);
+    const body = encodeURIComponent(
+      `Target Admin Email: nouriq.aisupport@gmail.com\n` +
+      `Creator Name: ${creatorName.trim()}\n` +
+      `Creator Email: ${creatorEmail.trim()}\n` +
+      `Social Media Link: ${socialLink.trim()}\n` +
+      `Device Hardware Fingerprint: ${currentDeviceFp}\n` +
+      `Verification Token: ${verificationToken}\n` +
+      `Approval Link: https://nouriq-ai.onrender.com?approve_creator=${verificationToken}&fp=${currentDeviceFp}\n\n` +
+      `Please verify this creator proof and approve access.`
+    );
+    const mailtoUrl = `mailto:nouriq.aisupport@gmail.com?subject=${subject}&body=${body}`;
+
     try {
-      const verificationToken = `token_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-      const verificationPayload = {
-        adminRecipient: 'nouriq.aisupport@gmail.com',
-        code: 'NOURIQPASS',
-        verificationToken,
-        status: 'PENDING_ADMIN_VERIFICATION',
-        creatorName: creatorName.trim(),
-        creatorEmail: creatorEmail.trim(),
-        socialProfileUrl: socialLink.trim(),
-        deviceFingerprint: currentDeviceFp,
-        timestamp: new Date().toISOString(),
-        approvalLink: `https://nouriq-ai.onrender.com?approve_creator=${verificationToken}&fp=${currentDeviceFp}`,
-        locationLocale: Intl.DateTimeFormat().resolvedOptions().timeZone
-      };
-
-      // 1. Store pending verification request & burn NOURIQPASS for 2nd time use
-      localStorage.setItem('nouriq_nouriqpass_nullified', 'true');
-      localStorage.setItem('nouriq_creator_device_fingerprint', currentDeviceFp);
-      localStorage.setItem('nouriq_pending_creator_request', JSON.stringify(verificationPayload));
-
-      // 2. Dispatch Guaranteed Email Payload directly to nouriq.aisupport@gmail.com
-      console.info('📧 Dispatching Creator Verification Email to nouriq.aisupport@gmail.com:', verificationPayload);
-      
-      try {
-        const formData = new FormData();
-        formData.append('_subject', `🚨 CREATOR VERIFICATION REQUEST: ${creatorName.trim()} (${creatorEmail.trim()})`);
-        formData.append('Target Admin Email', 'nouriq.aisupport@gmail.com');
-        formData.append('Creator Full Name', creatorName.trim());
-        formData.append('Creator Email', creatorEmail.trim());
-        formData.append('Social Profile Link', socialLink.trim());
-        formData.append('Device Fingerprint', currentDeviceFp);
-        formData.append('Verification Token', verificationToken);
-        formData.append('Admin Approval URL', `https://nouriq-ai.onrender.com?approve_creator=${verificationToken}&fp=${currentDeviceFp}`);
-        formData.append('_captcha', 'false');
-
-        await fetch('https://formsubmit.co/ajax/nouriq.aisupport@gmail.com', {
-          method: 'POST',
-          body: formData
-        }).catch(e => console.info('FormSubmit dispatch fallback:', e));
-      } catch (err) {}
-
-      confetti({ particleCount: 120, spread: 80 });
-      setIsSubmitting(false);
-      setIsSubmittedPending(true);
-
-      if (typeof onVerificationComplete === 'function') {
-        onVerificationComplete(verificationPayload);
-      }
+      window.location.href = mailtoUrl;
     } catch (err) {
-      setErrorMsg('Verification error. Please try submitting again.');
-      setIsSubmitting(false);
+      console.info('Mailto launch fallback:', err);
     }
+
+    confetti({ particleCount: 120, spread: 80 });
+    setIsSubmitting(false);
+    setIsSubmittedPending(true);
+
+    if (typeof onVerificationComplete === 'function') {
+      onVerificationComplete(verificationPayload);
+    }
+  };
+
+  const handleCopyProofText = () => {
+    if (!pendingPayload) return;
+    const textToCopy = 
+      `Target Admin Email: nouriq.aisupport@gmail.com\n` +
+      `Creator Name: ${pendingPayload.creatorName}\n` +
+      `Creator Email: ${pendingPayload.creatorEmail}\n` +
+      `Social Media Link: ${pendingPayload.socialProfileUrl}\n` +
+      `Device Hardware Fingerprint: ${pendingPayload.deviceFingerprint}\n` +
+      `Verification Token: ${pendingPayload.verificationToken}\n` +
+      `Approval Link: ${pendingPayload.approvalLink}`;
+
+    navigator.clipboard.writeText(textToCopy);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
+  const handleOpenEmailClient = () => {
+    if (!pendingPayload) return;
+    const subject = encodeURIComponent(`🚨 CREATOR VIP VERIFICATION REQUEST — NOURIQPASS (${pendingPayload.creatorName})`);
+    const body = encodeURIComponent(
+      `Target Admin Email: nouriq.aisupport@gmail.com\n` +
+      `Creator Name: ${pendingPayload.creatorName}\n` +
+      `Creator Email: ${pendingPayload.creatorEmail}\n` +
+      `Social Media Link: ${pendingPayload.socialProfileUrl}\n` +
+      `Device Hardware Fingerprint: ${pendingPayload.deviceFingerprint}\n` +
+      `Verification Token: ${pendingPayload.verificationToken}\n` +
+      `Approval Link: ${pendingPayload.approvalLink}\n\n` +
+      `Please verify this creator proof and approve access.`
+    );
+    window.location.href = `mailto:nouriq.aisupport@gmail.com?subject=${subject}&body=${body}`;
   };
 
   return (
@@ -111,7 +140,7 @@ export default function CreatorVerificationModal({ isOpen, onClose, onVerificati
         {/* Header Security Badge */}
         <div className="flex items-center justify-between">
           <span className="px-3.5 py-1 rounded-full bg-amber-100 text-amber-900 text-[11px] font-extrabold flex items-center gap-1.5 border border-amber-300">
-            <Lock className="w-3.5 h-3.5 text-amber-700" /> Admin Email Verification System
+            <Lock className="w-3.5 h-3.5 text-amber-700" /> Manual Admin Verification System
           </span>
           <button 
             onClick={onClose}
@@ -132,7 +161,7 @@ export default function CreatorVerificationModal({ isOpen, onClose, onVerificati
                 Creator Proof Required
               </h3>
               <p className="text-xs text-[#26658C] font-medium leading-relaxed max-w-xs mx-auto">
-                Submit your creator details. A verification email will be dispatched to <strong className="text-[#011C40]">nouriq.aisupport@gmail.com</strong> for Admin approval:
+                Submit your creator details below to send a verification mail directly to <strong className="text-[#011C40]">nouriq.aisupport@gmail.com</strong> for Admin approval:
               </p>
             </div>
 
@@ -197,42 +226,60 @@ export default function CreatorVerificationModal({ isOpen, onClose, onVerificati
                   className="w-full py-3.5 rounded-full liquid-glass-btn liquid-glass-btn-active text-white font-extrabold text-xs shadow-md active:scale-95 transition-all flex items-center justify-center gap-2"
                 >
                   <Send className="w-4 h-4" />
-                  <span>{isSubmitting ? 'Sending to Admin...' : 'Send Verification Mail to nouriq.aisupport@gmail.com'}</span>
+                  <span>{isSubmitting ? 'Opening Email App...' : 'Send Email to nouriq.aisupport@gmail.com'}</span>
                 </button>
               </div>
             </form>
           </>
         ) : (
-          /* PENDING ADMIN APPROVAL SCREEN */
-          <div className="space-y-4 py-2">
+          /* PENDING ADMIN APPROVAL & MANUAL DISPATCH SCREEN */
+          <div className="space-y-4 py-2 text-xs">
             <div className="w-16 h-16 rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-600 mx-auto shadow-md animate-pulse">
               <Clock className="w-8 h-8" />
             </div>
             <div className="space-y-1.5">
               <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-[11px] font-extrabold border border-amber-300 uppercase tracking-wider">
-                Verification Mail Sent ✉️
+                Verification Email Ready ✉️
               </span>
               <h3 className="text-xl font-extrabold text-[#011C40]">
-                Awaiting Admin Review
+                Submit to nouriq.aisupport@gmail.com
               </h3>
               <p className="text-xs text-[#26658C] font-medium leading-relaxed max-w-sm mx-auto">
-                Verification details have been sent to <strong className="text-[#011C40]">nouriq.aisupport@gmail.com</strong>.
+                Send your verification email to <strong className="text-[#011C40]">nouriq.aisupport@gmail.com</strong>. Access will remain Free until approved by Nouriq Admin.
               </p>
+
               <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-left text-xs space-y-1 text-[#011C40]">
+                <p><strong>Admin Email:</strong> nouriq.aisupport@gmail.com</p>
                 <p><strong>Creator:</strong> {creatorName}</p>
-                <p><strong>Email:</strong> {creatorEmail}</p>
-                <p><strong>Status:</strong> <span className="text-amber-700 font-extrabold">Pending Admin Verification</span></p>
+                <p><strong>Creator Email:</strong> {creatorEmail}</p>
+                <p><strong>Status:</strong> <span className="text-amber-700 font-extrabold">Pending Admin Review</span></p>
               </div>
-              <p className="text-[11px] text-[#26658C] font-semibold pt-1">
-                Once the Nouriq Admin team verifies your proof, Lifetime VIP Access will activate on your device.
-              </p>
             </div>
-            <button
-              onClick={onClose}
-              className="w-full py-3 rounded-full liquid-glass-btn liquid-glass-btn-active text-white text-xs font-extrabold shadow-sm active:scale-95"
-            >
-              Got It / Return to Nouriq
-            </button>
+
+            <div className="space-y-2 pt-1">
+              <button
+                onClick={handleOpenEmailClient}
+                className="w-full py-3 rounded-full liquid-glass-btn liquid-glass-btn-active text-white text-xs font-extrabold shadow-sm active:scale-95 flex items-center justify-center gap-2"
+              >
+                <Mail className="w-4 h-4" />
+                <span>Open Email App to Send to nouriq.aisupport@gmail.com</span>
+              </button>
+
+              <button
+                onClick={handleCopyProofText}
+                className="w-full py-2.5 rounded-full liquid-glass-btn text-[#011C40] text-xs font-bold active:scale-95 flex items-center justify-center gap-1.5"
+              >
+                {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-[#023859]" />}
+                <span>{copied ? 'Copied Email Text to Clipboard!' : 'Copy Verification Details to Clipboard'}</span>
+              </button>
+
+              <button
+                onClick={onClose}
+                className="w-full py-2 rounded-full text-[#26658C] hover:text-[#011C40] font-extrabold text-xs transition-colors"
+              >
+                Done / Return to Nouriq
+              </button>
+            </div>
           </div>
         )}
 
