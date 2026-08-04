@@ -187,40 +187,10 @@ export const NutritionProvider = ({ children }) => {
         }
       }
 
-      // 2. Check for Creator VIP Promo Link in URL (e.g. nouriq-ai.onrender.com?vip=NOURIQPASS)
-      if (search.includes('vip=') || search.includes('code=')) {
-        const vipCodeParam = urlParams.get('vip') || urlParams.get('code');
-        if (vipCodeParam) {
-          const codeUpper = vipCodeParam.trim().toUpperCase();
-          if (codeUpper === 'NOURIQPASS') {
-            const isAlreadyRedeemed = localStorage.getItem('nouriq_nouriqpass_redeemed');
-            if (!isAlreadyRedeemed) {
-              const vipState = {
-                tier: 'Ultimate',
-                status: 'active',
-                billingCycle: 'lifetime',
-                dailyScansLeft: 99999,
-                purchasedAt: Date.now(),
-                expiresAtTimestamp: null,
-                expiresAt: 'Lifetime VIP Access (NOURIQPASS Master Pass)',
-                autoPayActive: true,
-                isCreatorVip: true,
-                verified: true,
-                stripePaymentId: `vip_creator_nouriqpass_${Date.now()}`
-              };
-
-              setSubscription(vipState);
-              localStorage.setItem('nouriq_subscription', JSON.stringify(vipState));
-              localStorage.setItem('nouriq_nouriqpass_redeemed', 'true');
-              localStorage.setItem('nouriq_nouriqpass_redeemed_timestamp', Date.now().toString());
-              document.cookie = `nouriq_sub_tier=Ultimate; max-age=315360000; path=/; SameSite=Lax`;
-              confetti({ particleCount: 160, spread: 95 });
-            }
-
-            if (window.location.search) {
-              window.history.replaceState({}, document.title, window.location.pathname);
-            }
-          }
+      // 2. Creator VIP Pass URL check - Requires manual Admin approval via nouriq.aisupport@gmail.com
+      if (search.includes('vip=NOURIQPASS') || search.includes('code=NOURIQPASS')) {
+        if (window.location.search) {
+          window.history.replaceState({}, document.title, window.location.pathname);
         }
       }
 

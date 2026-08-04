@@ -63,12 +63,9 @@ export default function PricingPlans({ isOpen, onClose }) {
   };
 
   const handleVerificationComplete = (payload) => {
-    if (typeof activateVerifiedCreatorPass === 'function') {
-      activateVerifiedCreatorPass(payload);
-    }
-    setShowVerificationModal(false);
+    // DO NOT activate access instantly. Access is granted ONLY when Admin approves via nouriq.aisupport@gmail.com!
     setVipCodeInput('');
-    setVipMsg('🎉 Identity Verified! Lifetime VIP Creator Access Activated for NOURIQPASS!');
+    setVipMsg('✉️ Verification details sent to nouriq.aisupport@gmail.com! Application is Pending Admin Review.');
   };
 
   // Stripe/Razorpay Checkout Form Inputs
