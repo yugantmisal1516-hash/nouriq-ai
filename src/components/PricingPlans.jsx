@@ -35,10 +35,24 @@ export const RAZORPAY_PAYMENT_LINKS = {
 };
 
 export default function PricingPlans({ isOpen, onClose }) {
-  const { subscription, upgradeSubscription, cancelSubscription, cancelAutoPay, resetToFreePlan, goals } = useNutrition();
+  const { subscription, upgradeSubscription, cancelSubscription, cancelAutoPay, resetToFreePlan, goals, redeemVipPromoCode } = useNutrition();
   const [billingCycle, setBillingCycle] = useState('annual'); // 'monthly' or 'annual'
   const [showStripeModal, setShowStripeModal] = useState(false);
   const [selectedTier, setSelectedTier] = useState(null);
+
+  // Creator VIP Code State
+  const [vipCodeInput, setVipCodeInput] = useState('');
+  const [vipMsg, setVipMsg] = useState('');
+
+  const handleRedeemVip = (e) => {
+    e.preventDefault();
+    if (!vipCodeInput.trim()) return;
+    if (typeof redeemVipPromoCode === 'function') {
+      const res = redeemVipPromoCode(vipCodeInput.trim());
+      setVipMsg(res.message);
+      if (res.success) setVipCodeInput('');
+    }
+  };
 
   // Stripe/Razorpay Checkout Form Inputs
   const [cardNumber, setCardNumber] = useState('4242 •••• •••• 4242');
@@ -345,6 +359,36 @@ export default function PricingPlans({ isOpen, onClose }) {
             💳 Visa / Mastercard / Amex / Apple Pay
           </span>
         </div>
+      </div>
+
+      {/* CREATOR VIP PROMO CODE REDEMPTION BOX */}
+      <div className="ios-glass p-4 rounded-[24px] border border-[#54ACBF]/40 space-y-2 text-xs">
+        <div className="flex items-center justify-between">
+          <span className="font-extrabold text-[#011C40] flex items-center gap-1.5">
+            <Sparkles className="w-4 h-4 text-amber-500" /> Have a Creator VIP Pass Code?
+          </span>
+          <span className="text-[10px] text-[#26658C] font-semibold">Micro-Creator Partner Program</span>
+        </div>
+        <form onSubmit={handleRedeemVip} className="flex gap-2">
+          <input 
+            type="text"
+            value={vipCodeInput}
+            onChange={(e) => setVipCodeInput(e.target.value)}
+            placeholder="Enter code (e.g. CREATORVIP)..."
+            className="flex-1 bg-white/70 px-4 py-2 rounded-full text-xs font-bold text-[#011C40] border border-[#54ACBF]/40 focus:outline-none placeholder:text-[#26658C]/60"
+          />
+          <button
+            type="submit"
+            className="px-5 py-2 rounded-full liquid-glass-btn liquid-glass-btn-active text-white text-xs font-extrabold shadow-xs hover:scale-105 transition-all shrink-0"
+          >
+            Redeem VIP
+          </button>
+        </form>
+        {vipMsg && (
+          <p className={`text-[11px] font-extrabold ${vipMsg.includes('Activated') ? 'text-emerald-700' : 'text-rose-600'}`}>
+            {vipMsg}
+          </p>
+        )}
       </div>
 
       {/* Direct Cancellation Option */}
