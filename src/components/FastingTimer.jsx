@@ -15,8 +15,35 @@ export default function FastingTimer() {
   } = nutrition;
 
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [hasNotified, setHasNotified] = useState(false);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
 
   const isPro = subscription?.tier === 'Pro' || subscription?.tier === 'Ultimate';
+
+  const sendCompletionNotification = () => {
+    if ('Notification' in window) {
+      if (Notification.permission === 'granted') {
+        try {
+          new Notification('🎉 Fasting Goal Completed! — Nouriq AI', {
+            body: `Congratulations! You have completed your ${fastingState?.protocol || '16:8'} fasting goal of ${fastingState?.targetHours || 16} hours! Time to log your healthy meal on Nouriq.`,
+            icon: '/nouriq_logo.jpg',
+            badge: '/nouriq_logo.jpg',
+            vibrate: [200, 100, 200, 100, 200],
+            tag: 'nouriq-fasting-completed'
+          });
+        } catch (e) {
+          console.info('Notification fallback:', e);
+        }
+      } else if (Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    }
+    if (navigator.vibrate) {
+      try {
+        navigator.vibrate([200, 100, 200, 100, 200]);
+      } catch (e) {}
+    }
+  };
 
   // Live Timer Ticker Interval (Calculates exact elapsed time continuously)
   useEffect(() => {
@@ -25,16 +52,25 @@ export default function FastingTimer() {
       const updateElapsed = () => {
         const diff = Math.max(0, Math.floor((Date.now() - fastingState.startTime) / 1000));
         setElapsedSeconds(diff);
+
+        const goalSecs = (fastingState.targetHours || 16) * 3600;
+        if (diff >= goalSecs && !hasNotified) {
+          setHasNotified(true);
+          setShowCompletionModal(true);
+          sendCompletionNotification();
+          confetti({ particleCount: 150, spread: 90 });
+        }
       };
       updateElapsed();
       interval = setInterval(updateElapsed, 1000);
     } else {
       setElapsedSeconds(0);
+      setHasNotified(false);
     }
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [fastingState]);
+  }, [fastingState, hasNotified]);
 
   const targetHours = fastingState?.targetHours || 16;
   const targetSeconds = targetHours * 3600;
@@ -60,7 +96,13 @@ export default function FastingTimer() {
 
   const handleStartFast = (protocolId = '16:8', hours = 16) => {
     setElapsedSeconds(0);
+    setHasNotified(false);
+    setShowCompletionModal(false);
     startFast(protocolId, hours);
+
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
     confetti({ particleCount: 70, spread: 60 });
   };
 
@@ -249,6 +291,45 @@ export default function FastingTimer() {
         </div>
 
       </div>
+
+      {/* Fasting Completion Notification Modal Overlay */}
+      {showCompletionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-300">
+          <div className="ios-glass p-6 rounded-[28px] max-w-md w-full text-center space-y-4 shadow-xl border border-[#54ACBF] bg-white/95">
+            <div className="w-16 h-16 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center mx-auto text-emerald-600 shadow-sm animate-bounce">
+              <Sparkles className="w-8 h-8" />
+            </div>
+            <div>
+              <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold border border-emerald-300 uppercase tracking-wider">
+                Fasting Goal Accomplished 🎉
+              </span>
+              <h3 className="text-xl font-extrabold text-[#011C40] mt-2">
+                Congratulations!
+              </h3>
+              <p className="text-xs text-[#26658C] font-medium mt-1">
+                You completed your <span className="font-bold text-[#023859]">{fastingState?.protocol || '16:8'}</span> target of <span className="font-bold text-[#023859]">{targetHours} hours</span>! Your body is now in deep autophagy & fat oxidation mode.
+              </p>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => {
+                  setShowCompletionModal(false);
+                  setActiveTab('scanner');
+                }}
+                className="flex-1 py-2.5 rounded-full liquid-glass-btn liquid-glass-btn-active text-white text-xs font-extrabold shadow-sm active:scale-95"
+              >
+                Log Meal Now
+              </button>
+              <button
+                onClick={() => setShowCompletionModal(false)}
+                className="px-4 py-2.5 rounded-full liquid-glass-btn text-[#011C40] text-xs font-bold active:scale-95"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
