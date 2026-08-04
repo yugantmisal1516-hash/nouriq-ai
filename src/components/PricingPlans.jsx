@@ -376,7 +376,7 @@ export default function PricingPlans({ isOpen, onClose }) {
             type="text"
             value={vipCodeInput}
             onChange={(e) => setVipCodeInput(e.target.value)}
-            placeholder="Enter code (e.g. CREATORVIP)..."
+            placeholder="Enter code..."
             className="flex-1 bg-white/70 px-4 py-2 rounded-full text-xs font-bold text-[#011C40] border border-[#54ACBF]/40 focus:outline-none placeholder:text-[#26658C]/60"
           />
           <button
