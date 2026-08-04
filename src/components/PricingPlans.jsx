@@ -369,7 +369,7 @@ export default function PricingPlans({ isOpen, onClose }) {
           <span className="font-extrabold text-[#011C40] flex items-center gap-1.5">
             <Sparkles className="w-4 h-4 text-amber-500" /> Have a Creator VIP Pass Code?
           </span>
-          <span className="text-[10px] text-[#26658C] font-semibold">Micro-Creator Partner Program</span>
+          <span className="text-[10px] text-[#26658C] font-semibold">Creator Partner Program</span>
         </div>
         <form onSubmit={handleRedeemVip} className="flex gap-2">
           <input 
