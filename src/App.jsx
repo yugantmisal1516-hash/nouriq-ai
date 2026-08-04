@@ -14,6 +14,7 @@ import SupportAndPolicies from './components/SupportAndPolicies';
 import PricingPlans from './components/PricingPlans';
 import DietitianConsult from './components/DietitianConsult';
 import MobileBottomNav from './components/MobileBottomNav';
+import PermissionModal from './components/PermissionModal';
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -136,6 +137,7 @@ export default function App() {
           <MobileBottomNav />
 
           <StripePaymentSuccessModal />
+          <PermissionModal />
         </div>
       </NutritionProvider>
     </ErrorBoundary>
