@@ -7,7 +7,9 @@ import {
   ShieldCheck, 
   CreditCard, 
   ArrowRight,
-  ExternalLink
+  ExternalLink,
+  Clock,
+  X
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
