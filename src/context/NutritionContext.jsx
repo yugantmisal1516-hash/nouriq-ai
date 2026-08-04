@@ -187,31 +187,35 @@ export const NutritionProvider = ({ children }) => {
         }
       }
 
-      // 2. Check for Creator VIP Promo Link in URL (e.g. nouriq-ai.onrender.com?vip=CREATORVIP)
+      // 2. Check for Creator VIP Promo Link in URL (e.g. nouriq-ai.onrender.com?vip=NOURIQPASS)
       if (search.includes('vip=') || search.includes('code=')) {
         const vipCodeParam = urlParams.get('vip') || urlParams.get('code');
         if (vipCodeParam) {
-          const validVipCodes = ['CREATORVIP', 'FITNESSVIP', 'VIPLIFETIME', 'NOURIQPASS', 'GUESTPRO', 'INFLUENCERVIP', 'NOURIQPRO100'];
           const codeUpper = vipCodeParam.trim().toUpperCase();
-          if (validVipCodes.includes(codeUpper) || codeUpper.endsWith('VIP')) {
-            const vipState = {
-              tier: 'Ultimate',
-              status: 'active',
-              billingCycle: 'lifetime',
-              dailyScansLeft: 99999,
-              purchasedAt: Date.now(),
-              expiresAtTimestamp: null,
-              expiresAt: 'Lifetime VIP Access (Creator Pass)',
-              autoPayActive: true,
-              isCreatorVip: true,
-              verified: true,
-              stripePaymentId: `vip_creator_${Date.now()}`
-            };
+          if (codeUpper === 'NOURIQPASS') {
+            const isAlreadyRedeemed = localStorage.getItem('nouriq_nouriqpass_redeemed');
+            if (!isAlreadyRedeemed) {
+              const vipState = {
+                tier: 'Ultimate',
+                status: 'active',
+                billingCycle: 'lifetime',
+                dailyScansLeft: 99999,
+                purchasedAt: Date.now(),
+                expiresAtTimestamp: null,
+                expiresAt: 'Lifetime VIP Access (NOURIQPASS Master Pass)',
+                autoPayActive: true,
+                isCreatorVip: true,
+                verified: true,
+                stripePaymentId: `vip_creator_nouriqpass_${Date.now()}`
+              };
 
-            setSubscription(vipState);
-            localStorage.setItem('nouriq_subscription', JSON.stringify(vipState));
-            document.cookie = `nouriq_sub_tier=Ultimate; max-age=315360000; path=/; SameSite=Lax`;
-            confetti({ particleCount: 160, spread: 95 });
+              setSubscription(vipState);
+              localStorage.setItem('nouriq_subscription', JSON.stringify(vipState));
+              localStorage.setItem('nouriq_nouriqpass_redeemed', 'true');
+              localStorage.setItem('nouriq_nouriqpass_redeemed_timestamp', Date.now().toString());
+              document.cookie = `nouriq_sub_tier=Ultimate; max-age=315360000; path=/; SameSite=Lax`;
+              confetti({ particleCount: 160, spread: 95 });
+            }
 
             if (window.location.search) {
               window.history.replaceState({}, document.title, window.location.pathname);
@@ -300,31 +304,41 @@ export const NutritionProvider = ({ children }) => {
   };
 
   const redeemVipPromoCode = (codeStr) => {
-    const validVipCodes = ['CREATORVIP', 'FITNESSVIP', 'VIPLIFETIME', 'NOURIQPASS', 'GUESTPRO', 'INFLUENCERVIP', 'NOURIQPRO100'];
     const codeUpper = (codeStr || '').trim().toUpperCase();
 
-    if (validVipCodes.includes(codeUpper) || codeUpper.endsWith('VIP')) {
-      const vipState = {
-        tier: 'Ultimate',
-        status: 'active',
-        billingCycle: 'lifetime',
-        dailyScansLeft: 99999,
-        purchasedAt: Date.now(),
-        expiresAtTimestamp: null,
-        expiresAt: 'Lifetime VIP Access (Creator Pass)',
-        autoPayActive: true,
-        isCreatorVip: true,
-        verified: true,
-        stripePaymentId: `vip_creator_${Date.now()}`
-      };
-
-      setSubscription(vipState);
-      localStorage.setItem('nouriq_subscription', JSON.stringify(vipState));
-      document.cookie = `nouriq_sub_tier=Ultimate; max-age=315360000; path=/; SameSite=Lax`;
-      confetti({ particleCount: 160, spread: 95 });
-      return { success: true, message: '🎉 Lifetime VIP Creator Access Activated!' };
+    if (codeUpper !== 'NOURIQPASS') {
+      return { success: false, message: 'Invalid code. Only NOURIQPASS is authorized for Creator Access.' };
     }
-    return { success: false, message: 'Invalid VIP Promo Code. Please check spelling.' };
+
+    const isAlreadyRedeemed = localStorage.getItem('nouriq_nouriqpass_redeemed');
+    if (isAlreadyRedeemed === 'true') {
+      return { 
+        success: false, 
+        message: '🔒 Security Alert: NOURIQPASS has already been redeemed. Single-use VIP Creator passes cannot be reused or shared across devices.' 
+      };
+    }
+
+    const vipState = {
+      tier: 'Ultimate',
+      status: 'active',
+      billingCycle: 'lifetime',
+      dailyScansLeft: 99999,
+      purchasedAt: Date.now(),
+      expiresAtTimestamp: null,
+      expiresAt: 'Lifetime VIP Access (NOURIQPASS Master Pass)',
+      autoPayActive: true,
+      isCreatorVip: true,
+      verified: true,
+      stripePaymentId: `vip_creator_nouriqpass_${Date.now()}`
+    };
+
+    setSubscription(vipState);
+    localStorage.setItem('nouriq_subscription', JSON.stringify(vipState));
+    localStorage.setItem('nouriq_nouriqpass_redeemed', 'true');
+    localStorage.setItem('nouriq_nouriqpass_redeemed_timestamp', Date.now().toString());
+    document.cookie = `nouriq_sub_tier=Ultimate; max-age=315360000; path=/; SameSite=Lax`;
+    confetti({ particleCount: 160, spread: 95 });
+    return { success: true, message: '🎉 Lifetime VIP Creator Access Activated for NOURIQPASS!' };
   };
 
   const cancelAutoPay = () => {
