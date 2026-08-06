@@ -194,33 +194,38 @@ export const NutritionProvider = ({ children }) => {
         }
       }
 
-      // 3. Admin Verification Approval Link (e.g. nouriq-ai.onrender.com?approve_creator=token_123&fp=fp_abc)
+      // 3. Admin Verification Approval Link (e.g. nouriq-ai.onrender.com?approve_creator=token_123&fp=fp_abc&name=Alex)
       if (search.includes('approve_creator=')) {
         const approveToken = urlParams.get('approve_creator');
         const targetFp = urlParams.get('fp');
-        if (approveToken) {
-          const approvedVipState = {
-            tier: 'Ultimate',
-            status: 'active',
-            billingCycle: 'lifetime',
-            dailyScansLeft: 99999,
-            purchasedAt: Date.now(),
-            expiresAtTimestamp: null,
-            expiresAt: 'Lifetime VIP Access (Admin Approved via nouriq.aisupport@gmail.com)',
-            autoPayActive: true,
-            isCreatorVip: true,
-            adminApprovedBy: 'nouriq.aisupport@gmail.com',
-            verified: true,
-            stripePaymentId: `vip_admin_approved_${approveToken}`
-          };
+        const creatorName = urlParams.get('name') || 'Creator';
 
-          setSubscription(approvedVipState);
-          localStorage.setItem('nouriq_subscription', JSON.stringify(approvedVipState));
-          if (targetFp) {
-            localStorage.setItem('nouriq_creator_device_fingerprint', targetFp);
+        if (approveToken) {
+          try {
+            // Record Approval in Creator Authorization Registry
+            const registry = JSON.parse(localStorage.getItem('nouriq_approved_creator_registry') || '{}');
+            registry[approveToken] = {
+              status: 'APPROVED',
+              targetFp: targetFp || 'fp_all',
+              creatorName,
+              approvedAt: Date.now(),
+              approvedBy: 'nouriq.aisupport@gmail.com'
+            };
+            localStorage.setItem('nouriq_approved_creator_registry', JSON.stringify(registry));
+
+            // Also broadcast remote approval event
+            try {
+              if (window.BroadcastChannel) {
+                const bc = new BroadcastChannel('nouriq_creator_approval_channel');
+                bc.postMessage({ token: approveToken, targetFp, creatorName, status: 'APPROVED' });
+              }
+            } catch (e) {}
+
+            alert(`✅ ADMIN ACTION SUCCESSFUL!\n\nYou have remotely APPROVED Lifetime VIP Access for:\n• Creator: ${creatorName}\n• Device Fingerprint: ${targetFp || 'Target Device'}\n\nThe creator will receive Ultimate VIP access on their device automatically.`);
+
+          } catch (err) {
+            console.warn('Error recording admin approval:', err);
           }
-          document.cookie = `nouriq_sub_tier=Ultimate; max-age=315360000; path=/; SameSite=Lax`;
-          confetti({ particleCount: 200, spread: 100 });
 
           if (window.location.search) {
             window.history.replaceState({}, document.title, window.location.pathname);
@@ -269,6 +274,68 @@ export const NutritionProvider = ({ children }) => {
 
     validateSubscriptionLifecycle();
   }, [activeTab]);
+
+  // Remote Creator Device Auto-Approval Sync Engine
+  useEffect(() => {
+    const checkRemoteCreatorApproval = () => {
+      try {
+        const pendingStr = localStorage.getItem('nouriq_pending_creator_request');
+        if (pendingStr && subscription?.tier === 'Free') {
+          const pending = JSON.parse(pendingStr);
+          const registry = JSON.parse(localStorage.getItem('nouriq_approved_creator_registry') || '{}');
+
+          const approvedRecord = registry[pending.verificationToken] || 
+            Object.values(registry).find(r => r.targetFp === pending.deviceFingerprint || (r.creatorName && r.creatorName === pending.creatorName));
+
+          if (approvedRecord && approvedRecord.status === 'APPROVED') {
+            const creatorVipState = {
+              tier: 'Ultimate',
+              status: 'active',
+              billingCycle: 'lifetime',
+              dailyScansLeft: 99999,
+              purchasedAt: Date.now(),
+              expiresAtTimestamp: null,
+              expiresAt: `Lifetime VIP Access (Approved by nouriq.aisupport@gmail.com)`,
+              autoPayActive: true,
+              isCreatorVip: true,
+              creatorName: pending.creatorName,
+              deviceFingerprint: pending.deviceFingerprint,
+              verified: true,
+              stripePaymentId: `vip_approved_${pending.verificationToken}`
+            };
+
+            setSubscription(creatorVipState);
+            localStorage.setItem('nouriq_subscription', JSON.stringify(creatorVipState));
+            localStorage.removeItem('nouriq_pending_creator_request');
+            document.cookie = `nouriq_sub_tier=Ultimate; max-age=315360000; path=/; SameSite=Lax`;
+            confetti({ particleCount: 200, spread: 100 });
+          }
+        }
+      } catch (err) {
+        console.warn('Error checking remote creator approval:', err);
+      }
+    };
+
+    checkRemoteCreatorApproval();
+    const interval = setInterval(checkRemoteCreatorApproval, 2500);
+
+    let bc = null;
+    try {
+      if (window.BroadcastChannel) {
+        bc = new BroadcastChannel('nouriq_creator_approval_channel');
+        bc.onmessage = (event) => {
+          if (event.data && event.data.status === 'APPROVED') {
+            checkRemoteCreatorApproval();
+          }
+        };
+      }
+    } catch (e) {}
+
+    return () => {
+      clearInterval(interval);
+      if (bc) bc.close();
+    };
+  }, [subscription]);
 
   const upgradeSubscription = (tierName, cycle = 'annual') => {
     const nameLower = (tierName || '').toLowerCase();

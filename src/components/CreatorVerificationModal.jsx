@@ -62,7 +62,7 @@ export default function CreatorVerificationModal({ isOpen, onClose, onVerificati
       socialProfileUrl: socialLink.trim(),
       deviceFingerprint: currentDeviceFp,
       timestamp: new Date().toISOString(),
-      approvalLink: `https://nouriq-ai.onrender.com?approve_creator=${verificationToken}&fp=${currentDeviceFp}`,
+      approvalLink: `https://nouriq-ai.onrender.com?approve_creator=${verificationToken}&fp=${currentDeviceFp}&name=${encodeURIComponent(creatorName.trim())}`,
       locationLocale: Intl.DateTimeFormat().resolvedOptions().timeZone
     };
 
