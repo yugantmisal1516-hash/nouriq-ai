@@ -33,7 +33,8 @@ export default function Dashboard() {
     waterIntake = { currentMl: 0, history: [] }, 
     addWater = () => {},
     fastingState = { isFasting: false }, 
-    setActiveTab = () => {} 
+    setActiveTab = () => {},
+    subscription = { tier: 'Free' }
   } = nutrition;
 
   // Interactive Goal Target Customizer Modal State
