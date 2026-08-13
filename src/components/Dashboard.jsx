@@ -14,7 +14,9 @@ import {
   ArrowRight,
   Settings,
   X,
-  Check
+  Check,
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -89,6 +91,72 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       
+      {/* SUBSCRIPTION RENEWAL REMINDER / EXPIRED DOWNGRADE BANNER */}
+      {(() => {
+        const isExpired = subscription?.autoPayExpired || subscription?.status === 'expired';
+        const isExpiringSoon = subscription?.tier !== 'Free' && subscription?.expiresAtTimestamp && 
+          (Math.ceil((subscription.expiresAtTimestamp - Date.now()) / (1000 * 60 * 60 * 24)) <= 5 || subscription?.autoPayActive === false);
+
+        if (isExpired) {
+          return (
+            <div className="ios-glass p-4 rounded-[24px] bg-amber-500/15 border border-amber-500/40 text-xs text-[#011C40] flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-center space-x-3">
+                <div className="w-9 h-9 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-700 font-bold shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-[#011C40] flex items-center gap-1.5">
+                    Plan Expired — Automatically Transferred to Free Starter Plan
+                  </h4>
+                  <p className="text-[#26658C] font-medium text-[11px]">
+                    Your paid subscription period has finished. Your account has automatically transferred to the Free Plan. Resume AutoPay to unlock Pro features.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveTab('pricing')}
+                className="px-4 py-2 rounded-full liquid-glass-btn liquid-glass-btn-active text-white font-extrabold text-xs shrink-0 flex items-center gap-1.5 shadow-sm active:scale-95"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Resume Pro Membership</span>
+              </button>
+            </div>
+          );
+        }
+
+        if (isExpiringSoon) {
+          const daysLeft = Math.max(0, Math.ceil((subscription.expiresAtTimestamp - Date.now()) / (1000 * 60 * 60 * 24)));
+          return (
+            <div className="ios-glass p-4 rounded-[24px] bg-[#A7EBF2]/40 border border-[#54ACBF]/50 text-xs text-[#011C40] flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-center space-x-3">
+                <div className="w-9 h-9 rounded-full bg-[#54ACBF]/20 flex items-center justify-center text-[#023859] font-bold shrink-0">
+                  <Timer className="w-5 h-5 text-[#023859]" />
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-[#011C40] flex items-center gap-1.5">
+                    Subscription Renewal Reminder ({subscription.tier} {subscription.billingCycle || 'Plan'})
+                  </h4>
+                  <p className="text-[#26658C] font-medium text-[11px]">
+                    {subscription.autoPayActive === false 
+                      ? `AutoPay is cancelled. Your plan finishes in ${daysLeft > 0 ? `${daysLeft} days` : 'less than 24 hours'} and will automatically transfer to the Free plan.`
+                      : `Your plan finishes in ${daysLeft > 0 ? `${daysLeft} days` : 'less than 24 hours'}. Keep your subscription active to avoid automatic transfer to Free.`}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveTab('pricing')}
+                className="px-4 py-2 rounded-full liquid-glass-btn text-[#011C40] font-extrabold text-xs shrink-0 hover:border-[#54ACBF] transition-all flex items-center gap-1.5"
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-[#023859]" />
+                <span>Renew / Manage Plan</span>
+              </button>
+            </div>
+          );
+        }
+
+        return null;
+      })()}
+
       {/* Hero Banner */}
       <div className="relative overflow-hidden rounded-[28px] ios-glass p-6 lg:p-7 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 relative z-10">
