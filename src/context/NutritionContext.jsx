@@ -39,6 +39,25 @@ export const NutritionProvider = ({ children }) => {
   const [groceryItems, setGroceryItems] = useState(getStoredGroceryItems);
   const [weightLogs, setWeightLogs] = useState(getStoredWeightLogs);
   const [activeTab, setActiveTab] = useState('dashboard'); // dashboard, scanner, mealplan, fasting, water, grocery, analytics, coach, pricing, support
+  const [userBloodwork, setUserBloodwork] = useState(() => {
+    try {
+      const stored = localStorage.getItem('nouriq_user_bloodwork');
+      return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const syncUserBloodwork = (biomarkers) => {
+    setUserBloodwork(biomarkers);
+    try {
+      if (biomarkers) {
+        localStorage.setItem('nouriq_user_bloodwork', JSON.stringify(biomarkers));
+      } else {
+        localStorage.removeItem('nouriq_user_bloodwork');
+      }
+    } catch (e) {}
+  };
 
   // Helper to read cookie fallback
   const getSubCookie = () => {
@@ -700,6 +719,7 @@ export const NutritionProvider = ({ children }) => {
       weightLogs, logWeight,
       activeTab, setActiveTab,
       averageHealthScore,
+      userBloodwork, setUserBloodwork, syncUserBloodwork,
       subscription, upgradeSubscription, cancelSubscription, cancelAutoPay, resetToFreePlan, consumeScanQuota, redeemVipPromoCode, activateVerifiedCreatorPass,
       showStripeSuccessModal, setShowStripeSuccessModal
     }}>

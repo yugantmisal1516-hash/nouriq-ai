@@ -43,7 +43,13 @@ import {
 
 export default function DietitianConsult() {
   const nutrition = useNutrition() || {};
-  const { subscription = { tier: 'Free' }, setActiveTab = () => {}, goals = { name: 'Alex Rivera', dietType: 'High Protein', dailyCalorieGoal: 2200 } } = nutrition;
+  const { 
+    subscription = { tier: 'Free' }, 
+    setActiveTab = () => {}, 
+    goals = { name: 'Alex Rivera', dietType: 'High Protein', dailyCalorieGoal: 2200 },
+    userBloodwork = null,
+    syncUserBloodwork = () => {}
+  } = nutrition;
 
   const isUltimate = subscription?.tier === 'Ultimate';
 
@@ -108,11 +114,11 @@ export default function DietitianConsult() {
   const [copySuccess, setCopySuccess] = useState(false);
 
   // Advanced AI Biomarker Lab Parser State
-  const [uploadedLabName, setUploadedLabName] = useState(null);
+  const [uploadedLabName, setUploadedLabName] = useState(userBloodwork ? 'Synced Clinical Panel' : null);
   const [isUploading, setIsUploading] = useState(false);
-  const [labSuccess, setLabSuccess] = useState(false);
+  const [labSuccess, setLabSuccess] = useState(!!userBloodwork);
   const [invalidLabWarning, setInvalidLabWarning] = useState(null);
-  const [parsedBiomarkers, setParsedBiomarkers] = useState(null);
+  const [parsedBiomarkers, setParsedBiomarkers] = useState(userBloodwork || null);
 
   // Live 1-on-1 AI Chat Consultation State
   const [chatInput, setChatInput] = useState('');
@@ -324,6 +330,9 @@ END:VCALENDAR`;
       // VALID CLINICAL LAB REPORT PARSED ACCURATELY
       const extractedMetrics = generateAccurateLabAnalysis(file.name);
       setParsedBiomarkers(extractedMetrics);
+      if (typeof syncUserBloodwork === 'function') {
+        syncUserBloodwork(extractedMetrics);
+      }
       setLabSuccess(true);
       confetti({ particleCount: 90, spread: 70 });
 
@@ -403,23 +412,27 @@ END:VCALENDAR`;
 
     const userMsgText = chatInput.trim();
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const userMsg = { sender: 'user', text: userMsgText, time: timeStr };
 
-    setChatMessages(prev => [...prev, { sender: 'user', text: userMsgText, time: timeStr }]);
+    const currentHistory = [...chatMessages, userMsg];
+    setChatMessages(currentHistory);
     setChatInput('');
     setIsAiThinking(true);
+
+    const activeBloodwork = parsedBiomarkers || userBloodwork;
 
     setTimeout(() => {
       let aiReply = '';
       if (currentDietitian.id === 'dr-elena-ai') {
-        aiReply = generateMetabolicPCOSClinicalResponse(userMsgText, goals, subscription);
+        aiReply = generateMetabolicPCOSClinicalResponse(userMsgText, goals, subscription, currentHistory, activeBloodwork);
       } else if (currentDietitian.id === 'marcus-chen-ai') {
-        aiReply = generateHypertrophyPerformanceResponse(userMsgText, goals, subscription);
+        aiReply = generateHypertrophyPerformanceResponse(userMsgText, goals, subscription, currentHistory, activeBloodwork);
       } else if (currentDietitian.id === 'dr-sarah-jenkins-ai') {
-        aiReply = generateGutMicrobiomeClinicalResponse(userMsgText, goals, subscription);
+        aiReply = generateGutMicrobiomeClinicalResponse(userMsgText, goals, subscription, currentHistory, activeBloodwork);
       } else if (currentDietitian.id === 'master-zen-ai') {
-        aiReply = generateAutophagyLongevityResponse(userMsgText, goals, subscription);
+        aiReply = generateAutophagyLongevityResponse(userMsgText, goals, subscription, currentHistory, activeBloodwork);
       } else {
-        aiReply = generateAINutritionistResponse(userMsgText, goals, {}, subscription);
+        aiReply = generateAINutritionistResponse(userMsgText, goals, {}, subscription, currentHistory, activeBloodwork);
       }
 
       setIsAiThinking(false);
@@ -431,7 +444,7 @@ END:VCALENDAR`;
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
       ]);
-    }, 1000);
+    }, 900);
   };
 
   // Gating View for Non-Ultimate Plan Users
@@ -728,9 +741,16 @@ END:VCALENDAR`;
               <img src={currentDietitian.avatar} alt={currentDietitian.name} className="w-10 h-10 rounded-full border-2 border-[#54ACBF] object-cover" />
               <div>
                 <h2 className="text-sm font-extrabold text-[#011C40]">{currentDietitian.name}</h2>
-                <span className="text-[10px] text-emerald-700 font-bold flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" /> Live 1-on-1 Consultation Session Active
-                </span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[10px] text-emerald-700 font-bold flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" /> Live 1-on-1 Consultation Session Active
+                  </span>
+                  {(parsedBiomarkers || userBloodwork) && (
+                    <span className="text-[9px] text-[#023859] font-black bg-[#A7EBF2]/60 px-2 py-0.5 rounded-full inline-flex items-center gap-1 border border-[#54ACBF]/50">
+                      <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" /> Bloodwork Synced (HbA1c & Fasting Glucose Active)
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 

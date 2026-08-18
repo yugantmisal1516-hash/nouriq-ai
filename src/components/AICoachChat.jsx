@@ -9,7 +9,8 @@ export default function AICoachChat() {
     goals = { name: 'Alex' }, 
     todayTotals = { calories: 0 }, 
     averageHealthScore = 92, 
-    subscription = { tier: 'Free' } 
+    subscription = { tier: 'Free' },
+    userBloodwork = null
   } = nutrition;
 
   const isPro = subscription?.tier === 'Pro' || subscription?.tier === 'Ultimate';
@@ -50,12 +51,13 @@ export default function AICoachChat() {
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    setMessages(prev => [...prev, userMsg]);
+    const currentHistory = [...messages, userMsg];
+    setMessages(currentHistory);
     if (!textToSend) setInput('');
     setIsTyping(true);
 
     setTimeout(() => {
-      const aiResponse = generateAINutritionistResponse(text, goals, todayTotals, subscription);
+      const aiResponse = generateAINutritionistResponse(text, goals, todayTotals, subscription, currentHistory, userBloodwork);
 
       const aiMsg = {
         id: `msg-ai-${Date.now()}`,
