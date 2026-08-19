@@ -119,6 +119,11 @@ export default function DietitianConsult() {
   const [labSuccess, setLabSuccess] = useState(!!userBloodwork);
   const [invalidLabWarning, setInvalidLabWarning] = useState(null);
   const [parsedBiomarkers, setParsedBiomarkers] = useState(userBloodwork || null);
+  const [isEditingBiomarkers, setIsEditingBiomarkers] = useState(false);
+  const [customHbA1c, setCustomHbA1c] = useState('5.4');
+  const [customGlucose, setCustomGlucose] = useState('88');
+  const [customCholesterol, setCustomCholesterol] = useState('178');
+  const [customVitD, setCustomVitD] = useState('42');
 
   // Live 1-on-1 AI Chat Consultation State
   const [chatInput, setChatInput] = useState('');
@@ -132,6 +137,60 @@ export default function DietitianConsult() {
   ]);
 
   const chatEndRef = useRef(null);
+
+  useEffect(() => {
+    if (parsedBiomarkers) {
+      setCustomHbA1c(String(parsedBiomarkers.hba1c?.val || '5.4'));
+      setCustomGlucose(String(parsedBiomarkers.glucose?.val || '88'));
+      setCustomCholesterol(String(parsedBiomarkers.cholesterol?.val || '178'));
+      setCustomVitD(String(parsedBiomarkers.vitD?.val || '42'));
+    }
+  }, [parsedBiomarkers]);
+
+  const handleSaveCustomBiomarkers = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const hba1cNum = parseFloat(customHbA1c) || 5.4;
+    const glucoseNum = parseFloat(customGlucose) || 88;
+    const cholNum = parseFloat(customCholesterol) || 178;
+    const vitDNum = parseFloat(customVitD) || 42;
+
+    const hba1cStatus = hba1cNum < 5.7 ? 'Optimal (<5.7%)' : (hba1cNum < 6.5 ? 'Pre-Diabetic Range (5.7-6.4%)' : 'Elevated (≥6.5%)');
+    const glucoseStatus = glucoseNum < 100 ? 'Optimal (70-99 mg/dL)' : (glucoseNum < 126 ? 'Impaired (100-125 mg/dL)' : 'Elevated (≥126 mg/dL)');
+    const cholStatus = cholNum < 200 ? 'Optimal (<200 mg/dL)' : (cholNum < 240 ? 'Borderline (200-239 mg/dL)' : 'Elevated (≥240 mg/dL)');
+    const vitDStatus = vitDNum >= 30 ? 'Sufficient (30-100 ng/mL)' : 'Suboptimal (<30 ng/mL)';
+
+    const updatedMetrics = {
+      hba1c: { val: hba1cNum, status: hba1cStatus },
+      glucose: { val: glucoseNum, status: glucoseStatus },
+      cholesterol: { val: cholNum, status: cholStatus },
+      vitD: { val: vitDNum, status: vitDStatus },
+      clinicalRiskAnalysis: `Custom Lab Panel Synchronized: Fasting Glucose is ${glucoseNum} mg/dL (${glucoseStatus}), HbA1c is ${hba1cNum}% (${hba1cStatus}), Total Cholesterol is ${cholNum} mg/dL (${cholStatus}), and Vitamin D3 is ${vitDNum} ng/mL (${vitDStatus}).`,
+      recommendation: glucoseNum >= 100 || hba1cNum >= 5.7
+        ? 'Implement 10-minute post-meal walks, meal sequencing (fiber first ➡️ protein ➡️ carbs), and 35g daily dietary fiber.'
+        : 'Maintain high-protein nutritional architecture, adequate hydration, and balanced monounsaturated fat intake.',
+      questions: [
+        'What was your fasting duration prior to blood collection?',
+        'Do you experience fatigue, afternoon energy dips, or brain fog?',
+        'Are you taking any daily prescription medications or dietary supplements?'
+      ]
+    };
+
+    setParsedBiomarkers(updatedMetrics);
+    if (typeof syncUserBloodwork === 'function') {
+      syncUserBloodwork(updatedMetrics);
+    }
+    setIsEditingBiomarkers(false);
+    confetti({ particleCount: 80, spread: 60 });
+
+    setChatMessages(prev => [
+      ...prev,
+      {
+        sender: 'ai',
+        text: `📊 [Updated Lab Panel Synchronized]:\n• Fasting Glucose: ${glucoseNum} mg/dL\n• HbA1c: ${hba1cNum}%\n• Total Cholesterol: ${cholNum} mg/dL\n• Vitamin D3: ${vitDNum} ng/mL\n\nActive in live consultation room now!`,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }
+    ]);
+  };
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
