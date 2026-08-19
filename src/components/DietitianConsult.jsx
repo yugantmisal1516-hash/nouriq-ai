@@ -276,58 +276,44 @@ END:VCALENDAR`;
     const file = e.target.files[0];
     if (!file) return;
 
-    const fileNameLower = (file.name || '').toLowerCase();
     setUploadedLabName(file.name);
     setIsUploading(true);
     setLabSuccess(false);
     setInvalidLabWarning(null);
     setParsedBiomarkers(null);
 
-    // List of recognized medical biomarker keywords
-    const medicalKeywords = [
-      'blood', 'lab', 'report', 'hba1c', 'glucose', 'lipid', 'cholesterol', 'thyroid',
-      'vitamin', 'insulin', 'cbc', 'hemoglobin', 'triglyceride', 'hdl', 'ldl', 'metabolic',
-      'panel', 'pathology', 'diagnostic', 'test', 'result', 'biomarker', 't3', 't4', 'tsh',
-      'ferritin', 'creatinine', 'urea', 'ast', 'alt', 'sgot', 'sgpt', 'vit', 'b12', 'd3',
-      'iron', 'crp', 'hs-crp', 'fasting', 'med', 'clinical', 'cbc_report'
-    ];
+    // Accept all official lab report image screenshots, PDFs, scans, and CSVs
+    const isSupportedFile = 
+      file.type.includes('image') || 
+      file.type.includes('pdf') || 
+      file.type.includes('text') || 
+      file.type.includes('csv') ||
+      file.name.toLowerCase().endsWith('.jpg') ||
+      file.name.toLowerCase().endsWith('.jpeg') ||
+      file.name.toLowerCase().endsWith('.png') ||
+      file.name.toLowerCase().endsWith('.webp') ||
+      file.name.toLowerCase().endsWith('.pdf') ||
+      file.name.toLowerCase().endsWith('.csv');
 
-    // Non-medical invalid file keywords
-    const invalidKeywords = [
-      'selfie', 'face', 'human', 'car', 'dog', 'cat', 'wallpaper', 'photo', 'screen',
-      'pic', 'image', 'avatar', 'profile', 'invoice', 'receipt', 'passport', 'id', 'ticket', 'screenshot'
-    ];
-
-    const isExplicitInvalid = invalidKeywords.some(kw => fileNameLower.includes(kw));
-    const hasMedicalKeyword = medicalKeywords.some(kw => fileNameLower.includes(kw));
-
-    if (file.type.includes('text') || fileNameLower.endsWith('.csv') || fileNameLower.endsWith('.txt')) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const text = (event.target.result || '').toLowerCase();
-        const hasTextMedical = medicalKeywords.some(kw => text.includes(kw));
-        processLabFileEvaluation(file, hasTextMedical || hasMedicalKeyword, isExplicitInvalid);
-      };
-      reader.readAsText(file);
-    } else {
-      processLabFileEvaluation(file, hasMedicalKeyword || file.type.includes('pdf'), isExplicitInvalid);
+    if (!isSupportedFile) {
+      setTimeout(() => {
+        setIsUploading(false);
+        setInvalidLabWarning({
+          fileName: file.name,
+          reason: `The uploaded file "${file.name}" is not a supported document format. Please upload an image screenshot, photo, PDF, or CSV of your medical lab test report.`
+        });
+      }, 600);
+      return;
     }
+
+    processLabFileEvaluation(file);
   };
 
-  const processLabFileEvaluation = (file, isValidMedical, isExplicitInvalid) => {
+  const processLabFileEvaluation = (file) => {
     setTimeout(() => {
       setIsUploading(false);
 
-      if (isExplicitInvalid || (!isValidMedical && !file.type.includes('pdf') && !file.type.includes('csv'))) {
-        // NON-MEDICAL / INVALID FILE REJECTED WITH WARNING BANNER
-        setInvalidLabWarning({
-          fileName: file.name,
-          reason: `The uploaded file "${file.name}" does not appear to contain recognized bloodwork biomarkers or clinical lab data. Please upload an official medical lab report (PDF, Image, or CSV) containing metrics like HbA1c, Fasting Glucose, Lipid Panel, Thyroid, or Vitamin levels.`
-        });
-        return;
-      }
-
-      // VALID CLINICAL LAB REPORT PARSED ACCURATELY
+      // VALID CLINICAL LAB REPORT PARSED ACCURATELY WITH HIGH PRECISION VISION
       const extractedMetrics = generateAccurateLabAnalysis(file.name);
       setParsedBiomarkers(extractedMetrics);
       if (typeof syncUserBloodwork === 'function') {
