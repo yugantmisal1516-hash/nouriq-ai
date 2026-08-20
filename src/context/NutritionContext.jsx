@@ -574,6 +574,17 @@ export const NutritionProvider = ({ children }) => {
     saveStoredFastingState(newState);
   };
 
+  const updateFastingTargetHours = (hours) => {
+    const validHours = Math.max(1, Math.min(168, Number(hours) || 16));
+    const newState = {
+      ...fastingState,
+      targetHours: validHours,
+      protocol: `Custom (${validHours}h)`
+    };
+    setFastingState(newState);
+    saveStoredFastingState(newState);
+  };
+
   // Water Tracker Reset Handler
   const resetWater = () => {
     const today = new Date().toISOString().split('T')[0];
@@ -737,7 +748,7 @@ export const NutritionProvider = ({ children }) => {
       goals, setGoals, createNewUserSession,
       loggedMeals, logMeal, deleteMeal, removeMeal: deleteMeal, todayTotals, todayMeals,
       waterIntake, addWater, resetWater,
-      fastingState, setFastingState, startFast, stopFast,
+      fastingState, setFastingState, startFast, stopFast, updateFastingTargetHours,
       groceryItems, toggleGroceryItem, addGroceryItem, removeGroceryItem,
       weightLogs, logWeight,
       activeTab, setActiveTab,

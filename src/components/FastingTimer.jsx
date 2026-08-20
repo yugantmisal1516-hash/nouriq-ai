@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNutrition } from '../context/NutritionContext';
 import { FASTING_PROTOCOLS, METABOLIC_STAGES } from '../data/fastingProtocols';
-import { Play, Square, Sparkles, CheckCircle2, Flame, Droplets, Zap, ShieldCheck, RefreshCw, Lock } from 'lucide-react';
+import { Play, Square, Sparkles, CheckCircle2, Flame, Droplets, Zap, ShieldCheck, RefreshCw, Lock, Sliders, Clock, Settings2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export default function FastingTimer() {
@@ -10,6 +10,7 @@ export default function FastingTimer() {
     fastingState = { isFasting: false, protocol: '16:8', startTime: Date.now(), targetHours: 16 }, 
     startFast = () => {}, 
     stopFast = () => {}, 
+    updateFastingTargetHours = () => {},
     subscription = { tier: 'Free' }, 
     setActiveTab = () => {} 
   } = nutrition;
@@ -17,6 +18,8 @@ export default function FastingTimer() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [hasNotified, setHasNotified] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [customHours, setCustomHours] = useState(fastingState?.targetHours || 14);
+  const [showCustomToggle, setShowCustomToggle] = useState(fastingState?.protocol?.includes('Custom') || false);
 
   const isPro = subscription?.tier === 'Pro' || subscription?.tier === 'Ultimate';
 
@@ -144,9 +147,12 @@ export default function FastingTimer() {
           {protocolsList.map((p) => (
             <button
               key={p.id}
-              onClick={() => handleStartFast(p.id, p.fastHours)}
+              onClick={() => {
+                setShowCustomToggle(false);
+                handleStartFast(p.id, p.fastHours);
+              }}
               className={`px-4 py-2.5 rounded-full text-xs font-extrabold transition-all shrink-0 shadow-xs active:scale-95 liquid-glass-btn ${
-                fastingState?.protocol === p.id && fastingState?.isFasting
+                fastingState?.protocol === p.id && fastingState?.isFasting && !showCustomToggle
                   ? 'liquid-glass-btn-active scale-105'
                   : 'text-[#011C40]'
               }`}
@@ -154,8 +160,98 @@ export default function FastingTimer() {
               {p.id} ({p.fastHours}h)
             </button>
           ))}
+          <button
+            onClick={() => setShowCustomToggle(!showCustomToggle)}
+            className={`px-4 py-2.5 rounded-full text-xs font-extrabold transition-all shrink-0 shadow-xs active:scale-95 liquid-glass-btn flex items-center gap-1.5 ${
+              showCustomToggle || fastingState?.protocol?.includes('Custom')
+                ? 'liquid-glass-btn-active scale-105'
+                : 'text-[#011C40]'
+            }`}
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            <span>⚙️ Custom Time</span>
+          </button>
         </div>
       </div>
+
+      {/* CUSTOM FASTING TIME CONFIGURATION TOGGLE PANEL */}
+      {showCustomToggle && (
+        <div className="ios-glass p-5 rounded-[24px] border border-[#54ACBF]/60 bg-[#A7EBF2]/20 space-y-4 shadow-sm animate-fade-in">
+          <div className="flex items-center justify-between border-b border-[#54ACBF]/30 pb-2.5">
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-[#023859]" />
+              <h3 className="text-xs font-extrabold text-[#011C40] uppercase tracking-wider">
+                ⚙️ Custom Fasting & Eating Window Calibration
+              </h3>
+            </div>
+            <span className="text-[10px] bg-[#023859] text-white px-2.5 py-0.5 rounded-full font-bold">
+              {customHours}h Fast / {Math.max(0, 24 - customHours)}h Eat
+            </span>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Stepper Controls */}
+            <div className="flex items-center space-x-3 w-full sm:w-auto justify-center">
+              <button
+                type="button"
+                onClick={() => setCustomHours(prev => Math.max(1, prev - 1))}
+                className="w-9 h-9 rounded-full liquid-glass-btn text-base font-extrabold text-[#011C40] flex items-center justify-center active:scale-90 cursor-pointer shadow-xs"
+              >
+                -
+              </button>
+              <div className="text-center px-3">
+                <span className="text-2xl font-black text-[#011C40] font-mono">{customHours}</span>
+                <span className="text-[10px] text-[#26658C] font-bold block">Target Hours</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCustomHours(prev => Math.min(72, prev + 1))}
+                className="w-9 h-9 rounded-full liquid-glass-btn text-base font-extrabold text-[#011C40] flex items-center justify-center active:scale-90 cursor-pointer shadow-xs"
+              >
+                +
+              </button>
+            </div>
+
+            {/* Quick Presets */}
+            <div className="flex flex-wrap items-center justify-center gap-1.5">
+              {[12, 14, 15, 17, 19, 22, 36, 48].map((h) => (
+                <button
+                  key={h}
+                  type="button"
+                  onClick={() => setCustomHours(h)}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition-all cursor-pointer ${
+                    customHours === h
+                      ? 'bg-[#023859] text-white shadow-xs'
+                      : 'bg-white/80 text-[#023859] border border-[#54ACBF]/40 hover:bg-[#A7EBF2]/40'
+                  }`}
+                >
+                  {h}h
+                </button>
+              ))}
+            </div>
+
+            {/* Action Button */}
+            <button
+              type="button"
+              onClick={() => {
+                if (fastingState?.isFasting) {
+                  if (typeof updateFastingTargetHours === 'function') {
+                    updateFastingTargetHours(customHours);
+                  }
+                  confetti({ particleCount: 60, spread: 50 });
+                } else {
+                  handleStartFast(`Custom (${customHours}h)`, customHours);
+                }
+              }}
+              className="w-full sm:w-auto px-5 py-2.5 rounded-full liquid-glass-btn liquid-glass-btn-active text-white text-xs font-extrabold shadow-sm active:scale-95 cursor-pointer"
+            >
+              {fastingState?.isFasting 
+                ? `💾 Update Goal to ${customHours}h` 
+                : `🚀 Start ${customHours}h Custom Fast`}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
@@ -164,7 +260,17 @@ export default function FastingTimer() {
           <div className="w-full flex items-center justify-between border-b border-[#54ACBF]/30 pb-4">
             <div className="text-left">
               <span className="text-xs text-[#26658C] font-semibold block">Active Fasting Window</span>
-              <h3 className="text-base font-extrabold text-[#011C40]">{fastingState?.protocol || '16:8'} Protocol ({targetHours} Target Hours)</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-extrabold text-[#011C40]">{fastingState?.protocol || '16:8'} Protocol ({targetHours} Target Hours)</h3>
+                <button
+                  type="button"
+                  onClick={() => setShowCustomToggle(!showCustomToggle)}
+                  className="text-[10px] text-[#023859] font-bold bg-[#A7EBF2]/50 hover:bg-[#A7EBF2] border border-[#54ACBF]/40 px-2 py-0.5 rounded-full inline-flex items-center gap-1 transition-all cursor-pointer"
+                >
+                  <Sliders className="w-2.5 h-2.5" />
+                  <span>{showCustomToggle ? 'Hide' : 'Edit Hours'}</span>
+                </button>
+              </div>
             </div>
             <span className={`px-3.5 py-1 rounded-full text-xs font-extrabold liquid-glass-btn ${
               fastingState?.isFasting ? 'liquid-glass-btn-active text-white' : 'text-[#26658C]'
