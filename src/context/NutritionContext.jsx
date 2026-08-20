@@ -294,6 +294,27 @@ export const NutritionProvider = ({ children }) => {
     validateSubscriptionLifecycle();
   }, [activeTab]);
 
+  // Automatic Daily Water Reset Engine (Every new day starts at 0 ml)
+  useEffect(() => {
+    const checkDailyWaterReset = () => {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        setWaterIntake(prev => {
+          if (!prev || prev.date !== today) {
+            const fresh = { date: today, currentMl: 0, history: [] };
+            saveStoredWaterIntake(fresh);
+            return fresh;
+          }
+          return prev;
+        });
+      } catch (e) {}
+    };
+
+    checkDailyWaterReset();
+    const interval = setInterval(checkDailyWaterReset, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Remote Creator Device Auto-Approval Sync Engine
   useEffect(() => {
     const checkRemoteCreatorApproval = () => {
@@ -635,10 +656,12 @@ export const NutritionProvider = ({ children }) => {
     const today = new Date().toISOString().split('T')[0];
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     setWaterIntake(prev => {
-      const isToday = prev.date === today;
+      const isToday = prev && prev.date === today;
       const currentMl = isToday ? prev.currentMl + amountMl : amountMl;
-      const history = isToday ? [{ time: timeStr, amount: amountMl }, ...prev.history] : [{ time: timeStr, amount: amountMl }];
-      return { date: today, currentMl, history };
+      const history = isToday ? [{ time: timeStr, amount: amountMl }, ...(prev.history || [])] : [{ time: timeStr, amount: amountMl }];
+      const next = { date: today, currentMl, history };
+      saveStoredWaterIntake(next);
+      return next;
     });
   };
 

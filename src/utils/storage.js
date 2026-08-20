@@ -65,10 +65,17 @@ export function getStoredWaterIntake() {
   const data = localStorage.getItem(STORAGE_KEYS.WATER_INTAKE);
   const today = new Date().toISOString().split('T')[0];
   if (data) {
-    const parsed = JSON.parse(data);
-    if (parsed.date === today) return parsed;
+    try {
+      const parsed = JSON.parse(data);
+      if (parsed && parsed.date === today) return parsed;
+    } catch (e) {}
   }
-  return { date: today, currentMl: 1750, history: [{ time: '09:00 AM', amount: 500 }, { time: '11:30 AM', amount: 750 }, { time: '02:45 PM', amount: 500 }] };
+  // Reset to 0 for every new day
+  const newDayWater = { date: today, currentMl: 0, history: [] };
+  try {
+    localStorage.setItem(STORAGE_KEYS.WATER_INTAKE, JSON.stringify(newDayWater));
+  } catch (e) {}
+  return newDayWater;
 }
 
 export function saveStoredWaterIntake(waterData) {
