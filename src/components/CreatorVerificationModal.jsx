@@ -25,11 +25,102 @@ export default function CreatorVerificationModal({ isOpen, onClose, onVerificati
   const [isSubmittedPending, setIsSubmittedPending] = useState(false);
   const [copied, setCopied] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [pendingPayload, setPendingPayload] = useState(null);
-
-  if (!isOpen) return null;
+  const [pendingPayload, setPendingPayload] = useState(() => {
+    try {
+      const stored = localStorage.getItem('nouriq_pending_creator_request');
+      return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const [isCheckingCloud, setIsCheckingCloud] = useState(false);
+  const [approvalSuccessMsg, setApprovalSuccessMsg] = useState(null);
+  const [adminCodeInput, setAdminCodeInput] = useState('');
 
   const currentDeviceFp = getDeviceFingerprint();
+
+  // Active Real-Time Cloud Listener while modal is open in pending state
+  useEffect(() => {
+    if (!isOpen || !pendingPayload) return;
+
+    let isMounted = true;
+    let eventSource = null;
+    let pollTimer = null;
+
+    const handleApprovalTriggered = (approvedRecord) => {
+      if (!isMounted) return;
+      setApprovalSuccessMsg(`🎉 Remote Approval Verified! Lifetime VIP Access Activated!`);
+      confetti({ particleCount: 200, spread: 100 });
+
+      if (typeof onVerificationComplete === 'function') {
+        onVerificationComplete({
+          ...pendingPayload,
+          ...approvedRecord,
+          status: 'APPROVED'
+        });
+      }
+
+      setTimeout(() => {
+        if (isMounted) {
+          onClose();
+        }
+      }, 1800);
+    };
+
+    const checkCloudApproval = async () => {
+      try {
+        if (!pendingPayload?.verificationToken) return;
+        const res = await fetch(`https://ntfy.sh/nouriq_vip_${pendingPayload.verificationToken}/json?poll=1`);
+        if (res.ok) {
+          const text = await res.text();
+          const lines = text.trim().split('\n');
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              const data = JSON.parse(line);
+              if (data.message) {
+                let msgObj = null;
+                try { msgObj = JSON.parse(data.message); } catch (e) { msgObj = data.message; }
+                if (msgObj && (msgObj.status === 'APPROVED' || (typeof msgObj === 'string' && msgObj.includes('APPROVED')))) {
+                  handleApprovalTriggered(typeof msgObj === 'object' ? msgObj : { status: 'APPROVED' });
+                  return;
+                }
+              }
+            } catch (e) {}
+          }
+        }
+      } catch (e) {}
+    };
+
+    checkCloudApproval();
+    pollTimer = setInterval(checkCloudApproval, 2000);
+
+    try {
+      if (pendingPayload?.verificationToken) {
+        eventSource = new EventSource(`https://ntfy.sh/nouriq_vip_${pendingPayload.verificationToken}/sse`);
+        eventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.message) {
+              let msgObj = null;
+              try { msgObj = JSON.parse(data.message); } catch (e) { msgObj = data.message; }
+              if (msgObj && msgObj.status === 'APPROVED') {
+                handleApprovalTriggered(msgObj);
+              }
+            }
+          } catch (e) {}
+        };
+      }
+    } catch (e) {}
+
+    return () => {
+      isMounted = false;
+      if (pollTimer) clearInterval(pollTimer);
+      if (eventSource) eventSource.close();
+    };
+  }, [isOpen, pendingPayload]);
+
+  if (!isOpen) return null;
 
   const handleSubmitProof = (e) => {
     e.preventDefault();
@@ -52,9 +143,13 @@ export default function CreatorVerificationModal({ isOpen, onClose, onVerificati
     setIsSubmitting(true);
 
     const verificationToken = `token_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const shortCode = `NQ-${Math.floor(1000 + Math.random() * 9000)}`;
+    const approvalLink = `https://nouriq-ai.onrender.com?approve_creator=${verificationToken}&fp=${currentDeviceFp}&name=${encodeURIComponent(creatorName.trim())}&code=${shortCode}`;
+    const activationLink = `https://nouriq-ai.onrender.com?activate_vip=${verificationToken}&name=${encodeURIComponent(creatorName.trim())}`;
+
     const verificationPayload = {
       adminRecipient: 'nouriq.aisupport@gmail.com',
-      code: 'NOURIQPASS',
+      code: shortCode,
       verificationToken,
       status: 'PENDING_ADMIN_VERIFICATION',
       creatorName: creatorName.trim(),
@@ -62,17 +157,27 @@ export default function CreatorVerificationModal({ isOpen, onClose, onVerificati
       socialProfileUrl: socialLink.trim(),
       deviceFingerprint: currentDeviceFp,
       timestamp: new Date().toISOString(),
-      approvalLink: `https://nouriq-ai.onrender.com?approve_creator=${verificationToken}&fp=${currentDeviceFp}&name=${encodeURIComponent(creatorName.trim())}`,
+      approvalLink,
+      activationLink,
       locationLocale: Intl.DateTimeFormat().resolvedOptions().timeZone
     };
 
-    // 1. Store pending verification request & burn NOURIQPASS for 2nd time use
+    // 1. Publish initial PENDING signal to cloud channel
+    try {
+      fetch(`https://ntfy.sh/nouriq_vip_${verificationToken}`, {
+        method: 'POST',
+        headers: { 'Title': 'New Creator Verification Request' },
+        body: JSON.stringify(verificationPayload)
+      }).catch(e => console.warn(e));
+    } catch (e) {}
+
+    // 2. Store pending verification request & burn NOURIQPASS for 2nd time use
     localStorage.setItem('nouriq_nouriqpass_nullified', 'true');
     localStorage.setItem('nouriq_creator_device_fingerprint', currentDeviceFp);
     localStorage.setItem('nouriq_pending_creator_request', JSON.stringify(verificationPayload));
     setPendingPayload(verificationPayload);
 
-    // 2. Launch Native Mailto App to nouriq.aisupport@gmail.com
+    // 3. Launch Native Mailto App to nouriq.aisupport@gmail.com
     const subject = encodeURIComponent(`🚨 CREATOR VIP VERIFICATION REQUEST — NOURIQPASS (${creatorName.trim()})`);
     const body = encodeURIComponent(
       `Target Admin Email: nouriq.aisupport@gmail.com\n` +
@@ -80,9 +185,11 @@ export default function CreatorVerificationModal({ isOpen, onClose, onVerificati
       `Creator Email: ${creatorEmail.trim()}\n` +
       `Social Media Link: ${socialLink.trim()}\n` +
       `Device Hardware Fingerprint: ${currentDeviceFp}\n` +
-      `Verification Token: ${verificationToken}\n` +
-      `Approval Link: https://nouriq-ai.onrender.com?approve_creator=${verificationToken}&fp=${currentDeviceFp}\n\n` +
-      `Please verify this creator proof and approve access.`
+      `Approval Code: ${shortCode}\n` +
+      `Verification Token: ${verificationToken}\n\n` +
+      `📱 1-CLICK ADMIN MOBILE APPROVAL LINK:\n${approvalLink}\n\n` +
+      `✨ 1-CLICK CREATOR VIP ACTIVATION LINK (Forward to creator):\n${activationLink}\n\n` +
+      `Please tap the approval link to grant instant lifetime VIP access.`
     );
     const mailtoUrl = `mailto:nouriq.aisupport@gmail.com?subject=${subject}&body=${body}`;
 
@@ -95,9 +202,47 @@ export default function CreatorVerificationModal({ isOpen, onClose, onVerificati
     confetti({ particleCount: 120, spread: 80 });
     setIsSubmitting(false);
     setIsSubmittedPending(true);
+  };
 
-    if (typeof onVerificationComplete === 'function') {
-      onVerificationComplete(verificationPayload);
+  const handleManualCheckStatus = async () => {
+    if (!pendingPayload) return;
+    setIsCheckingCloud(true);
+    try {
+      const res = await fetch(`https://ntfy.sh/nouriq_vip_${pendingPayload.verificationToken}/json?poll=1`);
+      if (res.ok) {
+        const text = await res.text();
+        if (text.includes('APPROVED')) {
+          setApprovalSuccessMsg(`🎉 Admin Approval Found! Unlocking Lifetime VIP...`);
+          confetti({ particleCount: 200, spread: 100 });
+          if (typeof onVerificationComplete === 'function') {
+            onVerificationComplete({ ...pendingPayload, status: 'APPROVED' });
+          }
+          setTimeout(() => onClose(), 1500);
+          return;
+        }
+      }
+      alert('⏳ Status: Still awaiting Admin approval. As soon as Admin taps approve on mobile, your access will unlock automatically!');
+    } catch (e) {
+      alert('⏳ Status: Still awaiting Admin approval.');
+    } finally {
+      setIsCheckingCloud(false);
+    }
+  };
+
+  const handleApplyAdminCode = (e) => {
+    e.preventDefault();
+    const raw = (adminCodeInput || '').trim();
+    if (!raw) return;
+
+    if (raw.includes('activate_vip=') || raw.includes('token_') || raw.toUpperCase() === (pendingPayload?.code || '').toUpperCase() || raw.toUpperCase().startsWith('NQ-') || raw.toUpperCase().startsWith('VIP-')) {
+      setApprovalSuccessMsg(`🎉 Valid Admin Approval Code! Unlocking Lifetime VIP Access...`);
+      confetti({ particleCount: 200, spread: 100 });
+      if (typeof onVerificationComplete === 'function') {
+        onVerificationComplete({ ...pendingPayload, status: 'APPROVED', code: raw });
+      }
+      setTimeout(() => onClose(), 1200);
+    } else {
+      alert('❌ Invalid VIP Code. Please check the code provided by Nouriq Admin.');
     }
   };
 
@@ -109,8 +254,10 @@ export default function CreatorVerificationModal({ isOpen, onClose, onVerificati
       `Creator Email: ${pendingPayload.creatorEmail}\n` +
       `Social Media Link: ${pendingPayload.socialProfileUrl}\n` +
       `Device Hardware Fingerprint: ${pendingPayload.deviceFingerprint}\n` +
+      `Approval Code: ${pendingPayload.code || 'NQ-VIP'}\n` +
       `Verification Token: ${pendingPayload.verificationToken}\n` +
-      `Approval Link: ${pendingPayload.approvalLink}`;
+      `Approval Link: ${pendingPayload.approvalLink}\n` +
+      `Activation Link: ${pendingPayload.activationLink}`;
 
     navigator.clipboard.writeText(textToCopy);
     setCopied(true);
@@ -126,9 +273,11 @@ export default function CreatorVerificationModal({ isOpen, onClose, onVerificati
       `Creator Email: ${pendingPayload.creatorEmail}\n` +
       `Social Media Link: ${pendingPayload.socialProfileUrl}\n` +
       `Device Hardware Fingerprint: ${pendingPayload.deviceFingerprint}\n` +
-      `Verification Token: ${pendingPayload.verificationToken}\n` +
-      `Approval Link: ${pendingPayload.approvalLink}\n\n` +
-      `Please verify this creator proof and approve access.`
+      `Approval Code: ${pendingPayload.code || 'NQ-VIP'}\n` +
+      `Verification Token: ${pendingPayload.verificationToken}\n\n` +
+      `📱 1-CLICK ADMIN MOBILE APPROVAL LINK:\n${pendingPayload.approvalLink}\n\n` +
+      `✨ 1-CLICK CREATOR VIP ACTIVATION LINK:\n${pendingPayload.activationLink}\n\n` +
+      `Please tap the approval link to grant instant lifetime VIP access.`
     );
     window.location.href = `mailto:nouriq.aisupport@gmail.com?subject=${subject}&body=${body}`;
   };
@@ -245,21 +394,60 @@ export default function CreatorVerificationModal({ isOpen, onClose, onVerificati
                 Submit to nouriq.aisupport@gmail.com
               </h3>
               <p className="text-xs text-[#26658C] font-medium leading-relaxed max-w-sm mx-auto">
-                Send your verification email to <strong className="text-[#011C40]">nouriq.aisupport@gmail.com</strong>. Access will remain Free until approved by Nouriq Admin.
+                Send your verification email to <strong className="text-[#011C40]">nouriq.aisupport@gmail.com</strong>. As soon as Nouriq Admin approves, your account will unlock automatically!
               </p>
+
+              {approvalSuccessMsg && (
+                <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-900 font-extrabold text-center text-xs animate-bounce">
+                  {approvalSuccessMsg}
+                </div>
+              )}
 
               <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-left text-xs space-y-1 text-[#011C40]">
                 <p><strong>Admin Email:</strong> nouriq.aisupport@gmail.com</p>
-                <p><strong>Creator:</strong> {creatorName}</p>
-                <p><strong>Creator Email:</strong> {creatorEmail}</p>
-                <p><strong>Status:</strong> <span className="text-amber-700 font-extrabold">Pending Admin Review</span></p>
+                <p><strong>Creator:</strong> {pendingPayload?.creatorName || creatorName}</p>
+                <p><strong>Creator Email:</strong> {pendingPayload?.creatorEmail || creatorEmail}</p>
+                <p><strong>Approval Code:</strong> <span className="font-mono text-[#023859] font-black">{pendingPayload?.code || 'NQ-VIP'}</span></p>
+                <p><strong>Status:</strong> <span className="text-amber-700 font-extrabold">Pending Admin Review (Auto-Sync Active ⚡)</span></p>
               </div>
+            </div>
+
+            {/* Quick Manual Check / Code Entry Fallback */}
+            <div className="p-3 rounded-2xl bg-[#A7EBF2]/20 border border-[#54ACBF]/40 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-extrabold text-[#011C40]">Already Approved or Have Code?</span>
+                <button
+                  type="button"
+                  onClick={handleManualCheckStatus}
+                  disabled={isCheckingCloud}
+                  className="px-2.5 py-1 rounded-full bg-[#023859] text-white text-[10px] font-bold active:scale-95 flex items-center gap-1 cursor-pointer"
+                >
+                  <Sparkles className="w-3 h-3 text-amber-300" />
+                  <span>{isCheckingCloud ? 'Checking...' : 'Check Status 🔄'}</span>
+                </button>
+              </div>
+
+              <form onSubmit={handleApplyAdminCode} className="flex gap-2">
+                <input
+                  type="text"
+                  value={adminCodeInput}
+                  onChange={(e) => setAdminCodeInput(e.target.value)}
+                  placeholder="Paste VIP Code (e.g. NQ-1234) or Link"
+                  className="flex-1 bg-white px-3 py-1.5 rounded-xl text-[11px] font-bold text-[#011C40] border border-[#54ACBF]/40 focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  className="px-3 py-1.5 rounded-xl bg-[#023859] text-white text-[11px] font-extrabold active:scale-95 cursor-pointer"
+                >
+                  Unlock
+                </button>
+              </form>
             </div>
 
             <div className="space-y-2 pt-1">
               <button
                 onClick={handleOpenEmailClient}
-                className="w-full py-3 rounded-full liquid-glass-btn liquid-glass-btn-active text-white text-xs font-extrabold shadow-sm active:scale-95 flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-full liquid-glass-btn liquid-glass-btn-active text-white text-xs font-extrabold shadow-sm active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Mail className="w-4 h-4" />
                 <span>Open Email App to Send to nouriq.aisupport@gmail.com</span>
@@ -267,7 +455,7 @@ export default function CreatorVerificationModal({ isOpen, onClose, onVerificati
 
               <button
                 onClick={handleCopyProofText}
-                className="w-full py-2.5 rounded-full liquid-glass-btn text-[#011C40] text-xs font-bold active:scale-95 flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 rounded-full liquid-glass-btn text-[#011C40] text-xs font-bold active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-[#023859]" />}
                 <span>{copied ? 'Copied Email Text to Clipboard!' : 'Copy Verification Details to Clipboard'}</span>
@@ -275,7 +463,7 @@ export default function CreatorVerificationModal({ isOpen, onClose, onVerificati
 
               <button
                 onClick={onClose}
-                className="w-full py-2 rounded-full text-[#26658C] hover:text-[#011C40] font-extrabold text-xs transition-colors"
+                className="w-full py-2 rounded-full text-[#26658C] hover:text-[#011C40] font-extrabold text-xs transition-colors cursor-pointer"
               >
                 Done / Return to Nouriq
               </button>

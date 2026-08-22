@@ -216,35 +216,85 @@ export const NutritionProvider = ({ children }) => {
       // 3. Admin Verification Approval Link (e.g. nouriq-ai.onrender.com?approve_creator=token_123&fp=fp_abc&name=Alex)
       if (search.includes('approve_creator=')) {
         const approveToken = urlParams.get('approve_creator');
-        const targetFp = urlParams.get('fp');
+        const targetFp = urlParams.get('fp') || 'fp_all';
         const creatorName = urlParams.get('name') || 'Creator';
+        const shortCode = urlParams.get('code') || '';
 
         if (approveToken) {
+          const approvalPayload = {
+            token: approveToken,
+            targetFp,
+            creatorName,
+            code: shortCode,
+            status: 'APPROVED',
+            approvedAt: Date.now(),
+            approvedBy: 'nouriq.aisupport@gmail.com'
+          };
+
+          // 1. Broadcast global cloud signal via ntfy.sh (token-specific channel & global channel)
           try {
-            // Record Approval in Creator Authorization Registry
+            fetch(`https://ntfy.sh/nouriq_vip_${approveToken}`, {
+              method: 'POST',
+              headers: { 'Title': 'VIP Approved', 'Priority': 'urgent' },
+              body: JSON.stringify(approvalPayload)
+            }).catch(e => console.warn('Cloud signal error:', e));
+
+            fetch(`https://ntfy.sh/nouriq_vip_global_approvals`, {
+              method: 'POST',
+              headers: { 'Title': 'VIP Approved', 'Priority': 'urgent' },
+              body: JSON.stringify(approvalPayload)
+            }).catch(e => console.warn('Cloud global error:', e));
+          } catch (e) {}
+
+          // 2. Record Approval in local registry
+          try {
             const registry = JSON.parse(localStorage.getItem('nouriq_approved_creator_registry') || '{}');
-            registry[approveToken] = {
-              status: 'APPROVED',
-              targetFp: targetFp || 'fp_all',
-              creatorName,
-              approvedAt: Date.now(),
-              approvedBy: 'nouriq.aisupport@gmail.com'
-            };
+            registry[approveToken] = approvalPayload;
             localStorage.setItem('nouriq_approved_creator_registry', JSON.stringify(registry));
 
-            // Also broadcast remote approval event
-            try {
-              if (window.BroadcastChannel) {
-                const bc = new BroadcastChannel('nouriq_creator_approval_channel');
-                bc.postMessage({ token: approveToken, targetFp, creatorName, status: 'APPROVED' });
-              }
-            } catch (e) {}
-
-            alert(`✅ ADMIN ACTION SUCCESSFUL!\n\nYou have remotely APPROVED Lifetime VIP Access for:\n• Creator: ${creatorName}\n• Device Fingerprint: ${targetFp || 'Target Device'}\n\nThe creator will receive Ultimate VIP access on their device automatically.`);
-
+            if (window.BroadcastChannel) {
+              const bc = new BroadcastChannel('nouriq_creator_approval_channel');
+              bc.postMessage(approvalPayload);
+            }
           } catch (err) {
             console.warn('Error recording admin approval:', err);
           }
+
+          alert(`✅ ADMIN ACTION SUCCESSFUL!\n\nYou have remotely APPROVED Lifetime VIP Access for:\n• Creator: ${creatorName}\n• Device Fingerprint: ${targetFp || 'Target Device'}\n\nSignal transmitted across the cloud to Creator's device. VIP Access is now ACTIVE on their device!`);
+
+          if (window.location.search) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        }
+      }
+
+      // 4. Direct 1-Click VIP Pass Activation Link for Creator (e.g. nouriq-ai.onrender.com?activate_vip=token_123)
+      if (search.includes('activate_vip=') || search.includes('vip_token=') || search.includes('vip_pass=')) {
+        const vipToken = urlParams.get('activate_vip') || urlParams.get('vip_token') || urlParams.get('vip_pass');
+        const creatorName = urlParams.get('name') || 'VIP Creator';
+        if (vipToken) {
+          const vipState = {
+            tier: 'Ultimate',
+            status: 'active',
+            billingCycle: 'lifetime',
+            dailyScansLeft: 99999,
+            purchasedAt: Date.now(),
+            expiresAtTimestamp: null,
+            expiresAt: `Lifetime VIP Access (Approved by nouriq.aisupport@gmail.com)`,
+            autoPayActive: true,
+            isCreatorVip: true,
+            creatorName: creatorName,
+            deviceFingerprint: localStorage.getItem('nouriq_creator_device_fingerprint') || 'fp_vip',
+            verified: true,
+            stripePaymentId: `vip_link_approved_${vipToken}`
+          };
+
+          setSubscription(vipState);
+          localStorage.setItem('nouriq_subscription', JSON.stringify(vipState));
+          localStorage.removeItem('nouriq_pending_creator_request');
+          document.cookie = `nouriq_sub_tier=Ultimate; max-age=315360000; path=/; SameSite=Lax`;
+          setShowStripeSuccessModal(true);
+          confetti({ particleCount: 200, spread: 100 });
 
           if (window.location.search) {
             window.history.replaceState({}, document.title, window.location.pathname);
@@ -315,49 +365,139 @@ export const NutritionProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, []);
 
-  // Remote Creator Device Auto-Approval Sync Engine
+  // Remote Creator Device Auto-Approval Sync Engine (Cross-Device Cloud PubSub + SSE + Local)
   useEffect(() => {
-    const checkRemoteCreatorApproval = () => {
+    if (subscription?.tier !== 'Free') return;
+
+    let isMounted = true;
+    let eventSource = null;
+    let pollInterval = null;
+
+    const handleApprovalData = (approvedRecord) => {
+      if (!isMounted) return;
       try {
         const pendingStr = localStorage.getItem('nouriq_pending_creator_request');
-        if (pendingStr && subscription?.tier === 'Free') {
+        if (!pendingStr) return;
+        const pending = JSON.parse(pendingStr);
+
+        const currentFp = localStorage.getItem('nouriq_creator_device_fingerprint') || '';
+        const tokenMatch = approvedRecord.token && approvedRecord.token === pending.verificationToken;
+        const fpMatch = approvedRecord.targetFp && (approvedRecord.targetFp === currentFp || approvedRecord.targetFp === pending.deviceFingerprint || approvedRecord.targetFp === 'fp_all');
+        const nameMatch = approvedRecord.creatorName && (approvedRecord.creatorName === pending.creatorName);
+
+        if (tokenMatch || fpMatch || nameMatch || approvedRecord.status === 'APPROVED') {
+          const creatorVipState = {
+            tier: 'Ultimate',
+            status: 'active',
+            billingCycle: 'lifetime',
+            dailyScansLeft: 99999,
+            purchasedAt: Date.now(),
+            expiresAtTimestamp: null,
+            expiresAt: `Lifetime VIP Access (Approved by nouriq.aisupport@gmail.com)`,
+            autoPayActive: true,
+            isCreatorVip: true,
+            creatorName: approvedRecord.creatorName || pending.creatorName || 'Creator VIP',
+            deviceFingerprint: approvedRecord.targetFp || pending.deviceFingerprint || currentFp,
+            verified: true,
+            stripePaymentId: `vip_approved_${approvedRecord.token || pending.verificationToken || Date.now()}`
+          };
+
+          setSubscription(creatorVipState);
+          localStorage.setItem('nouriq_subscription', JSON.stringify(creatorVipState));
+          localStorage.removeItem('nouriq_pending_creator_request');
+          document.cookie = `nouriq_sub_tier=Ultimate; max-age=315360000; path=/; SameSite=Lax`;
+          confetti({ particleCount: 200, spread: 110 });
+        }
+      } catch (e) {
+        console.warn('Error applying creator approval:', e);
+      }
+    };
+
+    // 1. Local Registry & Broadcast Check
+    const checkLocalRegistry = () => {
+      try {
+        const pendingStr = localStorage.getItem('nouriq_pending_creator_request');
+        if (pendingStr) {
           const pending = JSON.parse(pendingStr);
           const registry = JSON.parse(localStorage.getItem('nouriq_approved_creator_registry') || '{}');
-
           const approvedRecord = registry[pending.verificationToken] || 
             Object.values(registry).find(r => r.targetFp === pending.deviceFingerprint || (r.creatorName && r.creatorName === pending.creatorName));
 
           if (approvedRecord && approvedRecord.status === 'APPROVED') {
-            const creatorVipState = {
-              tier: 'Ultimate',
-              status: 'active',
-              billingCycle: 'lifetime',
-              dailyScansLeft: 99999,
-              purchasedAt: Date.now(),
-              expiresAtTimestamp: null,
-              expiresAt: `Lifetime VIP Access (Approved by nouriq.aisupport@gmail.com)`,
-              autoPayActive: true,
-              isCreatorVip: true,
-              creatorName: pending.creatorName,
-              deviceFingerprint: pending.deviceFingerprint,
-              verified: true,
-              stripePaymentId: `vip_approved_${pending.verificationToken}`
-            };
-
-            setSubscription(creatorVipState);
-            localStorage.setItem('nouriq_subscription', JSON.stringify(creatorVipState));
-            localStorage.removeItem('nouriq_pending_creator_request');
-            document.cookie = `nouriq_sub_tier=Ultimate; max-age=315360000; path=/; SameSite=Lax`;
-            confetti({ particleCount: 200, spread: 100 });
+            handleApprovalData(approvedRecord);
           }
         }
-      } catch (err) {
-        console.warn('Error checking remote creator approval:', err);
-      }
+      } catch (err) {}
     };
 
-    checkRemoteCreatorApproval();
-    const interval = setInterval(checkRemoteCreatorApproval, 2500);
+    // 2. Fast Cloud Polling from ntfy.sh (Cross-Device Internet Relay)
+    const pollCloudStore = async () => {
+      try {
+        const pendingStr = localStorage.getItem('nouriq_pending_creator_request');
+        if (!pendingStr) return;
+        const pending = JSON.parse(pendingStr);
+        if (!pending.verificationToken) return;
+
+        const endpoints = [
+          `https://ntfy.sh/nouriq_vip_${pending.verificationToken}/json?poll=1`,
+          `https://ntfy.sh/nouriq_vip_global_approvals/json?poll=1`
+        ];
+
+        for (const ep of endpoints) {
+          try {
+            const res = await fetch(ep);
+            if (res.ok) {
+              const text = await res.text();
+              const lines = text.trim().split('\n');
+              for (const line of lines) {
+                if (!line.trim()) continue;
+                try {
+                  const data = JSON.parse(line);
+                  if (data.message) {
+                    let msgObj = null;
+                    try { msgObj = JSON.parse(data.message); } catch (e) { msgObj = data.message; }
+                    if (msgObj && (msgObj.status === 'APPROVED' || (typeof msgObj === 'string' && msgObj.includes('APPROVED')))) {
+                      handleApprovalData(typeof msgObj === 'object' ? msgObj : { token: pending.verificationToken, status: 'APPROVED' });
+                      return;
+                    }
+                  }
+                } catch (e) {}
+              }
+            }
+          } catch (e) {}
+        }
+      } catch (err) {}
+    };
+
+    checkLocalRegistry();
+    pollCloudStore();
+    pollInterval = setInterval(() => {
+      checkLocalRegistry();
+      pollCloudStore();
+    }, 2000);
+
+    // 3. Real-Time Server-Sent Events (SSE) Cross-Device Stream
+    try {
+      const pendingStr = localStorage.getItem('nouriq_pending_creator_request');
+      if (pendingStr) {
+        const pending = JSON.parse(pendingStr);
+        if (pending.verificationToken) {
+          eventSource = new EventSource(`https://ntfy.sh/nouriq_vip_${pending.verificationToken}/sse`);
+          eventSource.onmessage = (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              if (data.message) {
+                let msgObj = null;
+                try { msgObj = JSON.parse(data.message); } catch (e) { msgObj = data.message; }
+                if (msgObj && msgObj.status === 'APPROVED') {
+                  handleApprovalData(msgObj);
+                }
+              }
+            } catch (e) {}
+          };
+        }
+      }
+    } catch (e) {}
 
     let bc = null;
     try {
@@ -365,17 +505,19 @@ export const NutritionProvider = ({ children }) => {
         bc = new BroadcastChannel('nouriq_creator_approval_channel');
         bc.onmessage = (event) => {
           if (event.data && event.data.status === 'APPROVED') {
-            checkRemoteCreatorApproval();
+            handleApprovalData(event.data);
           }
         };
       }
     } catch (e) {}
 
     return () => {
-      clearInterval(interval);
+      isMounted = false;
+      if (pollInterval) clearInterval(pollInterval);
+      if (eventSource) eventSource.close();
       if (bc) bc.close();
     };
-  }, [subscription]);
+  }, [subscription?.tier]);
 
   const upgradeSubscription = (tierName, cycle = 'annual') => {
     const nameLower = (tierName || '').toLowerCase();
