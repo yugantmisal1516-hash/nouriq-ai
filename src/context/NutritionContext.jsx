@@ -6,7 +6,9 @@ import {
   getStoredWaterIntake, saveStoredWaterIntake,
   getStoredFastingState, saveStoredFastingState,
   getStoredGroceryItems, saveStoredGroceryItems,
-  getStoredWeightLogs, saveStoredWeightLogs
+  getStoredWeightLogs, saveStoredWeightLogs,
+  getStoredWorkoutLogs, saveStoredWorkoutLogs,
+  getStoredActiveWorkout, saveStoredActiveWorkout
 } from '../utils/storage';
 
 const NutritionContext = createContext(null);
@@ -38,7 +40,75 @@ export const NutritionProvider = ({ children }) => {
   const [fastingState, setFastingState] = useState(getStoredFastingState);
   const [groceryItems, setGroceryItems] = useState(getStoredGroceryItems);
   const [weightLogs, setWeightLogs] = useState(getStoredWeightLogs);
-  const [activeTab, setActiveTab] = useState('dashboard'); // dashboard, scanner, mealplan, fasting, water, grocery, analytics, coach, pricing, support
+  const [activeTab, setActiveTab] = useState('dashboard'); // dashboard, scanner, mealplan, fasting, water, grocery, analytics, workout, coach, pricing, support
+  const [workoutLogs, setWorkoutLogs] = useState(getStoredWorkoutLogs);
+  const [activeWorkout, setActiveWorkout] = useState(getStoredActiveWorkout);
+
+  const startWorkoutSession = (routine) => {
+    const newSession = {
+      id: `session-${Date.now()}`,
+      routineId: routine.id,
+      routineName: routine.name,
+      splitType: routine.splitType,
+      startedAt: Date.now(),
+      date: new Date().toISOString().split('T')[0],
+      exercises: routine.exercises.map(re => ({
+        exerciseId: re.exerciseId,
+        targetSets: re.targetSets,
+        targetReps: re.targetReps,
+        targetRpe: re.targetRpe,
+        sets: Array.from({ length: re.targetSets }, (_, i) => ({
+          setNumber: i + 1,
+          weightKg: '',
+          reps: '',
+          rpe: re.targetRpe || 8,
+          completed: false
+        }))
+      }))
+    };
+    setActiveWorkout(newSession);
+    saveStoredActiveWorkout(newSession);
+  };
+
+  const updateActiveWorkout = (updatedSession) => {
+    setActiveWorkout(updatedSession);
+    saveStoredActiveWorkout(updatedSession);
+  };
+
+  const cancelWorkoutSession = () => {
+    setActiveWorkout(null);
+    saveStoredActiveWorkout(null);
+  };
+
+  const saveWorkoutSession = (completedWorkout) => {
+    const updatedLogs = [completedWorkout, ...workoutLogs];
+    setWorkoutLogs(updatedLogs);
+    saveStoredWorkoutLogs(updatedLogs);
+    setActiveWorkout(null);
+    saveStoredActiveWorkout(null);
+    confetti({ particleCount: 140, spread: 80 });
+  };
+
+  const deleteWorkoutLog = (workoutId) => {
+    const updated = workoutLogs.filter(w => w.id !== workoutId);
+    setWorkoutLogs(updated);
+    saveStoredWorkoutLogs(updated);
+  };
+
+  const syncWorkoutRecoveryMacros = (recoveryBonus) => {
+    if (!recoveryBonus) return;
+    setGoals(prev => {
+      const updatedGoals = {
+        ...prev,
+        dailyCalorieGoal: (prev.dailyCalorieGoal || 2200) + (recoveryBonus.bonusCalories || 0),
+        dailyProteinGoal: (prev.dailyProteinGoal || 160) + (recoveryBonus.bonusProtein || 0),
+        dailyCarbGoal: (prev.dailyCarbGoal || 200) + (recoveryBonus.bonusCarbs || 0)
+      };
+      saveStoredGoals(updatedGoals);
+      return updatedGoals;
+    });
+  };
+
   const [userBloodwork, setUserBloodwork] = useState(() => {
     try {
       const stored = localStorage.getItem('nouriq_user_bloodwork');
@@ -893,6 +963,7 @@ export const NutritionProvider = ({ children }) => {
       fastingState, setFastingState, startFast, stopFast, updateFastingTargetHours,
       groceryItems, toggleGroceryItem, addGroceryItem, removeGroceryItem,
       weightLogs, logWeight,
+      workoutLogs, activeWorkout, startWorkoutSession, updateActiveWorkout, cancelWorkoutSession, saveWorkoutSession, deleteWorkoutLog, syncWorkoutRecoveryMacros,
       activeTab, setActiveTab,
       averageHealthScore,
       userBloodwork, setUserBloodwork, syncUserBloodwork,

@@ -12,7 +12,8 @@ import {
   Crown,
   Sparkles,
   TrendingUp,
-  Stethoscope
+  Stethoscope,
+  Dumbbell
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -27,6 +28,7 @@ export default function Sidebar() {
     { id: 'fasting', label: 'Fasting Timer', icon: Timer, badge: 'Live' },
     { id: 'water', label: 'Water Tracker', icon: Droplet },
     { id: 'grocery', label: 'Smart Grocery', icon: ShoppingCart },
+    { id: 'workout', label: 'AI Workout Coach', icon: Dumbbell, badge: 'Adaptive' },
     { id: 'analytics', label: 'Progress Analytics', icon: TrendingUp, badge: 'Reports' },
     { id: 'dietitian', label: 'VIP Dietitian & Lab', icon: Stethoscope, badge: '⭐ Ultimate' },
     { id: 'coach', label: 'AI Nutritionist', icon: Bot, badge: 'Zero-Error' },

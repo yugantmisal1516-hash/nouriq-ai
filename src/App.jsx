@@ -13,6 +13,7 @@ import AICoachChat from './components/AICoachChat';
 import SupportAndPolicies from './components/SupportAndPolicies';
 import PricingPlans from './components/PricingPlans';
 import DietitianConsult from './components/DietitianConsult';
+import WorkoutTracker from './components/WorkoutTracker';
 import MobileBottomNav from './components/MobileBottomNav';
 import PermissionModal from './components/PermissionModal';
 
@@ -63,6 +64,7 @@ function MainContent() {
     case 'fasting': return <FastingTimer />;
     case 'water': return <WaterTracker />;
     case 'grocery': return <GroceryList />;
+    case 'workout': return <WorkoutTracker />;
     case 'analytics': return <Analytics />;
     case 'coach': return <AICoachChat />;
     case 'dietitian': return <DietitianConsult />;

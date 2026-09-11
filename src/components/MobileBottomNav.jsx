@@ -16,7 +16,8 @@ import {
   HelpCircle,
   Sparkles,
   ChevronRight,
-  ShieldCheck
+  ShieldCheck,
+  Dumbbell
 } from 'lucide-react';
 
 export default function MobileBottomNav() {
@@ -34,6 +35,7 @@ export default function MobileBottomNav() {
   ];
 
   const drawerItems = [
+    { id: 'workout', label: 'AI Workout Coach', icon: Dumbbell, badge: 'Adaptive' },
     { id: 'fasting', label: 'Fasting Timer', icon: Timer, badge: 'Live' },
     { id: 'water', label: 'Water Tracker', icon: Droplet },
     { id: 'grocery', label: 'Smart Grocery', icon: ShoppingCart },

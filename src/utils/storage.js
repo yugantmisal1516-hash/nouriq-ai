@@ -6,8 +6,59 @@ const STORAGE_KEYS = {
   WATER_INTAKE: 'nutrimind_water_intake',
   FASTING_STATE: 'nutrimind_fasting_state',
   GROCERY_ITEMS: 'nutrimind_grocery_items',
-  WEIGHT_LOGS: 'nutrimind_weight_logs'
+  WEIGHT_LOGS: 'nutrimind_weight_logs',
+  WORKOUT_LOGS: 'nutrimind_workout_logs',
+  ACTIVE_WORKOUT: 'nutrimind_active_workout'
 };
+
+const INITIAL_WORKOUT_LOGS = [
+  {
+    id: 'workout-seed-1',
+    routineId: 'routine-ppl-push',
+    routineName: 'Push Day (Chest, Shoulders, Triceps)',
+    date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    durationMinutes: 44,
+    totalVolumeKg: 4920,
+    exercises: [
+      {
+        exerciseId: 'barbell-bench-press',
+        exerciseName: 'Barbell Bench Press',
+        sets: [
+          { setNumber: 1, weightKg: 50, reps: 10, rpe: 8, completed: true },
+          { setNumber: 2, weightKg: 50, reps: 10, rpe: 8.5, completed: true },
+          { setNumber: 3, weightKg: 50, reps: 10, rpe: 9, completed: true }
+        ]
+      },
+      {
+        exerciseId: 'incline-dumbbell-press',
+        exerciseName: 'Incline Dumbbell Press',
+        sets: [
+          { setNumber: 1, weightKg: 18, reps: 12, rpe: 8, completed: true },
+          { setNumber: 2, weightKg: 18, reps: 11, rpe: 8.5, completed: true },
+          { setNumber: 3, weightKg: 18, reps: 10, rpe: 9, completed: true }
+        ]
+      },
+      {
+        exerciseId: 'dumbbell-lateral-raise',
+        exerciseName: 'Dumbbell Lateral Raise',
+        sets: [
+          { setNumber: 1, weightKg: 8, reps: 15, rpe: 8.5, completed: true },
+          { setNumber: 2, weightKg: 8, reps: 14, rpe: 9, completed: true },
+          { setNumber: 3, weightKg: 8, reps: 13, rpe: 9.5, completed: true }
+        ]
+      },
+      {
+        exerciseId: 'rope-tricep-pushdown',
+        exerciseName: 'Cable Rope Tricep Pushdown',
+        sets: [
+          { setNumber: 1, weightKg: 20, reps: 12, rpe: 8, completed: true },
+          { setNumber: 2, weightKg: 20, reps: 12, rpe: 8.5, completed: true },
+          { setNumber: 3, weightKg: 20, reps: 11, rpe: 9, completed: true }
+        ]
+      }
+    ]
+  }
+];
 
 // Initial Seed Data for Demo
 const INITIAL_LOGGED_MEALS = [
@@ -117,4 +168,26 @@ export function getStoredWeightLogs() {
 
 export function saveStoredWeightLogs(logs) {
   localStorage.setItem(STORAGE_KEYS.WEIGHT_LOGS, JSON.stringify(logs));
+}
+
+export function getStoredWorkoutLogs() {
+  const data = localStorage.getItem(STORAGE_KEYS.WORKOUT_LOGS);
+  return data ? JSON.parse(data) : INITIAL_WORKOUT_LOGS;
+}
+
+export function saveStoredWorkoutLogs(logs) {
+  localStorage.setItem(STORAGE_KEYS.WORKOUT_LOGS, JSON.stringify(logs));
+}
+
+export function getStoredActiveWorkout() {
+  const data = localStorage.getItem(STORAGE_KEYS.ACTIVE_WORKOUT);
+  return data ? JSON.parse(data) : null;
+}
+
+export function saveStoredActiveWorkout(activeSession) {
+  if (!activeSession) {
+    localStorage.removeItem(STORAGE_KEYS.ACTIVE_WORKOUT);
+  } else {
+    localStorage.setItem(STORAGE_KEYS.ACTIVE_WORKOUT, JSON.stringify(activeSession));
+  }
 }
