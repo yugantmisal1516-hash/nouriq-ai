@@ -1,19 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { 
   X, 
   Play, 
   Pause, 
-  RotateCcw, 
   Compass, 
   Eye, 
-  ShieldCheck, 
   AlertTriangle, 
   Wind, 
   Sparkles, 
   Check, 
   Activity,
-  Layers,
   Maximize2
 } from 'lucide-react';
 
@@ -27,6 +25,7 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
   const [currentPhase, setCurrentPhase] = useState('concentric'); // 'concentric' or 'eccentric'
   const [repCount, setRepCount] = useState(1);
   const [activeAngle, setActiveAngle] = useState('iso'); // 'iso', 'front', 'side', 'top'
+  const [modelLoading, setModelLoading] = useState(true);
 
   // Refs for Three.js state
   const sceneRef = useRef(null);
@@ -36,10 +35,15 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
   const animTimeRef = useRef(0);
   const isDraggingRef = useRef(false);
   const prevMousePosRef = useRef({ x: 0, y: 0 });
-  const cameraAngleRef = useRef({ theta: Math.PI / 4, phi: Math.PI / 3, radius: 3.5 });
+  const cameraAngleRef = useRef({ theta: Math.PI / 4, phi: Math.PI / 2.8, radius: 3.2 });
 
-  // References to mannequin parts for animation
-  const mannequinRefs = useRef({});
+  // Loaded bones & equipment mesh references
+  const bonesRef = useRef({});
+  const initialQuatsRef = useRef({});
+  const initialPositionsRef = useRef({});
+  const modelRootRef = useRef(null);
+  const equipmentRefs = useRef({});
+  const skinnedMeshRef = useRef(null);
 
   // Reset states when exercise changes or opens
   useEffect(() => {
@@ -47,21 +51,23 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
       setIsPlaying(true);
       setRepCount(1);
       animTimeRef.current = 0;
-      cameraAngleRef.current = { theta: Math.PI / 4, phi: Math.PI / 3, radius: 3.5 };
+      cameraAngleRef.current = { theta: Math.PI / 4, phi: Math.PI / 2.8, radius: 3.2 };
       setActiveAngle('iso');
     }
   }, [isOpen, exercise?.id]);
 
-  // Three.js Scene Setup & Kinematic Engine
+  // Three.js Scene Setup & GLTF Male Base Mesh Loader
   useEffect(() => {
     if (!isOpen || !exercise || !canvasRef.current) return;
+
+    setModelLoading(true);
 
     const width = containerRef.current ? containerRef.current.clientWidth : 480;
     const height = containerRef.current ? containerRef.current.clientHeight : 440;
 
     // 1. SCENE & CAMERA
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x011328); // Deep Navy Studio
+    scene.background = new THREE.Color(0x011124); // Studio Dark Navy Background
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
@@ -81,50 +87,53 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     rendererRef.current = renderer;
 
-    // 3. LIGHTING
+    // 3. THREE-POINT STUDIO LIGHTING (Highlights Muscular Contours of Male Base Mesh)
     const ambientLight = new THREE.AmbientLight(0xdcf8fa, 0.75);
     scene.add(ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.3);
-    keyLight.position.set(4, 8, 5);
+    // Key Light (Angled front-top-right for sculpted muscle definition)
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.4);
+    keyLight.position.set(3, 6, 4);
     keyLight.castShadow = true;
     scene.add(keyLight);
 
-    const fillLight = new THREE.DirectionalLight(0x54acbf, 0.8);
-    fillLight.position.set(-4, 3, -3);
+    // Fill Light (Soft cool cyan from left)
+    const fillLight = new THREE.DirectionalLight(0x54acbf, 0.9);
+    fillLight.position.set(-4, 3, 2);
     scene.add(fillLight);
 
-    const rimLight = new THREE.PointLight(0xa7ebf2, 1.2, 10);
+    // Back / Rim Light (Edge rim lighting for deltoids, lats, and spine)
+    const rimLight = new THREE.DirectionalLight(0xa7ebf2, 1.3);
     rimLight.position.set(0, 4, -4);
     scene.add(rimLight);
 
-    // 4. STUDIO GYM FLOOR GRID
-    const gridHelper = new THREE.GridHelper(6, 16, 0x54acbf, 0x0a3055);
-    gridHelper.position.y = 0;
+    // 4. STUDIO GYM FLOOR & PEDESTAL
+    const floorPedestal = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.2, 2.3, 0.06, 32),
+      new THREE.MeshStandardMaterial({ color: 0x011c40, roughness: 0.4, metalness: 0.3 })
+    );
+    floorPedestal.position.y = -0.03;
+    floorPedestal.receiveShadow = true;
+    scene.add(floorPedestal);
+
+    const gridHelper = new THREE.GridHelper(5, 14, 0x54acbf, 0x023859);
+    gridHelper.position.y = 0.005;
     scene.add(gridHelper);
 
-    const floorGeo = new THREE.CircleGeometry(3.5, 32);
-    const floorMat = new THREE.MeshBasicMaterial({ color: 0x011c40, transparent: true, opacity: 0.6 });
-    const floor = new THREE.Mesh(floorGeo, floorMat);
-    floor.rotation.x = -Math.PI / 2;
-    floor.position.y = -0.01;
-    scene.add(floor);
+    // 5. GYM EQUIPMENT: BARBELL, DUMBBELLS, OLYMPIC BENCH
+    const equipment = createGymEquipment(scene, exercise);
+    equipmentRefs.current = equipment;
 
-    // 5. MATERIALS FOR ATHLETIC MANNEQUIN & ACTIVE MUSCLE GLOW
-    const skinMat = new THREE.MeshStandardMaterial({
-      color: 0xddeef8,
-      roughness: 0.35,
-      metalness: 0.2
+    // 6. ATHLETIC MALE BASE MESH MATERIAL (Matching User's Reference Model: media_1789975315254.png)
+    const athleticSkinMat = new THREE.MeshStandardMaterial({
+      color: 0x9fb0c2,      // Sculpted studio clay/gray matching user reference image
+      roughness: 0.35,      // Smooth specular sheen showing anatomical muscle contours
+      metalness: 0.15,
+      flatShading: false
     });
 
-    const jointMat = new THREE.MeshStandardMaterial({
-      color: 0x26658c,
-      roughness: 0.2,
-      metalness: 0.6
-    });
-
-    // Dynamic Muscle Glowing Material (illuminates during contraction)
-    const activeMuscleMat = new THREE.MeshStandardMaterial({
+    // Active Muscle Glowing Overlay Material
+    const muscleGlowMat = new THREE.MeshStandardMaterial({
       color: 0x54acbf,
       emissive: 0x26658c,
       emissiveIntensity: 0.6,
@@ -132,268 +141,51 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
       metalness: 0.4
     });
 
-    const weightIronMat = new THREE.MeshStandardMaterial({
-      color: 0x1e293b,
-      roughness: 0.3,
-      metalness: 0.8
-    });
+    // 7. LOAD GLTF MALE BASE MESH
+    const loader = new GLTFLoader();
+    loader.load(
+      '/models/male_base_mesh.glb',
+      (gltf) => {
+        const model = gltf.scene;
+        modelRootRef.current = model;
 
-    const barbellShaftMat = new THREE.MeshStandardMaterial({
-      color: 0xe2e8f0,
-      roughness: 0.2,
-      metalness: 0.95
-    });
+        // Model orientation: rotate to face camera and place feet on floor
+        model.rotation.y = -Math.PI / 2;
+        model.position.set(0, 0.95, 0);
 
-    const benchMat = new THREE.MeshStandardMaterial({
-      color: 0x023859,
-      roughness: 0.5,
-      metalness: 0.1
-    });
+        const bones = {};
+        const initialQuats = {};
+        const initialPositions = {};
 
-    // 6. BUILD PROCEDURAL ARTICULATED MANNEQUIN
-    const mannequin = new THREE.Group();
-    mannequin.position.y = 0;
-    scene.add(mannequin);
+        model.traverse((child) => {
+          if (child.isBone) {
+            bones[child.name] = child;
+            initialQuats[child.name] = child.quaternion.clone();
+            initialPositions[child.name] = child.position.clone();
+          }
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+            child.material = athleticSkinMat;
+            skinnedMeshRef.current = child;
+          }
+        });
 
-    // Pelvis (Root Joint)
-    const pelvis = new THREE.Group();
-    pelvis.position.set(0, 0.95, 0);
-    mannequin.add(pelvis);
+        bonesRef.current = bones;
+        initialQuatsRef.current = initialQuats;
+        initialPositionsRef.current = initialPositions;
 
-    const pelvisMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.14, 0.18, 16), jointMat);
-    pelvis.add(pelvisMesh);
-
-    // Spine & Torso
-    const spine = new THREE.Group();
-    pelvis.add(spine);
-
-    const torsoMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.16, 0.38, 16), skinMat);
-    torsoMesh.position.y = 0.24;
-    spine.add(torsoMesh);
-
-    // Pectoral / Chest Plates (Active Muscle indicator)
-    const chestPlateGeo = new THREE.BoxGeometry(0.36, 0.18, 0.12);
-    const chestPlate = new THREE.Mesh(chestPlateGeo, activeMuscleMat);
-    chestPlate.position.set(0, 0.3, 0.12);
-    spine.add(chestPlate);
-
-    // Lat Plates (Back Active Muscle indicator)
-    const latPlateGeo = new THREE.BoxGeometry(0.38, 0.22, 0.1);
-    const latPlate = new THREE.Mesh(latPlateGeo, activeMuscleMat);
-    latPlate.position.set(0, 0.26, -0.11);
-    spine.add(latPlate);
-
-    // Neck & Head
-    const neck = new THREE.Group();
-    neck.position.set(0, 0.46, 0);
-    spine.add(neck);
-
-    const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.13, 18, 18), skinMat);
-    headMesh.position.y = 0.12;
-    neck.add(headMesh);
-
-    // Visor / Athletic Face Feature
-    const visorMesh = new THREE.Mesh(
-      new THREE.BoxGeometry(0.18, 0.05, 0.12),
-      new THREE.MeshBasicMaterial({ color: 0xa7ebf2 })
+        scene.add(model);
+        setModelLoading(false);
+      },
+      undefined,
+      (err) => {
+        console.warn('Error loading GLTF male base mesh:', err);
+        setModelLoading(false);
+      }
     );
-    visorMesh.position.set(0, 0.13, 0.08);
-    neck.add(visorMesh);
 
-    // LEFT ARM HIERARCHY
-    const leftShoulder = new THREE.Group();
-    leftShoulder.position.set(0.25, 0.38, 0);
-    spine.add(leftShoulder);
-
-    const leftShoulderMesh = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 14), activeMuscleMat);
-    leftShoulder.add(leftShoulderMesh);
-
-    const leftUpperArm = new THREE.Group();
-    leftShoulder.add(leftUpperArm);
-    const leftUpperArmMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.06, 0.28, 12), activeMuscleMat);
-    leftUpperArmMesh.position.y = -0.14;
-    leftUpperArm.add(leftUpperArmMesh);
-
-    const leftElbow = new THREE.Group();
-    leftElbow.position.set(0, -0.28, 0);
-    leftUpperArm.add(leftElbow);
-
-    const leftForearm = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.045, 0.26, 12), skinMat);
-    leftForearm.position.y = -0.13;
-    leftElbow.add(leftForearm);
-
-    const leftHand = new THREE.Group();
-    leftHand.position.set(0, -0.26, 0);
-    leftElbow.add(leftHand);
-
-    // RIGHT ARM HIERARCHY
-    const rightShoulder = new THREE.Group();
-    rightShoulder.position.set(-0.25, 0.38, 0);
-    spine.add(rightShoulder);
-
-    const rightShoulderMesh = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 14), activeMuscleMat);
-    rightShoulder.add(rightShoulderMesh);
-
-    const rightUpperArm = new THREE.Group();
-    rightShoulder.add(rightUpperArm);
-    const rightUpperArmMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.06, 0.28, 12), activeMuscleMat);
-    rightUpperArmMesh.position.y = -0.14;
-    rightUpperArm.add(rightUpperArmMesh);
-
-    const rightElbow = new THREE.Group();
-    rightElbow.position.set(0, -0.28, 0);
-    rightUpperArm.add(rightElbow);
-
-    const rightForearm = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.045, 0.26, 12), skinMat);
-    rightForearm.position.y = -0.13;
-    rightElbow.add(rightForearm);
-
-    const rightHand = new THREE.Group();
-    rightHand.position.set(0, -0.26, 0);
-    rightElbow.add(rightHand);
-
-    // LEFT LEG HIERARCHY
-    const leftHip = new THREE.Group();
-    leftHip.position.set(0.12, -0.05, 0);
-    pelvis.add(leftHip);
-
-    const leftThigh = new THREE.Group();
-    leftHip.add(leftThigh);
-    const leftThighMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.07, 0.42, 14), activeMuscleMat);
-    leftThighMesh.position.y = -0.21;
-    leftThigh.add(leftThighMesh);
-
-    const leftKnee = new THREE.Group();
-    leftKnee.position.set(0, -0.42, 0);
-    leftThigh.add(leftKnee);
-
-    const leftShin = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.055, 0.42, 12), skinMat);
-    leftShin.position.y = -0.21;
-    leftKnee.add(leftShin);
-
-    const leftFoot = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.06, 0.18), jointMat);
-    leftFoot.position.set(0, -0.43, 0.05);
-    leftKnee.add(leftFoot);
-
-    // RIGHT LEG HIERARCHY
-    const rightHip = new THREE.Group();
-    rightHip.position.set(-0.12, -0.05, 0);
-    pelvis.add(rightHip);
-
-    const rightThigh = new THREE.Group();
-    rightHip.add(rightThigh);
-    const rightThighMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.07, 0.42, 14), activeMuscleMat);
-    rightThighMesh.position.y = -0.21;
-    rightThigh.add(rightThighMesh);
-
-    const rightKnee = new THREE.Group();
-    rightKnee.position.set(0, -0.42, 0);
-    rightThigh.add(rightKnee);
-
-    const rightShin = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.055, 0.42, 12), skinMat);
-    rightShin.position.y = -0.21;
-    rightKnee.add(rightShin);
-
-    const rightFoot = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.06, 0.18), jointMat);
-    rightFoot.position.set(0, -0.43, 0.05);
-    rightKnee.add(rightFoot);
-
-    // 7. GYM EQUIPMENT: BARBELL / DUMBBELLS / BENCH
-    const barbell = new THREE.Group();
-    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 1.6, 16), barbellShaftMat);
-    shaft.rotation.z = Math.PI / 2;
-    barbell.add(shaft);
-
-    const plate1 = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.05, 24), weightIronMat);
-    plate1.rotation.z = Math.PI / 2;
-    plate1.position.x = 0.65;
-    barbell.add(plate1);
-
-    const plate2 = plate1.clone();
-    plate2.position.x = -0.65;
-    barbell.add(plate2);
-
-    scene.add(barbell);
-
-    // Dumbbell pair
-    const leftDumbbell = new THREE.Group();
-    const dbShaft1 = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.28, 12), barbellShaftMat);
-    dbShaft1.rotation.z = Math.PI / 2;
-    leftDumbbell.add(dbShaft1);
-    const dbPlate1 = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.04, 16), weightIronMat);
-    dbPlate1.rotation.z = Math.PI / 2;
-    dbPlate1.position.x = 0.1;
-    leftDumbbell.add(dbPlate1);
-    const dbPlate2 = dbPlate1.clone();
-    dbPlate2.position.x = -0.1;
-    leftDumbbell.add(dbPlate2);
-    leftHand.add(leftDumbbell);
-
-    const rightDumbbell = leftDumbbell.clone();
-    rightHand.add(rightDumbbell);
-
-    // Flat Gym Bench
-    const benchGroup = new THREE.Group();
-    const benchPad = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.08, 1.3), benchMat);
-    benchPad.position.set(0, 0.45, 0);
-    benchGroup.add(benchPad);
-
-    const benchLeg1 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.45, 0.06), weightIronMat);
-    benchLeg1.position.set(0, 0.22, 0.5);
-    benchGroup.add(benchLeg1);
-    const benchLeg2 = benchLeg1.clone();
-    benchLeg2.position.set(0, 0.22, -0.5);
-    benchGroup.add(benchLeg2);
-
-    scene.add(benchGroup);
-
-    // Save refs for animation loop
-    mannequinRefs.current = {
-      mannequin,
-      pelvis,
-      spine,
-      neck,
-      leftShoulder,
-      leftUpperArm,
-      leftElbow,
-      leftHand,
-      rightShoulder,
-      rightUpperArm,
-      rightElbow,
-      rightHand,
-      leftHip,
-      leftThigh,
-      leftKnee,
-      rightHip,
-      rightThigh,
-      rightKnee,
-      barbell,
-      leftDumbbell,
-      rightDumbbell,
-      benchGroup,
-      activeMuscleMat,
-      chestPlate,
-      latPlate,
-      leftShoulderMesh,
-      rightShoulderMesh,
-      leftUpperArmMesh,
-      rightUpperArmMesh,
-      leftThighMesh,
-      rightThighMesh
-    };
-
-    // Configure visibility of equipment based on exercise
-    const eq = (exercise.equipment || '').toLowerCase();
-    const isBarbell = eq.includes('barbell');
-    const isDumbbell = eq.includes('dumbbell');
-    const isBench = exercise.kinematicType === 'bench-press' || exercise.kinematicType === 'incline-press';
-
-    barbell.visible = isBarbell;
-    leftDumbbell.visible = isDumbbell;
-    rightDumbbell.visible = isDumbbell;
-    benchGroup.visible = isBench;
-
-    // 8. RENDER & KINEMATICS ANIMATION LOOP
+    // 8. KINEMATICS ANIMATION LOOP
     let lastTime = performance.now();
 
     const animate = (currentTime) => {
@@ -403,7 +195,7 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
       lastTime = currentTime;
 
       if (isPlaying) {
-        const speed = isSlowMo ? 1.1 : 2.2;
+        const speed = isSlowMo ? 1.0 : 2.0;
         animTimeRef.current += delta * speed;
 
         // Oscillate cycle between 0 and 1
@@ -412,18 +204,13 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
 
         setCurrentPhase(isConcentric ? 'concentric' : 'eccentric');
 
-        // Increment rep counter when cycle loops
+        // Increment rep counter when cycle resets
         if (Math.abs(Math.sin(animTimeRef.current)) < 0.04 && Math.cos(animTimeRef.current) > 0.98) {
           setRepCount(prev => (prev >= 12 ? 1 : prev + 1));
         }
 
-        // Pulse active muscle glow during concentric contraction
-        const pulse = 0.5 + 0.5 * cycleProgress;
-        activeMuscleMat.emissiveIntensity = 0.4 + 0.6 * cycleProgress;
-        activeMuscleMat.emissive.setHex(isConcentric ? 0x54acbf : 0x26658c);
-
-        // Apply kinematics based on exercise type
-        applyKinematics(exercise.kinematicType || 'squat', cycleProgress, isConcentric);
+        // Apply US-standard workout kinematics
+        applyUSStandardKinematics(exercise.kinematicType || 'squat', cycleProgress, isConcentric);
       }
 
       renderer.render(scene, camera);
@@ -446,185 +233,319 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
     cameraRef.current.position.x = radius * Math.sin(phi) * Math.sin(theta);
     cameraRef.current.position.y = radius * Math.cos(phi);
     cameraRef.current.position.z = radius * Math.sin(phi) * Math.cos(theta);
-    cameraRef.current.lookAt(0, 1.0, 0);
+    cameraRef.current.lookAt(0, 0.95, 0);
   };
 
-  // KINEMATIC FORM EQUATIONS PER EXERCISE
-  const applyKinematics = (type, t, isConcentric) => {
-    const refs = mannequinRefs.current;
-    if (!refs.mannequin) return;
+  // CREATE REALISTIC GYM EQUIPMENT
+  const createGymEquipment = (scene, ex) => {
+    const eq = (ex.equipment || '').toLowerCase();
+    const type = ex.kinematicType || 'squat';
 
-    // Reset base orientations
-    refs.mannequin.rotation.set(0, 0, 0);
-    refs.mannequin.position.set(0, 0, 0);
-    refs.pelvis.position.set(0, 0.95, 0);
-    refs.spine.rotation.set(0, 0, 0);
+    const steelMat = new THREE.MeshStandardMaterial({ color: 0x2b3748, roughness: 0.3, metalness: 0.85 });
+    const chromeMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.15, metalness: 0.95 });
+    const leatherMat = new THREE.MeshStandardMaterial({ color: 0x02253d, roughness: 0.5, metalness: 0.1 });
+
+    // 1. Olympic Barbell (2.2m with knurling and 20kg Olympic bumper plates)
+    const barbell = new THREE.Group();
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 2.1, 16), chromeMat);
+    shaft.rotation.z = Math.PI / 2;
+    barbell.add(shaft);
+
+    // Left Plates
+    const plateL1 = new THREE.Mesh(new THREE.CylinderGeometry(0.225, 0.225, 0.05, 32), steelMat);
+    plateL1.rotation.z = Math.PI / 2;
+    plateL1.position.x = 0.75;
+    barbell.add(plateL1);
+    const collarL = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.03, 16), chromeMat);
+    collarL.rotation.z = Math.PI / 2;
+    collarL.position.x = 0.68;
+    barbell.add(collarL);
+
+    // Right Plates
+    const plateR1 = plateL1.clone();
+    plateR1.position.x = -0.75;
+    barbell.add(plateR1);
+    const collarR = collarL.clone();
+    collarR.position.x = -0.68;
+    barbell.add(collarR);
+
+    barbell.castShadow = true;
+    scene.add(barbell);
+
+    // 2. Commercial Dumbbells
+    const dumbbellL = new THREE.Group();
+    const dbHandleL = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.24, 14), chromeMat);
+    dbHandleL.rotation.z = Math.PI / 2;
+    dumbbellL.add(dbHandleL);
+    const dbHeadL1 = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.05, 18), steelMat);
+    dbHeadL1.rotation.z = Math.PI / 2;
+    dbHeadL1.position.x = 0.1;
+    dumbbellL.add(dbHeadL1);
+    const dbHeadL2 = dbHeadL1.clone();
+    dbHeadL2.position.x = -0.1;
+    dumbbellL.add(dbHeadL2);
+
+    const dumbbellR = dumbbellL.clone();
+    scene.add(dumbbellL);
+    scene.add(dumbbellR);
+
+    // 3. Olympic Flat Bench
+    const benchGroup = new THREE.Group();
+    const pad = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.08, 1.25), leatherMat);
+    pad.position.set(0, 0.45, 0);
+    benchGroup.add(pad);
+    const leg1 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.45, 0.06), steelMat);
+    leg1.position.set(0, 0.22, 0.5);
+    benchGroup.add(leg1);
+    const leg2 = leg1.clone();
+    leg2.position.set(0, 0.22, -0.5);
+    benchGroup.add(leg2);
+
+    scene.add(benchGroup);
+
+    // Visibility configuration
+    const isBarbellEx = eq.includes('barbell') || type === 'squat' || type === 'deadlift';
+    const isDumbbellEx = eq.includes('dumbbell') || type === 'lateral-raise' || type === 'bicep-curl';
+    const isBenchEx = type === 'bench-press' || type === 'incline-press';
+
+    barbell.visible = isBarbellEx;
+    dumbbellL.visible = isDumbbellEx;
+    dumbbellR.visible = isDumbbellEx;
+    benchGroup.visible = isBenchEx;
+
+    return { barbell, dumbbellL, dumbbellR, benchGroup };
+  };
+
+  // US STANDARD BIOMECHANICAL KINEMATIC FORM EQUATIONS
+  const applyUSStandardKinematics = (type, t, isConcentric) => {
+    const bones = bonesRef.current;
+    const initialQuats = initialQuatsRef.current;
+    const initialPos = initialPositionsRef.current;
+    const model = modelRootRef.current;
+    const eq = equipmentRefs.current;
+
+    if (!model || !bones.spine) return;
+
+    // Reset all bones to initial A-pose quaternion
+    Object.keys(bones).forEach(name => {
+      if (initialQuats[name]) {
+        bones[name].quaternion.copy(initialQuats[name]);
+      }
+      if (initialPos[name]) {
+        bones[name].position.copy(initialPos[name]);
+      }
+    });
+
+    // Reset root orientation
+    model.rotation.set(0, -Math.PI / 2, 0);
+    model.position.set(0, 0.95, 0);
 
     switch (type) {
+      // 1. US STANDARD BARBELL BENCH PRESS (5-Point Contact, 45° Elbow Tuck, J-Curve Bar Path)
       case 'bench-press': {
-        // Lie flat on bench
-        refs.mannequin.rotation.x = -Math.PI / 2;
-        refs.mannequin.position.set(0, 0.55, 0);
-        refs.pelvis.position.set(0, 0, 0);
+        // Lay horizontal on Olympic bench
+        model.rotation.set(-Math.PI / 2, 0, -Math.PI / 2);
+        model.position.set(0, 0.52, 0);
 
-        // Legs hanging down off bench
-        refs.leftHip.rotation.x = -Math.PI / 4;
-        refs.rightHip.rotation.x = -Math.PI / 4;
-        refs.leftKnee.rotation.x = Math.PI / 2.5;
-        refs.rightKnee.rotation.x = Math.PI / 2.5;
+        // Legs drape down with feet planted flat on floor (Leg Drive)
+        if (bones.thighL) bones.thighL.rotation.z = Math.PI / 4;
+        if (bones.thighR) bones.thighR.rotation.z = -Math.PI / 4;
+        if (bones.shinL) bones.shinL.rotation.z = -Math.PI / 2.5;
+        if (bones.shinR) bones.shinR.rotation.z = Math.PI / 2.5;
 
-        // Elbow tuck & Pressing Arc (45 degree elbow angle)
-        const armAngle = THREE.MathUtils.lerp(Math.PI / 2.4, 0.15, t);
-        refs.leftUpperArm.rotation.set(Math.PI / 4, 0, armAngle);
-        refs.rightUpperArm.rotation.set(Math.PI / 4, 0, -armAngle);
+        // Scapular retraction on chest (shoulders pulled back into bench)
+        if (bones.shoulderL) bones.shoulderL.rotation.y = 0.2;
+        if (bones.shoulderR) bones.shoulderR.rotation.y = -0.2;
 
-        refs.leftElbow.rotation.z = THREE.MathUtils.lerp(Math.PI / 2, 0.1, t);
-        refs.rightElbow.rotation.z = THREE.MathUtils.lerp(-Math.PI / 2, -0.1, t);
+        // US standard 45° elbow angle (prevents rotator cuff impingement)
+        const elbowFlexion = THREE.MathUtils.lerp(Math.PI / 2.2, 0.05, t);
+        const upperArmAngle = THREE.MathUtils.lerp(Math.PI / 4, 0.1, t);
 
-        // Barbell tracking vertically over mid-sternum
-        const barY = THREE.MathUtils.lerp(0.68, 1.08, t);
-        refs.barbell.position.set(0, barY, 0.15);
+        if (bones.upper_armL) {
+          bones.upper_armL.rotation.x = upperArmAngle;
+          bones.upper_armL.rotation.z = elbowFlexion;
+        }
+        if (bones.upper_armR) {
+          bones.upper_armR.rotation.x = upperArmAngle;
+          bones.upper_armR.rotation.z = -elbowFlexion;
+        }
+
+        // Barbell J-curve path: touches lower sternum at bottom, locks out over shoulders at top
+        const barY = THREE.MathUtils.lerp(0.72, 1.15, t);
+        const barZ = THREE.MathUtils.lerp(0.08, 0.0, t);
+        if (eq.barbell) {
+          eq.barbell.position.set(0, barY, barZ);
+          eq.barbell.rotation.set(0, 0, 0);
+        }
         break;
       }
 
-      case 'incline-press': {
-        // 30 degree incline on bench
-        refs.mannequin.rotation.x = -Math.PI / 3;
-        refs.mannequin.position.set(0, 0.6, -0.1);
-
-        const armAngle = THREE.MathUtils.lerp(Math.PI / 2.2, 0.2, t);
-        refs.leftUpperArm.rotation.set(Math.PI / 4, 0, armAngle);
-        refs.rightUpperArm.rotation.set(Math.PI / 4, 0, -armAngle);
-
-        refs.leftElbow.rotation.z = THREE.MathUtils.lerp(Math.PI / 2.2, 0.1, t);
-        refs.rightElbow.rotation.z = THREE.MathUtils.lerp(-Math.PI / 2.2, -0.1, t);
-        break;
-      }
-
+      // 2. US STANDARD BARBELL SQUAT (Crease of Hip Below Knee, Neutral Lumbar, Mid-Foot Bar Path)
       case 'squat': {
-        // Bar on upper traps
-        const depth = THREE.MathUtils.lerp(0, 0.45, 1 - t);
-        refs.pelvis.position.y = 0.95 - depth;
+        // Barbell rests firmly across upper trapezius shelf
+        const squatDepth = THREE.MathUtils.lerp(0, 0.48, 1 - t);
+        model.position.y = 0.95 - squatDepth;
 
-        // Hip hinge & knee flexion
-        const hipFlex = THREE.MathUtils.lerp(0, Math.PI / 2.2, 1 - t);
-        const kneeFlex = THREE.MathUtils.lerp(0, Math.PI / 2.0, 1 - t);
+        // Torso rigid 20° incline maintaining 360° intra-abdominal brace
+        const spineIncline = THREE.MathUtils.lerp(0, Math.PI / 9, 1 - t);
+        if (bones.spine001) bones.spine001.rotation.y = spineIncline;
+        if (bones.spine002) bones.spine002.rotation.y = spineIncline * 0.5;
 
-        refs.spine.rotation.x = THREE.MathUtils.lerp(0, Math.PI / 8, 1 - t); // slight torso forward lean
-        refs.leftHip.rotation.x = -hipFlex;
-        refs.rightHip.rotation.x = -hipFlex;
-        refs.leftKnee.rotation.x = kneeFlex;
-        refs.rightKnee.rotation.x = kneeFlex;
+        // Hips break backward, thighs reach full parallel / below parallel (US standard)
+        const hipFlexion = THREE.MathUtils.lerp(0, Math.PI / 2.1, 1 - t);
+        const kneeFlexion = THREE.MathUtils.lerp(0, Math.PI / 1.9, 1 - t);
 
-        // Arms holding barbell behind neck
-        refs.leftUpperArm.rotation.set(-Math.PI / 4, 0, Math.PI / 3);
-        refs.rightUpperArm.rotation.set(-Math.PI / 4, 0, -Math.PI / 3);
-        refs.leftElbow.rotation.z = Math.PI / 2.5;
-        refs.rightElbow.rotation.z = -Math.PI / 2.5;
+        if (bones.thighL) bones.thighL.rotation.x = hipFlexion;
+        if (bones.thighR) bones.thighR.rotation.x = -hipFlexion;
+        if (bones.shinL) bones.shinL.rotation.x = -kneeFlexion;
+        if (bones.shinR) bones.shinR.rotation.x = kneeFlexion;
 
-        // Barbell stays locked across traps
-        refs.barbell.position.set(0, 1.48 - depth, -0.05);
+        // Arms reach back and grip barbell
+        if (bones.upper_armL) bones.upper_armL.rotation.set(-Math.PI / 3, 0, Math.PI / 3);
+        if (bones.upper_armR) bones.upper_armR.rotation.set(-Math.PI / 3, 0, -Math.PI / 3);
+        if (bones.forearmL) bones.forearmL.rotation.z = Math.PI / 3;
+        if (bones.forearmR) bones.forearmR.rotation.z = -Math.PI / 3;
+
+        // Barbell stays locked over mid-foot vertical axis
+        if (eq.barbell) {
+          eq.barbell.position.set(0, 1.48 - squatDepth, -0.04);
+          eq.barbell.rotation.set(0, 0, 0);
+        }
         break;
       }
 
+      // 3. US STANDARD DEADLIFT / RDL (Posterior Chain Hinge, Bar Scraping Shins, Neutral Spine)
       case 'deadlift': {
-        // Hip hinge with bar scraping shins
-        const hinge = THREE.MathUtils.lerp(Math.PI / 3.2, 0, t);
-        refs.pelvis.position.y = THREE.MathUtils.lerp(0.8, 0.95, t);
-        refs.spine.rotation.x = hinge;
+        const hingeAngle = THREE.MathUtils.lerp(Math.PI / 3.4, 0, t);
+        model.position.y = THREE.MathUtils.lerp(0.82, 0.95, t);
 
-        refs.leftHip.rotation.x = -hinge * 0.8;
-        refs.rightHip.rotation.x = -hinge * 0.8;
-        refs.leftKnee.rotation.x = (1 - t) * 0.35;
-        refs.rightKnee.rotation.x = (1 - t) * 0.35;
+        // Hips push back horizontally, spine stays completely flat
+        if (bones.spine001) bones.spine001.rotation.y = hingeAngle;
+        if (bones.spine002) bones.spine002.rotation.y = hingeAngle * 0.4;
 
-        // Arms hang vertical holding bar
-        refs.leftUpperArm.rotation.set(hinge, 0, 0.1);
-        refs.rightUpperArm.rotation.set(hinge, 0, -0.1);
-        refs.leftElbow.rotation.set(0, 0, 0);
-        refs.rightElbow.rotation.set(0, 0, 0);
+        // Soft knees locked at 15°
+        if (bones.thighL) bones.thighL.rotation.x = hingeAngle * 0.7;
+        if (bones.thighR) bones.thighR.rotation.x = -hingeAngle * 0.7;
+        if (bones.shinL) bones.shinL.rotation.x = -(1 - t) * 0.3;
+        if (bones.shinR) bones.shinR.rotation.x = (1 - t) * 0.3;
 
-        // Barbell tracks along shins to hips
-        const barY = THREE.MathUtils.lerp(0.28, 0.82, t);
-        const barZ = THREE.MathUtils.lerp(0.25, 0.15, t);
-        refs.barbell.position.set(0, barY, barZ);
+        // Arms hang vertical with engaged lats ("squeeze oranges in armpits")
+        if (bones.upper_armL) bones.upper_armL.rotation.set(0, 0, 0.1);
+        if (bones.upper_armR) bones.upper_armR.rotation.set(0, 0, -0.1);
+
+        // Barbell slides vertically along shins to hips
+        const barY = THREE.MathUtils.lerp(0.32, 0.88, t);
+        const barZ = THREE.MathUtils.lerp(0.24, 0.12, t);
+        if (eq.barbell) {
+          eq.barbell.position.set(0, barY, barZ);
+          eq.barbell.rotation.set(0, 0, 0);
+        }
         break;
       }
 
+      // 4. US STANDARD LAT PULLDOWN (Scapular Depression, 10° Chest Arch, Elbows to Ribs)
       case 'lat-pulldown': {
-        // Seated, arms pull bar from overhead to upper chest
-        refs.pelvis.position.set(0, 0.65, 0);
-        refs.spine.rotation.x = -0.15; // 10 degree chest tilt
-        refs.leftHip.rotation.x = -Math.PI / 2.2;
-        refs.rightHip.rotation.x = -Math.PI / 2.2;
-        refs.leftKnee.rotation.x = Math.PI / 2.2;
-        refs.rightKnee.rotation.x = Math.PI / 2.2;
+        // Seated under thigh pads
+        model.position.set(0, 0.65, 0);
+        if (bones.spine001) bones.spine001.rotation.y = -0.15; // 10° chest tilt
 
-        // Arms pull down and elbows drive to ribs
-        const armPull = THREE.MathUtils.lerp(Math.PI * 0.9, Math.PI * 0.25, t);
-        refs.leftUpperArm.rotation.set(0, 0, armPull);
-        refs.rightUpperArm.rotation.set(0, 0, -armPull);
+        // Knees at 90° under thigh pads
+        if (bones.thighL) bones.thighL.rotation.x = Math.PI / 2.2;
+        if (bones.thighR) bones.thighR.rotation.x = -Math.PI / 2.2;
+        if (bones.shinL) bones.shinL.rotation.x = -Math.PI / 2.2;
+        if (bones.shinR) bones.shinR.rotation.x = Math.PI / 2.2;
 
-        refs.leftElbow.rotation.z = THREE.MathUtils.lerp(0.2, Math.PI / 2, t);
-        refs.rightElbow.rotation.z = THREE.MathUtils.lerp(-0.2, -Math.PI / 2, t);
+        // Arms pull down, driving elbows down and back toward lats
+        const armPull = THREE.MathUtils.lerp(Math.PI * 0.85, Math.PI * 0.28, t);
+        if (bones.upper_armL) bones.upper_armL.rotation.z = armPull;
+        if (bones.upper_armR) bones.upper_armR.rotation.z = -armPull;
+        if (bones.forearmL) bones.forearmL.rotation.z = THREE.MathUtils.lerp(0.15, Math.PI / 2.2, t);
+        if (bones.forearmR) bones.forearmR.rotation.z = THREE.MathUtils.lerp(-0.15, -Math.PI / 2.2, t);
 
-        // Barbell represents the cable lat bar
-        const barY = THREE.MathUtils.lerp(2.1, 1.45, t);
-        refs.barbell.position.set(0, barY, 0.1);
+        // Lat bar pulls from overhead down to collarbone
+        const barY = THREE.MathUtils.lerp(2.15, 1.48, t);
+        if (eq.barbell) {
+          eq.barbell.position.set(0, barY, 0.1);
+          eq.barbell.rotation.set(0, 0, 0);
+        }
         break;
       }
 
+      // 5. US STANDARD OVERHEAD SHOULDER PRESS (Scapular Plane, Head Through Window Lockout)
       case 'overhead-press': {
-        // Standing overhead press
-        const pressProgress = THREE.MathUtils.lerp(0.2, Math.PI * 0.85, t);
-        refs.leftUpperArm.rotation.set(0, 0, pressProgress);
-        refs.rightUpperArm.rotation.set(0, 0, -pressProgress);
+        // Standing press from collarbone to overhead lockout
+        const pressUp = THREE.MathUtils.lerp(0.2, Math.PI * 0.82, t);
+        if (bones.upper_armL) bones.upper_armL.rotation.z = pressUp;
+        if (bones.upper_armR) bones.upper_armR.rotation.z = -pressUp;
+        if (bones.forearmL) bones.forearmL.rotation.z = THREE.MathUtils.lerp(Math.PI / 2.2, 0.1, t);
+        if (bones.forearmR) bones.forearmR.rotation.z = THREE.MathUtils.lerp(-Math.PI / 2.2, -0.1, t);
 
-        refs.leftElbow.rotation.z = THREE.MathUtils.lerp(Math.PI / 2, 0.1, t);
-        refs.rightElbow.rotation.z = THREE.MathUtils.lerp(-Math.PI / 2, -0.1, t);
-
-        const barY = THREE.MathUtils.lerp(1.35, 2.05, t);
-        refs.barbell.position.set(0, barY, 0.08);
+        const barY = THREE.MathUtils.lerp(1.38, 2.05, t);
+        if (eq.barbell) {
+          eq.barbell.position.set(0, barY, 0.08);
+          eq.barbell.rotation.set(0, 0, 0);
+        }
         break;
       }
 
+      // 6. DUMBBELL LATERAL RAISE (Scapular Plane 15°, Soft Elbows, Parallel Height)
       case 'lateral-raise': {
-        // Dumbbell lateral raises: arms abduct to parallel
-        const raiseAngle = THREE.MathUtils.lerp(0.1, Math.PI / 2.1, t);
-        refs.leftUpperArm.rotation.set(0, 0, raiseAngle);
-        refs.rightUpperArm.rotation.set(0, 0, -raiseAngle);
-        refs.leftElbow.rotation.z = 0.2; // soft 15 degree elbow bend
-        refs.rightElbow.rotation.z = -0.2;
+        const raiseAngle = THREE.MathUtils.lerp(0.12, Math.PI / 2.1, t);
+        if (bones.upper_armL) bones.upper_armL.rotation.z = raiseAngle;
+        if (bones.upper_armR) bones.upper_armR.rotation.z = -raiseAngle;
+        if (bones.forearmL) bones.forearmL.rotation.z = 0.2; // soft 15° elbow bend
+        if (bones.forearmR) bones.forearmR.rotation.z = -0.2;
+
+        if (eq.dumbbellL) {
+          const dbY = THREE.MathUtils.lerp(0.65, 1.35, t);
+          const dbX = THREE.MathUtils.lerp(0.28, 0.72, t);
+          eq.dumbbellL.position.set(dbX, dbY, 0);
+        }
+        if (eq.dumbbellR) {
+          const dbY = THREE.MathUtils.lerp(0.65, 1.35, t);
+          const dbX = THREE.MathUtils.lerp(-0.28, -0.72, t);
+          eq.dumbbellR.position.set(dbX, dbY, 0);
+        }
         break;
       }
 
+      // 7. INCLINE BICEP CURL (Upper Arm Pinned, Supinated Forearm Squeeze)
       case 'bicep-curl': {
-        // Upper arm pinned vertical, forearms curl up
-        refs.leftUpperArm.rotation.set(0, 0, 0.1);
-        refs.rightUpperArm.rotation.set(0, 0, -0.1);
+        if (bones.upper_armL) bones.upper_armL.rotation.set(0, 0, 0.08);
+        if (bones.upper_armR) bones.upper_armR.rotation.set(0, 0, -0.08);
 
         const curlAngle = THREE.MathUtils.lerp(0.1, Math.PI * 0.75, t);
-        refs.leftElbow.rotation.x = curlAngle;
-        refs.rightElbow.rotation.x = curlAngle;
+        if (bones.forearmL) bones.forearmL.rotation.x = curlAngle;
+        if (bones.forearmR) bones.forearmR.rotation.x = curlAngle;
+
+        if (eq.dumbbellL) {
+          const dbY = THREE.MathUtils.lerp(0.65, 1.15, t);
+          const dbZ = THREE.MathUtils.lerp(0.05, 0.32, t);
+          eq.dumbbellL.position.set(0.26, dbY, dbZ);
+        }
+        if (eq.dumbbellR) {
+          const dbY = THREE.MathUtils.lerp(0.65, 1.15, t);
+          const dbZ = THREE.MathUtils.lerp(0.05, 0.32, t);
+          eq.dumbbellR.position.set(-0.26, dbY, dbZ);
+        }
         break;
       }
 
+      // 8. TRICEP PUSHDOWN (Elbows Pinned, Forearm Full Extension)
       case 'tricep-pushdown': {
-        // Pinned elbows, forearms extend downwards
-        refs.spine.rotation.x = 0.15; // slight torso lean
-        refs.leftUpperArm.rotation.set(-0.2, 0, 0.1);
-        refs.rightUpperArm.rotation.set(-0.2, 0, -0.1);
+        if (bones.spine001) bones.spine001.rotation.y = 0.12; // slight 10° torso lean
+        if (bones.upper_armL) bones.upper_armL.rotation.set(-0.15, 0, 0.08);
+        if (bones.upper_armR) bones.upper_armR.rotation.set(-0.15, 0, -0.08);
 
-        const extendAngle = THREE.MathUtils.lerp(Math.PI * 0.65, 0.05, t);
-        refs.leftElbow.rotation.x = extendAngle;
-        refs.rightElbow.rotation.x = extendAngle;
+        const pushdownAngle = THREE.MathUtils.lerp(Math.PI * 0.65, 0.05, t);
+        if (bones.forearmL) bones.forearmL.rotation.x = pushdownAngle;
+        if (bones.forearmR) bones.forearmR.rotation.x = pushdownAngle;
         break;
       }
 
       default: {
-        // Generic smooth full-body breathing cadence
-        const float = Math.sin(t * Math.PI) * 0.05;
-        refs.pelvis.position.y = 0.95 + float;
+        const float = Math.sin(t * Math.PI) * 0.03;
+        model.position.y = 0.95 + float;
       }
     }
   };
@@ -673,14 +594,14 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
   const setCameraAnglePreset = (preset) => {
     setActiveAngle(preset);
     if (preset === 'front') {
-      cameraAngleRef.current = { theta: 0, phi: Math.PI / 2.3, radius: 3.4 };
+      cameraAngleRef.current = { theta: 0, phi: Math.PI / 2.3, radius: 3.1 };
     } else if (preset === 'side') {
-      cameraAngleRef.current = { theta: Math.PI / 2, phi: Math.PI / 2.3, radius: 3.4 };
+      cameraAngleRef.current = { theta: Math.PI / 2, phi: Math.PI / 2.3, radius: 3.1 };
     } else if (preset === 'top') {
-      cameraAngleRef.current = { theta: 0, phi: 0.2, radius: 3.8 };
+      cameraAngleRef.current = { theta: 0, phi: 0.2, radius: 3.6 };
     } else {
       // Isometric 45
-      cameraAngleRef.current = { theta: Math.PI / 4, phi: Math.PI / 3, radius: 3.5 };
+      cameraAngleRef.current = { theta: Math.PI / 4, phi: Math.PI / 2.8, radius: 3.2 };
     }
     updateCameraPosition();
   };
@@ -703,9 +624,12 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
                 <span className="px-2.5 py-0.5 rounded-full bg-[#A7EBF2]/60 text-[#023859] text-[10px] font-black uppercase shrink-0">
                   {exercise.equipment}
                 </span>
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase shrink-0 border border-emerald-300">
+                  US Standard 🇺🇸
+                </span>
               </div>
               <p className="text-xs text-[#26658C] font-medium truncate">
-                Target: <strong className="text-[#011C40]">{exercise.primaryMuscle}</strong> • 3D Biomechanical Visualizer
+                Target: <strong className="text-[#011C40]">{exercise.primaryMuscle}</strong> • Athletic Male Base Mesh
               </p>
             </div>
           </div>
@@ -731,15 +655,23 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleMouseUp}
-              className="relative w-full aspect-square sm:aspect-4/3 rounded-3xl overflow-hidden shadow-inner bg-[#011328] border border-[#54ACBF]/40 cursor-grab active:cursor-grabbing flex items-center justify-center select-none"
+              className="relative w-full aspect-square sm:aspect-4/3 rounded-3xl overflow-hidden shadow-inner bg-[#011124] border border-[#54ACBF]/40 cursor-grab active:cursor-grabbing flex items-center justify-center select-none"
             >
               {/* Three.js Canvas */}
               <canvas ref={canvasRef} className="w-full h-full block touch-none" />
 
+              {/* Loading Indicator */}
+              {modelLoading && (
+                <div className="absolute inset-0 bg-[#011124]/90 flex flex-col items-center justify-center gap-2 text-white">
+                  <div className="w-8 h-8 rounded-full border-2 border-[#54ACBF] border-t-transparent animate-spin" />
+                  <span className="text-xs font-extrabold text-[#A7EBF2]">Calibrating Anatomical Model...</span>
+                </div>
+              )}
+
               {/* Drag Prompt Hint Overlay */}
               <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-[#011C40]/80 backdrop-blur-md text-white text-[10px] font-bold flex items-center gap-1.5 border border-[#54ACBF]/40 pointer-events-none">
                 <Compass className="w-3 h-3 text-[#A7EBF2] animate-spin" style={{ animationDuration: '6s' }} />
-                <span>Drag to Rotate 360°</span>
+                <span>360° Drag Orbit</span>
               </div>
 
               {/* Live Rep & Phase Counter */}
@@ -809,11 +741,11 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
               </div>
             </div>
 
-            {/* Active Muscle Glow Legend */}
+            {/* Quality & Interaction Hint */}
             <div className="flex items-center justify-between text-[11px] px-2 text-[#26658C]">
               <span className="flex items-center gap-1.5 font-bold text-[#011C40]">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#54ACBF] animate-ping" />
-                Cyan Glow = Primary Contracting Muscle
+                Anatomical Male Base Mesh • Smooth Studio Shading
               </span>
               <span className="font-semibold text-slate-500">
                 Pinch/Scroll to Zoom
@@ -837,7 +769,7 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
             {/* 3 Golden Setup Steps */}
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
               <h4 className="font-extrabold text-[#011C40] flex items-center gap-1.5">
-                <Check className="w-4 h-4 text-emerald-600 stroke-[3]" /> 3 Golden Setup Rules
+                <Check className="w-4 h-4 text-emerald-600 stroke-[3]" /> US-Standard Setup Rules
               </h4>
               <ul className="space-y-1.5 text-[11px] text-[#26658C] font-medium">
                 {(exercise.setupSteps || [
