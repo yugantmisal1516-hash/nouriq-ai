@@ -28,9 +28,11 @@ import {
   Activity,
   ShieldCheck,
   Zap,
-  Info
+  Info,
+  Eye
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import Workout3DVisualizerModal from './Workout3DVisualizerModal';
 
 // Synthesized Web Audio API Gym Timer Chime (100% reliable, zero external assets)
 function playTimerChime() {
@@ -88,6 +90,9 @@ export default function WorkoutTracker() {
 
   // Post-Workout Completion Summary Modal
   const [completedWorkoutSummary, setCompletedWorkoutSummary] = useState(null);
+
+  // 3D Form Visualizer Modal State
+  const [selected3DExercise, setSelected3DExercise] = useState(null);
 
   // Active workout timer effect
   useEffect(() => {
@@ -455,16 +460,29 @@ export default function WorkoutTracker() {
                       </p>
                     </div>
 
-                    {/* Exercise Substitute Trigger */}
-                    {exData.substitutes && exData.substitutes.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                      {/* 3D Biomechanical Form Model Trigger */}
                       <button
-                        onClick={() => setSubstituteModalExerciseIndex(exIdx)}
-                        className="px-3 py-1.5 rounded-full bg-white/80 hover:bg-white text-[#26658C] hover:text-[#011C40] text-[11px] font-bold border border-[#54ACBF]/40 transition-all flex items-center gap-1 cursor-pointer self-start sm:self-auto"
+                        type="button"
+                        onClick={() => setSelected3DExercise(exData)}
+                        className="px-3 py-1.5 rounded-full bg-[#023859] hover:bg-[#011C40] text-white text-[11px] font-extrabold flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
                       >
-                        <RefreshCw className="w-3 h-3" />
-                        <span>Machine Busy? Swap</span>
+                        <Eye className="w-3.5 h-3.5 text-[#A7EBF2]" />
+                        <span>3D Form Model</span>
                       </button>
-                    )}
+
+                      {/* Exercise Substitute Trigger */}
+                      {exData.substitutes && exData.substitutes.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setSubstituteModalExerciseIndex(exIdx)}
+                          className="px-3 py-1.5 rounded-full bg-white/80 hover:bg-white text-[#26658C] hover:text-[#011C40] text-[11px] font-bold border border-[#54ACBF]/40 transition-all flex items-center gap-1 cursor-pointer"
+                        >
+                          <RefreshCw className="w-3 h-3" />
+                          <span>Swap</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* AI Progressive Overload Advice Banner */}
@@ -746,9 +764,20 @@ export default function WorkoutTracker() {
                           </div>
                         </div>
 
-                        <span className="px-2 py-0.5 rounded-lg bg-[#A7EBF2]/50 text-[#023859] font-mono text-[10px] font-black shrink-0">
-                          {overload.recommendedWeightKg}kg next
-                        </span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setSelected3DExercise(ex)}
+                            className="px-2.5 py-1 rounded-full bg-[#023859] hover:bg-[#011C40] text-white text-[10px] font-extrabold flex items-center gap-1 shadow-xs active:scale-95 transition-all cursor-pointer"
+                            title="View 3D Biomechanical Form Model"
+                          >
+                            <Eye className="w-3 h-3 text-[#A7EBF2]" />
+                            <span>3D Form</span>
+                          </button>
+                          <span className="px-2 py-0.5 rounded-lg bg-[#A7EBF2]/50 text-[#023859] font-mono text-[10px] font-black">
+                            {overload.recommendedWeightKg}kg next
+                          </span>
+                        </div>
                       </div>
                     );
                   })}
@@ -934,6 +963,13 @@ export default function WorkoutTracker() {
           </div>
         </div>
       )}
+
+      {/* 3D BIOMECHANICAL WORKOUT FORM VISUALIZER MODAL */}
+      <Workout3DVisualizerModal
+        isOpen={!!selected3DExercise}
+        exercise={selected3DExercise}
+        onClose={() => setSelected3DExercise(null)}
+      />
 
     </div>
   );
