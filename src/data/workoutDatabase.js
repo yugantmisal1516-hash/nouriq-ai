@@ -132,7 +132,7 @@ export const EXERCISE_DATABASE = [
     id: 'one-arm-dumbbell-row',
     name: 'One-Arm Dumbbell Row',
     muscleGroup: 'Back',
-    kinematicType: 'seated-row',
+    kinematicType: 'one-arm-row',
     primaryMuscle: 'Latissimus Dorsi & Upper Back',
     secondaryMuscles: ['Forearms', 'Biceps'],
     equipment: 'Dumbbell',
