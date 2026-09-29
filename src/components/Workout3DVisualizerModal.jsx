@@ -424,7 +424,8 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
     if (eq.benchGroup) {
       eq.benchGroup.position.set(0, 0, 0);
       eq.benchGroup.rotation.set(0, 0, 0);
-      if (eq.pad) eq.pad.rotation.x = -Math.PI / 6; // default 30° incline
+      if (eq.pad) eq.pad.rotation.x = 0; // default flat
+      if (eq.strut) eq.strut.visible = false;
     }
 
     // Kinematic joint movements across all 16 exercise types
@@ -464,7 +465,11 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
           if (b('forearmL')) b('forearmL').rotateX(THREE.MathUtils.lerp(0.15, 1.55, t));
         }
 
-        if (eq.benchGroup) eq.benchGroup.position.set(-0.25, 0.05, 0.45);
+        if (eq.benchGroup) {
+          eq.benchGroup.position.set(-0.25, 0, 0.20);
+          if (eq.pad) eq.pad.rotation.x = 0;
+          if (eq.strut) eq.strut.visible = false;
+        }
         break;
       }
 
@@ -505,12 +510,12 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
       case 'bench-press': {
         model.rotation.set(0, -Math.PI / 2, 0);
         model.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), -Math.PI / 2);
-        model.position.set(0, 0.49, 0.2);
+        model.position.set(0, 0.48, 0.12);
 
-        if (b('thighL')) b('thighL').rotateX(0.8);
-        if (b('thighR')) b('thighR').rotateX(0.8);
-        if (b('shinL')) b('shinL').rotateX(1.4);
-        if (b('shinR')) b('shinR').rotateX(1.4);
+        if (b('thighL')) b('thighL').rotateX(0.85);
+        if (b('thighR')) b('thighR').rotateX(0.85);
+        if (b('shinL')) b('shinL').rotateX(1.35);
+        if (b('shinR')) b('shinR').rotateX(1.35);
 
         if (isMistake) {
           // Dangerous 90° elbow flare
@@ -539,8 +544,9 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
         }
 
         if (eq.benchGroup) {
-          eq.benchGroup.position.set(0, -0.15, 0);
+          eq.benchGroup.position.set(0, 0, 0);
           if (eq.pad) eq.pad.rotation.x = 0; // flat
+          if (eq.strut) eq.strut.visible = false;
         }
         break;
       }
@@ -549,34 +555,78 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
       case 'incline-press': {
         model.rotation.set(0, -Math.PI / 2, 0);
         model.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), -Math.PI / 3);
-        model.position.set(0, 0.55, 0.1);
+        model.position.set(0, 0.48, 0.08);
 
-        if (b('thighL')) b('thighL').rotateX(0.8);
-        if (b('thighR')) b('thighR').rotateX(0.8);
-        if (b('shinL')) b('shinL').rotateX(1.4);
-        if (b('shinR')) b('shinR').rotateX(1.4);
+        // Athletic base: Thighs rest naturally on seat pad, angled slightly out
+        if (b('thighL')) {
+          b('thighL').rotateX(1.30);
+          b('thighL').rotateZ(-0.20);
+        }
+        if (b('thighR')) {
+          b('thighR').rotateX(1.30);
+          b('thighR').rotateZ(0.20);
+        }
+
+        // Shins drop vertically to the floor (90° knee angle)
+        if (b('shinL')) b('shinL').rotateX(0.85);
+        if (b('shinR')) b('shinR').rotateX(0.85);
+
+        // Feet planted flat on gym floor with solid heel drive
+        if (b('footL')) b('footL').rotateX(-0.45);
+        if (b('footR')) b('footR').rotateX(-0.45);
+
+        // Scapular retraction & proud chest arched against the 30° incline pad
+        if (b('spine001')) b('spine001').rotateX(-0.04);
+        if (b('spine002')) b('spine002').rotateX(-0.04);
+        if (b('neck')) b('neck').rotateX(0.10);
+        if (b('head')) b('head').rotateX(0.06);
 
         if (isMistake) {
-          if (b('upper_armL')) b('upper_armL').rotateZ(THREE.MathUtils.lerp(1.35, 0.7, t));
-          if (b('upper_armR')) b('upper_armR').rotateZ(THREE.MathUtils.lerp(-1.35, -0.7, t));
-          if (b('forearmL')) b('forearmL').rotateX(THREE.MathUtils.lerp(0.9, 0.2, t));
-          if (b('forearmR')) b('forearmR').rotateX(THREE.MathUtils.lerp(0.9, 0.2, t));
-        } else {
+          // COMMON MISTAKE:
+          // 1. Dangerous 90° flared elbows (severe rotator cuff & shoulder impingement)
+          // 2. Dumbbells drop excessively deep at the bottom
+          // 3. Wrists cocked back
           if (b('upper_armL')) {
-            b('upper_armL').rotateZ(THREE.MathUtils.lerp(0.65, 0.2, t));
-            b('upper_armL').rotateX(THREE.MathUtils.lerp(0.6, 1.45, t));
+            b('upper_armL').rotateZ(THREE.MathUtils.lerp(1.45, 0.85, t));
+            b('upper_armL').rotateX(THREE.MathUtils.lerp(0.30, 1.25, t));
           }
           if (b('upper_armR')) {
-            b('upper_armR').rotateZ(THREE.MathUtils.lerp(-0.65, -0.2, t));
-            b('upper_armR').rotateX(THREE.MathUtils.lerp(0.6, 1.45, t));
+            b('upper_armR').rotateZ(THREE.MathUtils.lerp(-1.45, -0.85, t));
+            b('upper_armR').rotateX(THREE.MathUtils.lerp(0.30, 1.25, t));
           }
-          if (b('forearmL')) b('forearmL').rotateX(THREE.MathUtils.lerp(1.1, 0.15, t));
-          if (b('forearmR')) b('forearmR').rotateX(THREE.MathUtils.lerp(1.1, 0.15, t));
+          if (b('forearmL')) b('forearmL').rotateX(THREE.MathUtils.lerp(1.40, 0.20, t));
+          if (b('forearmR')) b('forearmR').rotateX(THREE.MathUtils.lerp(1.40, 0.20, t));
+          if (b('handL')) b('handL').rotateX(-0.30);
+          if (b('handR')) b('handR').rotateX(-0.30);
+        } else {
+          // CORRECT FORM:
+          // 1. 45° Elbow tuck in the scapular plane (protects anterior shoulder)
+          // 2. Controlled stretch to upper chest / collarbone level
+          // 3. Smooth upward press arc converging slightly over clavicular pecs
+          if (b('upper_armL')) {
+            b('upper_armL').rotateZ(THREE.MathUtils.lerp(0.68, 0.20, t));
+            b('upper_armL').rotateX(THREE.MathUtils.lerp(0.62, 1.48, t));
+          }
+          if (b('upper_armR')) {
+            b('upper_armR').rotateZ(THREE.MathUtils.lerp(-0.68, -0.20, t));
+            b('upper_armR').rotateX(THREE.MathUtils.lerp(0.62, 1.48, t));
+          }
+          if (b('forearmL')) b('forearmL').rotateX(THREE.MathUtils.lerp(1.15, 0.14, t));
+          if (b('forearmR')) b('forearmR').rotateX(THREE.MathUtils.lerp(1.15, 0.14, t));
+          if (b('handL')) {
+            b('handL').rotateZ(0.12);
+            b('handL').rotateY(-0.08);
+          }
+          if (b('handR')) {
+            b('handR').rotateZ(-0.12);
+            b('handR').rotateY(0.08);
+          }
         }
 
         if (eq.benchGroup) {
-          eq.benchGroup.position.set(0, -0.05, 0.1);
-          if (eq.pad) eq.pad.rotation.x = -Math.PI / 6;
+          eq.benchGroup.position.set(0, 0, 0);
+          if (eq.pad) eq.pad.rotation.x = Math.PI / 6; // +30° incline!
+          if (eq.strut) eq.strut.visible = true;
         }
         break;
       }
@@ -1040,7 +1090,15 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
 
         muscles.secondaryPatch.position.set(shoulderLPos.x + 0.05, shoulderLPos.y - 0.03, shoulderLPos.z - 0.06);
         muscles.secondaryPatch.scale.set(0.06, 0.08, 0.06);
-      } else if (type === 'bench-press' || type === 'incline-press' || type === 'chest-fly') {
+      } else if (type === 'incline-press') {
+        // Upper Chest (Clavicular Pectoralis) & Anterior Deltoid
+        muscles.primaryPatch.position.set(latPos.x + 0.08, latPos.y + 0.09, latPos.z + 0.12);
+        muscles.primaryPatch.scale.set(0.11, 0.09, 0.06);
+
+        const deltPos = new THREE.Vector3().lerpVectors(shoulderLPos, elbowLPos, 0.25);
+        muscles.secondaryPatch.position.set(deltPos.x + 0.04, deltPos.y + 0.02, deltPos.z + 0.05);
+        muscles.secondaryPatch.scale.set(0.06, 0.08, 0.05);
+      } else if (type === 'bench-press' || type === 'chest-fly') {
         muscles.primaryPatch.position.set(latPos.x + 0.08, latPos.y + 0.05, latPos.z + 0.14);
         muscles.primaryPatch.scale.set(0.12, 0.10, 0.06);
 
@@ -1153,15 +1211,30 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
         if (eq.dumbbellL) {
           eq.dumbbellL.visible = true;
           eq.dumbbellL.position.copy(handLPos);
+          eq.dumbbellL.rotation.set(0, 0, 0);
+        }
+      } else if (type === 'incline-press') {
+        if (eq.dumbbellL) {
+          eq.dumbbellL.visible = true;
+          eq.dumbbellL.position.copy(handLPos);
+          // Angle dumbbells to align with the 30° incline pressing plane & semi-pronated inward grip
+          eq.dumbbellL.rotation.set(-Math.PI / 6, 0.20, 0);
+        }
+        if (eq.dumbbellR) {
+          eq.dumbbellR.visible = true;
+          eq.dumbbellR.position.copy(handRPos);
+          eq.dumbbellR.rotation.set(-Math.PI / 6, -0.20, 0);
         }
       } else {
         if (eq.dumbbellL) {
           eq.dumbbellL.visible = true;
           eq.dumbbellL.position.copy(handLPos);
+          eq.dumbbellL.rotation.set(0, 0, 0);
         }
         if (eq.dumbbellR) {
           eq.dumbbellR.visible = true;
           eq.dumbbellR.position.copy(handRPos);
+          eq.dumbbellR.rotation.set(0, 0, 0);
         }
       }
     } else if (activeMode === 'barbell') {

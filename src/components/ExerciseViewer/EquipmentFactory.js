@@ -141,33 +141,72 @@ export function createGymEquipment(scene, exercise, initialMode) {
 
   // 6. COMMERCIAL INCLINE / FLAT GYM BENCH
   const benchGroup = new THREE.Group();
-  const pad = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.07, 0.95), leatherMat);
-  pad.position.set(0, 0.55, 0.1);
-  pad.rotation.x = -Math.PI / 6; // 30° incline
-  pad.receiveShadow = true;
-  benchGroup.add(pad);
 
-  const baseBar = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.6, 16), steelMat);
-  baseBar.rotation.z = Math.PI / 2;
-  baseBar.position.set(0, 0.03, -0.35);
-  benchGroup.add(baseBar);
+  // Floor Base & Stabilizers
+  const baseBarRear = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.58, 16), steelMat);
+  baseBarRear.rotation.z = Math.PI / 2;
+  baseBarRear.position.set(0, 0.028, -0.65);
+  benchGroup.add(baseBarRear);
 
-  const baseBarFront = baseBar.clone();
-  baseBarFront.position.set(0, 0.03, 0.55);
+  const baseBarFront = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.58, 16), steelMat);
+  baseBarFront.rotation.z = Math.PI / 2;
+  baseBarFront.position.set(0, 0.028, 0.48);
   benchGroup.add(baseBarFront);
 
-  const spineBeam = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.06, 0.95), steelMat);
-  spineBeam.position.set(0, 0.32, 0.1);
-  spineBeam.rotation.x = -Math.PI / 6;
-  benchGroup.add(spineBeam);
+  // Central Longitudinal Main Steel Spine Beam
+  const mainSpine = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.06, 1.15), steelMat);
+  mainSpine.position.set(0, 0.04, -0.08);
+  benchGroup.add(mainSpine);
 
-  const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.35, 0.06), steelMat);
-  pillar.position.set(0, 0.18, 0.35);
-  benchGroup.add(pillar);
+  // Vertical Upright Support Pillars
+  const frontPillar = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.36, 0.06), steelMat);
+  frontPillar.position.set(0, 0.22, 0.22);
+  benchGroup.add(frontPillar);
+
+  const pivotPillar = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.36, 0.06), steelMat);
+  pivotPillar.position.set(0, 0.22, 0.06);
+  benchGroup.add(pivotPillar);
+
+  const rearPillar = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.36, 0.06), steelMat);
+  rearPillar.position.set(0, 0.22, -0.42);
+  benchGroup.add(rearPillar);
+
+  // Ergonomic Commercial Seat Pad
+  const seatPad = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.06, 0.26), leatherMat);
+  seatPad.position.set(0, 0.42, 0.22);
+  seatPad.rotation.x = -0.10; // slight ergonomic incline to hold hips
+  seatPad.receiveShadow = true;
+  benchGroup.add(seatPad);
+
+  // Adjustable Incline Back Pad Pivot Group (Hinged at seat boundary z = 0.06, y = 0.41)
+  const padPivot = new THREE.Group();
+  padPivot.position.set(0, 0.41, 0.06);
+
+  // Back Pad Leather Cushion
+  const backPadMesh = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.06, 0.82), leatherMat);
+  backPadMesh.position.set(0, 0.03, -0.41);
+  backPadMesh.receiveShadow = true;
+  padPivot.add(backPadMesh);
+
+  // Steel Reinforcement Plate beneath the back pad
+  const padSpine = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.04, 0.80), steelMat);
+  padSpine.position.set(0, -0.02, -0.41);
+  padPivot.add(padSpine);
+
+  // Incline Support Strut (connecting frame to back pad)
+  const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.38, 12), chromeMat);
+  strut.position.set(0, 0.22, -0.22);
+  strut.rotation.x = Math.PI / 4;
+  benchGroup.add(strut);
+
+  benchGroup.add(padPivot);
 
   const isBenchEx = ['bench-press', 'incline-press', 'one-arm-row'].includes(exercise?.kinematicType);
   benchGroup.visible = isBenchEx;
+  const isIncline = exercise?.kinematicType === 'incline-press';
+  padPivot.rotation.x = isIncline ? Math.PI / 6 : 0;
+  strut.visible = isIncline;
   scene.add(benchGroup);
 
-  return { barbell, dumbbellL, dumbbellR, latBar, cableRope, pullUpBar, benchGroup, pad };
+  return { barbell, dumbbellL, dumbbellR, latBar, cableRope, pullUpBar, benchGroup, pad: padPivot, strut };
 }
