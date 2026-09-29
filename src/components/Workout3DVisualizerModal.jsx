@@ -55,6 +55,44 @@ export const getEquipmentMode = (exercise) => {
   return 'barbell';
 };
 
+// Pre-allocated static rotation quaternions for seated overhead press (zero GC overhead)
+const _qPressBottomL = new THREE.Quaternion()
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 1.40))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -0.70))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 0.60));
+
+const _qPressTopL = new THREE.Quaternion()
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -0.30))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -0.10))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 2.60));
+
+const _qPressBottomR = new THREE.Quaternion()
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 1.40))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.70))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -0.60));
+
+const _qPressTopR = new THREE.Quaternion()
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -0.30))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.10))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -2.60));
+
+const _qPressMistakeBottomL = new THREE.Quaternion()
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.20))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 1.40));
+
+const _qPressMistakeTopL = new THREE.Quaternion()
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 2.80));
+
+const _qPressMistakeBottomR = new THREE.Quaternion()
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.20))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -1.40));
+
+const _qPressMistakeTopR = new THREE.Quaternion()
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -2.80));
+
+const _tempQuatA = new THREE.Quaternion();
+const _tempQuatB = new THREE.Quaternion();
+
 export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
@@ -876,26 +914,24 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
           // COMMON MISTAKE:
           // 1. Severe Lumbar Hyperextension (cheating weight like an incline chest press)
           // 2. Harsh 180° Elbow Flare in coronal plane (rotator cuff impingement)
-          // 3. Clanking dumbbells overhead at apex / over-convergence
+          // 3. Clanking dumbbells overhead at apex / severe over-convergence
           // 4. Cocked/broken wrists collapsing backward
           if (b('spine001')) b('spine001').rotateX(THREE.MathUtils.lerp(-0.35, -0.48, t));
           if (b('spine002')) b('spine002').rotateX(THREE.MathUtils.lerp(-0.15, -0.25, t));
           if (b('spine004')) b('spine004').rotateX(0.20); // head straining forward
 
-          const azMistake = THREE.MathUtils.lerp(1.35, 2.78, t);
-          const axMistake = THREE.MathUtils.lerp(-0.05, 0.05, t);
-          const fxMistake = THREE.MathUtils.lerp(1.40, 0.02, t);
+          if (initialQuats['upper_armL'] && initialQuats['upper_armR']) {
+            _tempQuatA.copy(initialQuats['upper_armL']).multiply(_qPressMistakeBottomL);
+            _tempQuatB.copy(initialQuats['upper_armL']).multiply(_qPressMistakeTopL);
+            if (b('upper_armL')) b('upper_armL').quaternion.copy(_tempQuatA).slerp(_tempQuatB, t);
 
-          if (b('upper_armL')) {
-            b('upper_armL').rotateZ(azMistake);
-            b('upper_armL').rotateX(axMistake);
+            _tempQuatA.copy(initialQuats['upper_armR']).multiply(_qPressMistakeBottomR);
+            _tempQuatB.copy(initialQuats['upper_armR']).multiply(_qPressMistakeTopR);
+            if (b('upper_armR')) b('upper_armR').quaternion.copy(_tempQuatA).slerp(_tempQuatB, t);
           }
-          if (b('upper_armR')) {
-            b('upper_armR').rotateZ(-azMistake);
-            b('upper_armR').rotateX(axMistake);
-          }
-          if (b('forearmL')) b('forearmL').rotateX(fxMistake);
-          if (b('forearmR')) b('forearmR').rotateX(fxMistake);
+
+          if (b('forearmL')) b('forearmL').rotateX(THREE.MathUtils.lerp(1.45, 0.05, t));
+          if (b('forearmR')) b('forearmR').rotateX(THREE.MathUtils.lerp(1.45, 0.05, t));
 
           // Cocked, collapsed wrists
           if (b('handL')) b('handL').rotateX(-0.35);
@@ -904,34 +940,33 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
           // CORRECT FORM:
           // 1. Tall upright posture against the 80° back pad, ribs pulled down, core braced
           // 2. Elbows tucked in the scapular plane (~30° forward of torso line)
-          // 3. Smooth upward press arc directly over shoulders, soft lockout without clanking
+          // 3. Forearms vertically stacked under dumbbells at ear height (NEVER dropping or flaring like lateral raises)
+          // 4. Smooth, powerful upward vertical press directly overhead to soft lockout without clanking
           if (b('spine001')) b('spine001').rotateX(-0.06); // natural upright bracing
           if (b('spine002')) b('spine002').rotateX(-0.04);
           if (b('spine004')) b('spine004').rotateX(0.02);
 
-          const az = THREE.MathUtils.lerp(1.15, 2.50, t);
-          const ax = THREE.MathUtils.lerp(0.50, 0.10, t);
-          const fx = THREE.MathUtils.lerp(1.30, 0.10, t);
+          if (initialQuats['upper_armL'] && initialQuats['upper_armR']) {
+            _tempQuatA.copy(initialQuats['upper_armL']).multiply(_qPressBottomL);
+            _tempQuatB.copy(initialQuats['upper_armL']).multiply(_qPressTopL);
+            if (b('upper_armL')) b('upper_armL').quaternion.copy(_tempQuatA).slerp(_tempQuatB, t);
 
-          if (b('upper_armL')) {
-            b('upper_armL').rotateZ(az);
-            b('upper_armL').rotateX(ax);
+            _tempQuatA.copy(initialQuats['upper_armR']).multiply(_qPressBottomR);
+            _tempQuatB.copy(initialQuats['upper_armR']).multiply(_qPressTopR);
+            if (b('upper_armR')) b('upper_armR').quaternion.copy(_tempQuatA).slerp(_tempQuatB, t);
           }
-          if (b('upper_armR')) {
-            b('upper_armR').rotateZ(-az);
-            b('upper_armR').rotateX(ax);
-          }
-          if (b('forearmL')) b('forearmL').rotateX(fx);
-          if (b('forearmR')) b('forearmR').rotateX(fx);
 
-          // Semi-pronated strong neutral grip (~30° inward palms)
+          if (b('forearmL')) b('forearmL').rotateX(THREE.MathUtils.lerp(1.50, 0.08, t));
+          if (b('forearmR')) b('forearmR').rotateX(THREE.MathUtils.lerp(1.50, 0.08, t));
+
+          // Semi-pronated strong neutral grip (~30° inward palms in scapular plane)
           if (b('handL')) {
-            b('handL').rotateZ(0.12);
-            b('handL').rotateY(-0.25);
+            b('handL').rotateZ(0.15);
+            b('handL').rotateY(-0.35);
           }
           if (b('handR')) {
-            b('handR').rotateZ(-0.12);
-            b('handR').rotateY(0.25);
+            b('handR').rotateZ(-0.15);
+            b('handR').rotateY(0.35);
           }
         }
 
