@@ -127,6 +127,11 @@ export function createGymEquipment(scene, exercise, initialMode) {
   ropeBallR.position.set(-0.18, -0.30, 0);
   cableRope.add(ropeBallR);
 
+  // Overhead High-Pulley Cable Wire (connecting top chrome clamp to overhead cable crossover beam)
+  const cableWire = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 1.5, 8), chromeMat);
+  cableWire.position.set(0, 0.75, 0);
+  cableRope.add(cableWire);
+
   cableRope.visible = initialMode === 'cable' && !isLatPulldown;
   scene.add(cableRope);
 
@@ -217,5 +222,5 @@ export function createGymEquipment(scene, exercise, initialMode) {
   }
   scene.add(benchGroup);
 
-  return { barbell, dumbbellL, dumbbellR, latBar, cableRope, pullUpBar, benchGroup, pad: padPivot, strut };
+  return { barbell, dumbbellL, dumbbellR, latBar, cableRope, ropeCordL, ropeCordR, ropeBallL, ropeBallR, cableWire, pullUpBar, benchGroup, pad: padPivot, strut };
 }

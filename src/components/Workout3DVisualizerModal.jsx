@@ -513,33 +513,89 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
 
       // 2. CABLE ROPE TRICEP PUSHDOWN
       case 'tricep-pushdown': {
-        model.position.set(0, 0.95, 0);
+        model.position.set(0, 0.90, 0);
+        model.rotation.set(0, -Math.PI / 2, 0);
+
+        // Athletic Lower Body: Soft knees & slight hip hinge for stable ground base
+        if (b('thighL')) {
+          b('thighL').rotateX(-0.25);
+          b('thighL').rotateZ(-0.08);
+        }
+        if (b('thighR')) {
+          b('thighR').rotateX(-0.25);
+          b('thighR').rotateZ(0.08);
+        }
+        if (b('shinL')) b('shinL').rotateX(0.35);
+        if (b('shinR')) b('shinR').rotateX(0.35);
+        if (b('footL')) b('footL').rotateX(-0.10);
+        if (b('footR')) b('footR').rotateX(-0.10);
 
         if (isMistake) {
-          // Torso swings forward & back, elbows flare wide
-          if (b('spine001')) b('spine001').rotateX(THREE.MathUtils.lerp(0.1, 0.45, t));
+          // COMMON MISTAKE:
+          // 1. Torso swinging forward & backward (using bodyweight momentum to cheat)
+          // 2. Elbows flaring wide out to sides and drifting back & forth
+          // 3. Incomplete lockout (stopping short without tricep peak contraction)
+          // 4. Broken, collapsed wrists
+          if (b('spine001')) b('spine001').rotateX(THREE.MathUtils.lerp(0.08, 0.42, t));
+          if (b('spine002')) b('spine002').rotateX(THREE.MathUtils.lerp(0.02, 0.20, t));
+          if (b('spine004')) b('spine004').rotateX(-0.15); // neck straining forward
+
+          const uX = THREE.MathUtils.lerp(0.10, 0.55, t);
+          const uZ = THREE.MathUtils.lerp(-0.15, -0.65, t); // flared outward
+          const fX = THREE.MathUtils.lerp(1.50, 0.60, t); // incomplete lockout
+
           if (b('upper_armL')) {
-            b('upper_armL').rotateZ(THREE.MathUtils.lerp(-0.2, -0.6, t));
-            b('upper_armL').rotateX(THREE.MathUtils.lerp(0.1, 0.45, t));
+            b('upper_armL').rotateX(uX);
+            b('upper_armL').rotateZ(uZ);
           }
           if (b('upper_armR')) {
-            b('upper_armR').rotateZ(THREE.MathUtils.lerp(0.2, 0.6, t));
-            b('upper_armR').rotateX(THREE.MathUtils.lerp(0.1, 0.45, t));
+            b('upper_armR').rotateX(uX);
+            b('upper_armR').rotateZ(-uZ);
           }
-          if (b('forearmL')) b('forearmL').rotateX(THREE.MathUtils.lerp(1.4, 0.55, t));
-          if (b('forearmR')) b('forearmR').rotateX(THREE.MathUtils.lerp(1.4, 0.55, t));
+          if (b('forearmL')) b('forearmL').rotateX(fX);
+          if (b('forearmR')) b('forearmR').rotateX(fX);
+
+          if (b('handL')) b('handL').rotateX(-0.30);
+          if (b('handR')) b('handR').rotateX(-0.30);
         } else {
-          if (b('spine001')) b('spine001').rotateX(0.20); // 10° athletic lean
+          // CORRECT FORM:
+          // 1. Anchored athletic forward torso hinge (~15°-20°), core braced, zero torso swing
+          // 2. Elbows GLUED tight to flanks/ribcage (zero forward/backward shoulder drift)
+          // 3. Forearms extend from 90° stretch down to 180° full tricep lockout
+          // 4. Forceful rope spread at bottom (hands flare apart beside hips for peak lateral head squeeze)
+          if (b('spine001')) b('spine001').rotateX(0.22); // stable athletic hinge
+          if (b('spine002')) b('spine002').rotateX(0.08);
+          if (b('spine004')) b('spine004').rotateX(0.02);
+
+          const uX = THREE.MathUtils.lerp(0.20, 0.45, t);
+          const uY = THREE.MathUtils.lerp(0.10, 0.35, t);
+          const uZ = THREE.MathUtils.lerp(-0.55, -0.50, t);
+          const fX = THREE.MathUtils.lerp(1.75, 0.05, t);
+
           if (b('upper_armL')) {
-            b('upper_armL').rotateZ(-0.20);
-            b('upper_armL').rotateX(0.15);
+            b('upper_armL').rotateX(uX);
+            b('upper_armL').rotateY(uY);
+            b('upper_armL').rotateZ(uZ);
           }
           if (b('upper_armR')) {
-            b('upper_armR').rotateZ(0.20);
-            b('upper_armR').rotateX(0.15);
+            b('upper_armR').rotateX(uX);
+            b('upper_armR').rotateY(-uY);
+            b('upper_armR').rotateZ(-uZ);
           }
-          if (b('forearmL')) b('forearmL').rotateX(THREE.MathUtils.lerp(1.65, 0.12, t));
-          if (b('forearmR')) b('forearmR').rotateX(THREE.MathUtils.lerp(1.65, 0.12, t));
+          if (b('forearmL')) b('forearmL').rotateX(fX);
+          if (b('forearmR')) b('forearmR').rotateX(fX);
+
+          // Neutral grip that flares outward at the bottom as the ropes spread
+          const hZ = THREE.MathUtils.lerp(0.05, 0.25, t);
+          const hY = THREE.MathUtils.lerp(-0.10, -0.35, t);
+          if (b('handL')) {
+            b('handL').rotateZ(hZ);
+            b('handL').rotateY(hY);
+          }
+          if (b('handR')) {
+            b('handR').rotateZ(-hZ);
+            b('handR').rotateY(-hY);
+          }
         }
         break;
       }
@@ -1389,9 +1445,34 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
       } else {
         if (eq.cableRope) {
           eq.cableRope.visible = true;
-          const ropeCenterY = (handLPos.y + handRPos.y) / 2 + 0.15;
-          const ropeCenterZ = (handLPos.z + handRPos.z) / 2;
-          eq.cableRope.position.set(0, ropeCenterY, ropeCenterZ);
+          const clampY = (handLPos.y + handRPos.y) / 2 + 0.18;
+          const clampZ = (handLPos.z + handRPos.z) / 2 - 0.04;
+          eq.cableRope.position.set(0, clampY, clampZ);
+
+          if (eq.ropeBallL && eq.ropeBallR && eq.ropeCordL && eq.ropeCordR) {
+            const clampPos = new THREE.Vector3(0, clampY, clampZ);
+            const localHandL = handLPos.clone().sub(clampPos);
+            const localHandR = handRPos.clone().sub(clampPos);
+
+            eq.ropeBallL.position.copy(localHandL);
+            eq.ropeBallR.position.copy(localHandR);
+
+            const dirL = localHandL.clone().normalize();
+            eq.ropeCordL.position.set(localHandL.x / 2, localHandL.y / 2, localHandL.z / 2);
+            eq.ropeCordL.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirL);
+            eq.ropeCordL.scale.set(1, Math.max(0.1, localHandL.length() / 0.32), 1);
+
+            const dirR = localHandR.clone().normalize();
+            eq.ropeCordR.position.set(localHandR.x / 2, localHandR.y / 2, localHandR.z / 2);
+            eq.ropeCordR.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirR);
+            eq.ropeCordR.scale.set(1, Math.max(0.1, localHandR.length() / 0.32), 1);
+
+            if (eq.cableWire) {
+              const wireHeight = Math.max(0.1, 2.25 - clampY);
+              eq.cableWire.position.set(0, wireHeight / 2, 0);
+              eq.cableWire.scale.set(1, wireHeight / 1.5, 1);
+            }
+          }
         }
       }
     } else if (activeMode === 'bodyweight') {
