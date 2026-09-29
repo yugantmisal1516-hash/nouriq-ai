@@ -851,22 +851,22 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
       // 13. SEATED OVERHEAD DUMBBELL PRESS
       case 'overhead-press': {
         // Seated on the 80° upright commercial utility bench
-        model.position.set(0, 0.46, 0.16);
+        model.position.set(0, 0.52, 0.16);
         model.rotation.set(0, -Math.PI / 2, 0);
 
-        // Athletic Seated Base: Thighs horizontal on seat pad, splayed outward for stability
+        // Athletic Seated Base: Thighs horizontal on seat pad, knees bent 90°, feet planted flat on floor
         if (b('thighL')) {
-          b('thighL').rotateX(-1.50);
-          b('thighL').rotateZ(-0.20);
+          b('thighL').rotateX(-1.45);
+          b('thighL').rotateZ(-0.15);
         }
         if (b('thighR')) {
-          b('thighR').rotateX(-1.50);
-          b('thighR').rotateZ(0.20);
+          b('thighR').rotateX(-1.45);
+          b('thighR').rotateZ(0.15);
         }
 
         // Shins bent at 90° at knees, dropping vertically to the gym floor
-        if (b('shinL')) b('shinL').rotateX(1.50);
-        if (b('shinR')) b('shinR').rotateX(1.50);
+        if (b('shinL')) b('shinL').rotateX(1.45);
+        if (b('shinR')) b('shinR').rotateX(1.45);
 
         // Feet planted firmly flat on the floor pedestal
         if (b('footL')) b('footL').rotateX(0.0);
@@ -876,52 +876,61 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
           // COMMON MISTAKE:
           // 1. Severe Lumbar Hyperextension (cheating weight like an incline chest press)
           // 2. Harsh 180° Elbow Flare in coronal plane (rotator cuff impingement)
-          // 3. Clanking dumbbells overhead at apex
-          // 4. Stiff uncoordinated elbow snap
-          if (b('spine001')) b('spine001').rotateX(THREE.MathUtils.lerp(-0.35, -0.45, t));
-          if (b('neck')) b('neck').rotateX(-0.15); // head straining forward
+          // 3. Clanking dumbbells overhead at apex / over-convergence
+          // 4. Cocked/broken wrists collapsing backward
+          if (b('spine001')) b('spine001').rotateX(THREE.MathUtils.lerp(-0.35, -0.48, t));
+          if (b('spine002')) b('spine002').rotateX(THREE.MathUtils.lerp(-0.15, -0.25, t));
+          if (b('spine004')) b('spine004').rotateX(0.20); // head straining forward
+
+          const azMistake = THREE.MathUtils.lerp(1.35, 2.78, t);
+          const axMistake = THREE.MathUtils.lerp(-0.05, 0.05, t);
+          const fxMistake = THREE.MathUtils.lerp(1.40, 0.02, t);
 
           if (b('upper_armL')) {
-            b('upper_armL').rotateZ(THREE.MathUtils.lerp(1.42, 2.95, t)); // flared 180° straight out
-            b('upper_armL').rotateX(THREE.MathUtils.lerp(-0.05, 0.05, t));
+            b('upper_armL').rotateZ(azMistake);
+            b('upper_armL').rotateX(axMistake);
           }
           if (b('upper_armR')) {
-            b('upper_armR').rotateZ(THREE.MathUtils.lerp(-1.42, -2.95, t));
-            b('upper_armR').rotateX(THREE.MathUtils.lerp(-0.05, 0.05, t));
+            b('upper_armR').rotateZ(-azMistake);
+            b('upper_armR').rotateX(axMistake);
           }
-          if (b('forearmL')) b('forearmL').rotateX(THREE.MathUtils.lerp(1.45, 0.05, t));
-          if (b('forearmR')) b('forearmR').rotateX(THREE.MathUtils.lerp(1.45, 0.05, t));
+          if (b('forearmL')) b('forearmL').rotateX(fxMistake);
+          if (b('forearmR')) b('forearmR').rotateX(fxMistake);
 
-          // Cocked wrists
-          if (b('handL')) b('handL').rotateX(-0.30);
-          if (b('handR')) b('handR').rotateX(-0.30);
+          // Cocked, collapsed wrists
+          if (b('handL')) b('handL').rotateX(-0.35);
+          if (b('handR')) b('handR').rotateX(-0.35);
         } else {
           // CORRECT FORM:
           // 1. Tall upright posture against the 80° back pad, ribs pulled down, core braced
           // 2. Elbows tucked in the scapular plane (~30° forward of torso line)
-          // 3. Smooth upward press arc to ears/crown, soft lockout without clanking
+          // 3. Smooth upward press arc directly over shoulders, soft lockout without clanking
           if (b('spine001')) b('spine001').rotateX(-0.06); // natural upright bracing
           if (b('spine002')) b('spine002').rotateX(-0.04);
-          if (b('neck')) b('neck').rotateX(0.02);
+          if (b('spine004')) b('spine004').rotateX(0.02);
+
+          const az = THREE.MathUtils.lerp(1.15, 2.50, t);
+          const ax = THREE.MathUtils.lerp(0.50, 0.10, t);
+          const fx = THREE.MathUtils.lerp(1.30, 0.10, t);
 
           if (b('upper_armL')) {
-            b('upper_armL').rotateZ(THREE.MathUtils.lerp(0.72, 2.75, t));
-            b('upper_armL').rotateX(THREE.MathUtils.lerp(0.42, 0.12, t)); // tucked 30° in front
+            b('upper_armL').rotateZ(az);
+            b('upper_armL').rotateX(ax);
           }
           if (b('upper_armR')) {
-            b('upper_armR').rotateZ(THREE.MathUtils.lerp(-0.72, -2.75, t));
-            b('upper_armR').rotateX(THREE.MathUtils.lerp(0.42, 0.12, t));
+            b('upper_armR').rotateZ(-az);
+            b('upper_armR').rotateX(ax);
           }
-          if (b('forearmL')) b('forearmL').rotateX(THREE.MathUtils.lerp(1.55, 0.14, t));
-          if (b('forearmR')) b('forearmR').rotateX(THREE.MathUtils.lerp(1.55, 0.14, t));
+          if (b('forearmL')) b('forearmL').rotateX(fx);
+          if (b('forearmR')) b('forearmR').rotateX(fx);
 
           // Semi-pronated strong neutral grip (~30° inward palms)
           if (b('handL')) {
-            b('handL').rotateZ(0.15);
+            b('handL').rotateZ(0.12);
             b('handL').rotateY(-0.25);
           }
           if (b('handR')) {
-            b('handR').rotateZ(-0.15);
+            b('handR').rotateZ(-0.12);
             b('handR').rotateY(0.25);
           }
         }
@@ -1293,13 +1302,21 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
         if (eq.dumbbellL) {
           eq.dumbbellL.visible = true;
           eq.dumbbellL.position.copy(handLPos);
-          // Angle dumbbells to match 30° scapular plane semi-pronated inward grip
-          eq.dumbbellL.rotation.set(0.12, 0.35, 0.10);
+          if (isMistake) {
+            eq.dumbbellL.rotation.set(-0.25, 0.10, 0.25);
+          } else {
+            // Angle dumbbells to match 30° scapular plane semi-pronated inward grip
+            eq.dumbbellL.rotation.set(0.12, 0.35, 0.10);
+          }
         }
         if (eq.dumbbellR) {
           eq.dumbbellR.visible = true;
           eq.dumbbellR.position.copy(handRPos);
-          eq.dumbbellR.rotation.set(0.12, -0.35, -0.10);
+          if (isMistake) {
+            eq.dumbbellR.rotation.set(-0.25, -0.10, -0.25);
+          } else {
+            eq.dumbbellR.rotation.set(0.12, -0.35, -0.10);
+          }
         }
       } else {
         if (eq.dumbbellL) {
