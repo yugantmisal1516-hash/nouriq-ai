@@ -1115,7 +1115,8 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
         const x = (screenPos.x * 0.5 + 0.5) * 100;
         const y = (-(screenPos.y * 0.5) + 0.5) * 100;
 
-        const isVisible = screenPos.z < 1.0 && x >= 5 && x <= 95 && y >= 5 && y <= 95;
+        // Keep badges safely within visible body zone (avoiding top pills & bottom dock)
+        const isVisible = screenPos.z < 1.0 && x >= 10 && x <= 90 && y >= 18 && y <= 82;
 
         return {
           id: idx,
@@ -1259,26 +1260,26 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
   const isMistake = formMode === 'mistake';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-[#011C40]/85 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="ios-glass rounded-[32px] max-w-5xl w-full max-h-[94vh] overflow-y-auto shadow-2xl border border-[#54ACBF]/50 bg-white/95 flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-1.5 xs:p-2.5 sm:p-4 md:p-6 bg-[#011C40]/85 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="ios-glass rounded-2xl sm:rounded-[32px] max-w-5xl w-full max-h-[96vh] sm:max-h-[94vh] overflow-y-auto shadow-2xl border border-[#54ACBF]/50 bg-white/95 flex flex-col">
         
         {/* Header Bar */}
-        <div className="p-4 sm:p-5 border-b border-[#54ACBF]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center space-x-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-[#023859] text-white flex items-center justify-center shadow-md shrink-0">
-              <Eye className="w-5 h-5 text-[#A7EBF2]" />
+        <div className="p-3.5 sm:p-5 border-b border-[#54ACBF]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
+          <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-[#023859] text-white flex items-center justify-center shadow-md shrink-0">
+              <Eye className="w-4 h-4 sm:w-5 sm:h-5 text-[#A7EBF2]" />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-base sm:text-lg font-black text-[#011C40] tracking-tight truncate">{exercise.name}</h3>
-                <span className="px-2.5 py-0.5 rounded-full bg-[#A7EBF2]/60 text-[#023859] text-[10px] font-black uppercase shrink-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                <h3 className="text-sm sm:text-lg font-black text-[#011C40] tracking-tight truncate">{exercise.name}</h3>
+                <span className="px-2 py-0.5 rounded-full bg-[#A7EBF2]/60 text-[#023859] text-[9px] sm:text-[10px] font-black uppercase shrink-0">
                   {exercise.equipment}
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase shrink-0 border border-emerald-300">
+                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[9px] sm:text-[10px] font-extrabold uppercase shrink-0 border border-emerald-300">
                   US Standard 🇺🇸
                 </span>
               </div>
-              <p className="text-xs text-[#26658C] font-medium truncate">
+              <p className="text-[11px] sm:text-xs text-[#26658C] font-medium truncate">
                 Primary: <strong className="text-[#011C40]">{exercise.primaryMuscle}</strong> 
                 {bioData.secondaryMuscles?.length > 0 && (
                   <span className="text-slate-500 font-normal"> • Secondary: {bioData.secondaryMuscles.join(', ')}</span>
@@ -1287,41 +1288,41 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 self-end sm:self-auto shrink-0">
             {/* Real-Time Equipment Mode Switcher Pill */}
-            <div className="flex items-center bg-slate-100 p-1 rounded-full border border-slate-200 shadow-inner">
+            <div className="flex items-center bg-slate-100 p-0.5 sm:p-1 rounded-full border border-slate-200 shadow-inner">
               <button
                 type="button"
                 onClick={() => handleEquipmentModeChange('dumbbell')}
-                className={`px-3 py-1 rounded-full text-[11px] font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-2.5 sm:px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-black transition-all cursor-pointer flex items-center gap-1 sm:gap-1.5 ${
                   equipmentMode === 'dumbbell'
                     ? 'bg-[#023859] text-white shadow-xs'
                     : 'text-[#26658C] hover:text-[#011C40]'
                 }`}
                 title="View with Dumbbells in hands"
               >
-                <DumbbellIcon className="w-3.5 h-3.5" />
+                <DumbbellIcon className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
                 <span>Dumbbell</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleEquipmentModeChange('barbell')}
-                className={`px-3 py-1 rounded-full text-[11px] font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-2.5 sm:px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-black transition-all cursor-pointer flex items-center gap-1 sm:gap-1.5 ${
                   equipmentMode === 'barbell'
                     ? 'bg-[#023859] text-white shadow-xs'
                     : 'text-[#26658C] hover:text-[#011C40]'
                 }`}
                 title="View with Rod Weight (Barbell with Olympic plates)"
               >
-                <span>🏋️ Rod (Barbell)</span>
+                <span>🏋️ Rod<span className="hidden xs:inline"> (Barbell)</span></span>
               </button>
 
               {['cable', 'machine', 'bodyweight'].includes(defaultMode) && (
                 <button
                   type="button"
                   onClick={() => handleEquipmentModeChange(defaultMode)}
-                  className={`px-3 py-1 rounded-full text-[11px] font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-2.5 sm:px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-black transition-all cursor-pointer flex items-center gap-1 sm:gap-1.5 ${
                     equipmentMode === defaultMode
                       ? 'bg-[#023859] text-white shadow-xs'
                       : 'text-[#26658C] hover:text-[#011C40]'
@@ -1343,9 +1344,9 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
         </div>
 
         {/* Modal Main Body (3D Viewport Hero on Left, Personal Trainer Guide on Right) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 p-4 sm:p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 p-3 sm:p-6">
           
-          {/* 3D WebGL Viewport Container — THE HERO (Fills 65-80% with Large Mannequin) */}
+          {/* 3D WebGL Viewport Container — THE HERO (Generously sized for mobile & desktop) */}
           <div className="lg:col-span-8 flex flex-col space-y-3">
             
             <div 
@@ -1356,7 +1357,7 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleMouseUp}
-              className="relative w-full aspect-4/3 sm:aspect-16/10 rounded-3xl overflow-hidden shadow-2xl bg-[#161922] border border-[#54ACBF]/50 cursor-grab active:cursor-grabbing flex items-center justify-center select-none"
+              className="relative w-full h-[380px] xs:h-[420px] sm:h-auto sm:aspect-16/10 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl bg-[#161922] border border-[#54ACBF]/50 cursor-grab active:cursor-grabbing flex items-center justify-center select-none"
             >
               {/* Three.js Canvas */}
               <canvas ref={canvasRef} className="w-full h-full block touch-none" />
@@ -1370,38 +1371,38 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
               )}
 
               {/* Top-Left: Form Mode Toggle Pill (Correct Form vs Common Mistake) */}
-              <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 p-1 rounded-2xl bg-[#12151c]/90 backdrop-blur-md border border-slate-700/80 shadow-lg">
+              <div className="absolute top-2.5 sm:top-3 left-2.5 sm:left-3 z-10 flex items-center gap-1 p-0.5 sm:p-1 rounded-xl sm:rounded-2xl bg-[#12151c]/90 backdrop-blur-md border border-slate-700/80 shadow-lg">
                 <button
                   type="button"
                   onClick={() => setFormMode('correct')}
-                  className={`px-3 py-1 rounded-xl text-[11px] font-extrabold transition-all cursor-pointer flex items-center gap-1 ${
+                  className={`px-2 sm:px-3 py-1 rounded-lg sm:rounded-xl text-[10px] sm:text-[11px] font-extrabold transition-all cursor-pointer flex items-center gap-1 ${
                     !isMistake 
                       ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30' 
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  <Check className="w-3.5 h-3.5 stroke-[3]" />
-                  <span>Correct Form</span>
+                  <Check className="w-3 sm:w-3.5 h-3 sm:h-3.5 stroke-[3]" />
+                  <span>Correct<span className="hidden xs:inline"> Form</span></span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setFormMode('mistake')}
-                  className={`px-3 py-1 rounded-xl text-[11px] font-extrabold transition-all cursor-pointer flex items-center gap-1 ${
+                  className={`px-2 sm:px-3 py-1 rounded-lg sm:rounded-xl text-[10px] sm:text-[11px] font-extrabold transition-all cursor-pointer flex items-center gap-1 ${
                     isMistake 
                       ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30 animate-pulse' 
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  <AlertTriangle className="w-3.5 h-3.5 stroke-[2.5]" />
-                  <span>Common Mistake</span>
+                  <AlertTriangle className="w-3 sm:w-3.5 h-3 sm:h-3.5 stroke-[2.5]" />
+                  <span>Mistake<span className="hidden xs:inline"> (Avoid)</span></span>
                 </button>
               </div>
 
               {/* Live Biomechanical Laser Joint Angle Readout */}
               {showBiomechanics && (
-                <div className="absolute top-14 left-3 px-3 py-1 rounded-full bg-[#12151c]/90 backdrop-blur-md text-white text-[10px] font-mono font-extrabold flex items-center gap-2 border border-slate-700 pointer-events-none shadow-lg">
-                  <span className={`w-2.5 h-2.5 rounded-full ${
+                <div className="absolute top-11 sm:top-14 left-2.5 sm:left-3 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#12151c]/90 backdrop-blur-md text-white text-[9px] sm:text-[10px] font-mono font-extrabold flex items-center gap-1.5 sm:gap-2 border border-slate-700 pointer-events-none shadow-lg z-10">
+                  <span className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full ${
                     isMistake 
                       ? 'bg-rose-500 shadow-[0_0_8px_#f43f5e]' 
                       : (currentPhase === 'concentric' ? 'bg-[#ff5722] shadow-[0_0_8px_#ff5722]' : 'bg-[#22c55e] shadow-[0_0_8px_#22c55e]')
@@ -1414,54 +1415,61 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
                   }`}>
                     {liveJointAngle}°
                   </span>
-                  <span className="text-[9px] uppercase tracking-wider text-slate-400">
+                  <span className="hidden sm:inline text-[9px] uppercase tracking-wider text-slate-400">
                     ({isMistake ? 'FAULTY PATH' : (currentPhase === 'concentric' ? 'PEAK SQUEEZE' : 'OPTIMAL STRETCH')})
                   </span>
                 </div>
               )}
 
               {/* Top-Right Rep Counter & Phase Badge */}
-              <div className="absolute top-3 right-3 flex items-center gap-2 pointer-events-none">
-                <span className="px-2.5 py-1 rounded-full bg-[#12151c]/90 backdrop-blur-md text-white text-[10px] font-mono font-extrabold border border-slate-700">
+              <div className="absolute top-2.5 sm:top-3 right-2.5 sm:right-3 flex items-center gap-1 sm:gap-2 pointer-events-none z-10">
+                <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-[#12151c]/90 backdrop-blur-md text-white text-[9px] sm:text-[10px] font-mono font-extrabold border border-slate-700">
                   Rep #{repCount}
                 </span>
-                <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm ${
+                <span className={`px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider shadow-sm ${
                   isMistake
                     ? 'bg-rose-600 text-white shadow-[0_0_12px_rgba(244,63,94,0.6)] animate-pulse'
                     : (currentPhase === 'concentric' 
                         ? 'bg-[#ff5722] text-white shadow-[0_0_12px_rgba(255,87,34,0.6)]' 
                         : 'bg-[#22c55e] text-slate-950 shadow-[0_0_10px_rgba(34,197,94,0.4)]')
                 }`}>
-                  {isMistake ? '⚠️ Mistake Active' : (currentPhase === 'concentric' ? 'Drive Up ⚡' : 'Controlled 3s 🛡️')}
+                  <span className="xs:hidden">
+                    {isMistake ? 'Mistake ⚠️' : (currentPhase === 'concentric' ? 'Drive ⚡' : '3s 🛡️')}
+                  </span>
+                  <span className="hidden xs:inline">
+                    {isMistake ? '⚠️ Mistake Active' : (currentPhase === 'concentric' ? 'Drive Up ⚡' : 'Controlled 3s 🛡️')}
+                  </span>
                 </span>
               </div>
 
               {/* Floating 3D Anatomical Contextual Badges (Directly Anchored to Bones) */}
-              {projectedBadges.map((badge) => (
+              {projectedBadges.map((badge, idx) => (
                 badge.isVisible && (
                   <div
                     key={badge.id}
                     style={{ left: `${badge.x}%`, top: `${badge.y}%` }}
-                    className={`absolute -translate-x-1/2 -translate-y-1/2 px-2.5 py-1 rounded-full text-[10px] font-extrabold whitespace-nowrap shadow-xl pointer-events-none backdrop-blur-md transition-all duration-75 flex items-center gap-1.5 ${
+                    className={`absolute -translate-x-1/2 -translate-y-1/2 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-extrabold whitespace-nowrap shadow-xl pointer-events-none backdrop-blur-md transition-all duration-75 flex items-center gap-1 sm:gap-1.5 max-w-[160px] sm:max-w-none ${
+                      idx > 0 ? 'hidden sm:flex' : 'flex'
+                    } ${
                       badge.color === 'emerald'
                         ? 'bg-emerald-950/85 text-emerald-300 border border-emerald-500/60 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
                         : 'bg-rose-950/90 text-rose-200 border border-rose-500/80 shadow-[0_0_14px_rgba(244,63,94,0.4)] animate-bounce'
                     }`}
                   >
-                    <span>{badge.text}</span>
+                    <span className="truncate">{badge.text}</span>
                   </div>
                 )
               ))}
 
               {/* Bottom Dock: Controls Bar */}
-              <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between px-3 py-2 rounded-2xl bg-[#12151c]/90 backdrop-blur-md border border-slate-700 text-xs">
+              <div className="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 right-2 sm:right-3 flex items-center justify-between px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl bg-[#12151c]/90 backdrop-blur-md border border-slate-700 text-xs z-10">
                 
                 {/* Camera View Switcher */}
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-0.5 sm:gap-1">
                   <span className="text-[10px] font-bold text-slate-400 hidden sm:inline mr-1">View:</span>
                   <button
                     onClick={() => setCameraAnglePreset('side')}
-                    className={`px-2.5 py-1 rounded-xl text-[10px] font-extrabold transition-all cursor-pointer ${
+                    className={`px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-extrabold transition-all cursor-pointer ${
                       activeAngle === 'side' ? 'bg-[#54ACBF] text-[#011C40] shadow-sm' : 'text-white/80 hover:bg-white/10'
                     }`}
                   >
@@ -1469,7 +1477,7 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
                   </button>
                   <button
                     onClick={() => setCameraAnglePreset('threeQuarter')}
-                    className={`px-2.5 py-1 rounded-xl text-[10px] font-extrabold transition-all cursor-pointer ${
+                    className={`px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-extrabold transition-all cursor-pointer ${
                       activeAngle === 'threeQuarter' ? 'bg-[#54ACBF] text-[#011C40] shadow-sm' : 'text-white/80 hover:bg-white/10'
                     }`}
                   >
@@ -1477,7 +1485,7 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
                   </button>
                   <button
                     onClick={() => setCameraAnglePreset('front')}
-                    className={`px-2.5 py-1 rounded-xl text-[10px] font-extrabold transition-all cursor-pointer ${
+                    className={`px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-extrabold transition-all cursor-pointer ${
                       activeAngle === 'front' ? 'bg-[#54ACBF] text-[#011C40] shadow-sm' : 'text-white/80 hover:bg-white/10'
                     }`}
                   >
@@ -1489,7 +1497,7 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
                 <button
                   type="button"
                   onClick={() => setShowBiomechanics(!showBiomechanics)}
-                  className={`px-2.5 py-1 rounded-xl text-[10px] font-extrabold transition-all cursor-pointer flex items-center gap-1 ${
+                  className={`px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-extrabold transition-all cursor-pointer flex items-center gap-1 ${
                     showBiomechanics 
                       ? 'bg-slate-700 text-emerald-400 border border-emerald-500/50' 
                       : 'text-slate-400 hover:text-white hover:bg-white/10'
@@ -1497,18 +1505,19 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
                   title="Toggle Biomechanical Trajectories & Angle Vectors"
                 >
                   <Activity className="w-3 h-3" />
-                  <span className="hidden sm:inline">Biomechanics</span>
+                  <span className="hidden md:inline">Biomechanics</span>
+                  <span className="inline md:hidden text-[9px]">Bio</span>
                 </button>
 
                 {/* Playback Controls & Speed */}
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1 sm:gap-1.5">
                   {/* Speed Selector */}
-                  <div className="flex items-center bg-slate-800 rounded-xl p-0.5 border border-slate-700">
+                  <div className="flex items-center bg-slate-800 rounded-lg sm:rounded-xl p-0.5 border border-slate-700">
                     {[0.5, 1.0, 1.25].map(s => (
                       <button
                         key={s}
                         onClick={() => setPlaybackSpeed(s)}
-                        className={`px-1.5 py-0.5 rounded-lg text-[9px] font-extrabold transition-all cursor-pointer ${
+                        className={`px-1 sm:px-1.5 py-0.5 rounded-md sm:rounded-lg text-[8px] sm:text-[9px] font-extrabold transition-all cursor-pointer ${
                           playbackSpeed === s ? 'bg-[#54ACBF] text-[#011C40]' : 'text-slate-400 hover:text-white'
                         }`}
                       >
@@ -1519,18 +1528,18 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
 
                   <button
                     onClick={handleResetPlayback}
-                    className="p-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+                    className="p-1 sm:p-1.5 rounded-lg sm:rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
                     title="Reset Rep Counter"
                   >
-                    <RotateCcw className="w-3.5 h-3.5" />
+                    <RotateCcw className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
                   </button>
 
                   <button
                     onClick={() => setIsPlaying(!isPlaying)}
-                    className="p-1.5 rounded-xl bg-[#54ACBF] text-[#011C40] hover:bg-white transition-all cursor-pointer shadow-sm"
+                    className="p-1 sm:p-1.5 rounded-lg sm:rounded-xl bg-[#54ACBF] text-[#011C40] hover:bg-white transition-all cursor-pointer shadow-sm"
                     title={isPlaying ? 'Pause' : 'Play'}
                   >
-                    {isPlaying ? <Pause className="w-3.5 h-3.5 fill-[#011C40]" /> : <Play className="w-3.5 h-3.5 fill-[#011C40]" />}
+                    {isPlaying ? <Pause className="w-3 sm:w-3.5 h-3 sm:h-3.5 fill-[#011C40]" /> : <Play className="w-3 sm:w-3.5 h-3 sm:h-3.5 fill-[#011C40]" />}
                   </button>
                 </div>
 
@@ -1539,22 +1548,24 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
             </div>
 
             {/* AI Real-Time Feedback Strip Directly Below 3D Viewport */}
-            <div className={`p-3.5 rounded-2xl border transition-all duration-200 flex items-start gap-3 ${
+            <div className={`p-3 sm:p-3.5 rounded-2xl border transition-all duration-200 flex items-start gap-2.5 sm:gap-3 ${
               isMistake
                 ? 'bg-rose-50/90 border-rose-300 text-rose-950'
                 : 'bg-emerald-50/90 border-emerald-300 text-emerald-950'
             }`}>
-              <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
+              <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
                 isMistake ? 'bg-rose-600 text-white' : 'bg-[#023859] text-[#A7EBF2]'
               }`}>
-                {isMistake ? <AlertTriangle className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                {isMistake ? <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5 sm:gap-2">
                   <span className={`text-[10px] font-black uppercase tracking-wider ${isMistake ? 'text-rose-700' : 'text-[#023859]'}`}>
                     {isMistake ? 'Form Error Detected' : 'Nouriq AI Biomechanical Cue'}
                   </span>
-                  <span className="text-[10px] text-slate-500 font-mono">• Tempo: {bioData.correctForm.tempo || '2s-1s-3s'}</span>
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    Tempo: {bioData.correctForm.tempo || '2s-1s-3s'}
+                  </span>
                 </div>
                 <p className="text-xs font-semibold leading-relaxed mt-0.5">
                   {isMistake ? bioData.commonMistake.aiCoaching : bioData.correctForm.aiCoaching}
