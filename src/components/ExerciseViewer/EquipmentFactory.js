@@ -201,11 +201,20 @@ export function createGymEquipment(scene, exercise, initialMode) {
 
   benchGroup.add(padPivot);
 
-  const isBenchEx = ['bench-press', 'incline-press', 'one-arm-row'].includes(exercise?.kinematicType);
+  const isBenchEx = ['bench-press', 'incline-press', 'one-arm-row', 'overhead-press'].includes(exercise?.kinematicType);
   benchGroup.visible = isBenchEx;
   const isIncline = exercise?.kinematicType === 'incline-press';
-  padPivot.rotation.x = isIncline ? Math.PI / 6 : 0;
-  strut.visible = isIncline;
+  const isOverhead = exercise?.kinematicType === 'overhead-press';
+  if (isOverhead) {
+    padPivot.rotation.x = 1.40; // 80° upright utility bench
+    strut.visible = true;
+  } else if (isIncline) {
+    padPivot.rotation.x = Math.PI / 6; // 30° incline
+    strut.visible = true;
+  } else {
+    padPivot.rotation.x = 0; // flat
+    strut.visible = false;
+  }
   scene.add(benchGroup);
 
   return { barbell, dumbbellL, dumbbellR, latBar, cableRope, pullUpBar, benchGroup, pad: padPivot, strut };
