@@ -11,6 +11,7 @@ export function createGymEquipment(scene, exercise, initialMode) {
   const ropeMat = new THREE.MeshStandardMaterial({ color: 0x2a2f38, roughness: 0.8, metalness: 0.1 });
 
   const isLatPulldown = exercise?.kinematicType === 'lat-pulldown' || exercise?.id === 'lat-pulldown';
+  const isSeatedRow = exercise?.kinematicType === 'seated-row' || exercise?.id === 'seated-cable-row' || exercise?.id === 'seated-row';
 
   // 1. OLYMPIC BARBELL ROD (2.15m knurled chrome shaft with dual 20kg bumper plates)
   const barbell = new THREE.Group();
@@ -232,10 +233,143 @@ export function createGymEquipment(scene, exercise, initialMode) {
   cableWire.position.set(0, 0.75, 0);
   cableRope.add(cableWire);
 
-  cableRope.visible = initialMode === 'cable' && !isLatPulldown;
+  cableRope.visible = initialMode === 'cable' && !isLatPulldown && !isSeatedRow;
   scene.add(cableRope);
 
-  // 5. OVERHEAD PULL-UP BAR
+  // 5. COMMERCIAL SEATED CABLE ROW STATION & CLOSE-GRIP DOUBLE-D (V-BAR) HANDLE
+  const rowStation = new THREE.Group();
+
+  // Floor Base Rails (dark steel)
+  const rowBaseSpine = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.06, 1.65), steelMat);
+  rowBaseSpine.position.set(0, 0.03, 0.50);
+  rowStation.add(rowBaseSpine);
+
+  const rowBaseCrossFront = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.06, 0.06), steelMat);
+  rowBaseCrossFront.position.set(0, 0.03, 1.25);
+  rowStation.add(rowBaseCrossFront);
+
+  const rowBaseCrossRear = new THREE.Mesh(new THREE.BoxGeometry(0.60, 0.06, 0.06), steelMat);
+  rowBaseCrossRear.position.set(0, 0.03, -0.25);
+  rowStation.add(rowBaseCrossRear);
+
+  // Bench Pad Support Pillars (rising from base spine)
+  const rowSeatPostFront = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.30, 0.06), steelMat);
+  rowSeatPostFront.position.set(0, 0.18, 0.32);
+  rowStation.add(rowSeatPostFront);
+
+  const rowSeatPostRear = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.30, 0.06), steelMat);
+  rowSeatPostRear.position.set(0, 0.18, -0.10);
+  rowStation.add(rowSeatPostRear);
+
+  // Commercial Leather Bench Pad (mannequin sits at y = 0.40, z = 0.00)
+  const rowSeatPad = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.06, 0.72), leatherMat);
+  rowSeatPad.position.set(0, 0.35, 0.11);
+  rowSeatPad.receiveShadow = true;
+  rowStation.add(rowSeatPad);
+
+  // Dual Angled Diamond-Plate Footrests (for feet braced at x = ±0.15, y = 0.00, z = 0.80)
+  const footPlateMat = new THREE.MeshStandardMaterial({ color: 0x22262e, roughness: 0.5, metalness: 0.75 });
+  const footPlateGeom = new THREE.BoxGeometry(0.16, 0.02, 0.26);
+
+  const footPlateL = new THREE.Mesh(footPlateGeom, footPlateMat);
+  footPlateL.position.set(0.15, 0.15, 0.82);
+  footPlateL.rotation.x = -0.65; // ~37° backward angle matching braced foot
+  rowStation.add(footPlateL);
+
+  const footPlateR = new THREE.Mesh(footPlateGeom, footPlateMat);
+  footPlateR.position.set(-0.15, 0.15, 0.82);
+  footPlateR.rotation.x = -0.65;
+  rowStation.add(footPlateR);
+
+  // Sturdy Footplate Support Struts connecting to the base spine
+  const footStrutL = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.16, 0.04), steelMat);
+  footStrutL.position.set(0.12, 0.08, 0.78);
+  rowStation.add(footStrutL);
+
+  const footStrutR = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.16, 0.04), steelMat);
+  footStrutR.position.set(-0.12, 0.08, 0.78);
+  rowStation.add(footStrutR);
+
+  // Low Pulley Housing Tower (at z = 1.15)
+  const pulleyTower = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.52, 0.10), steelMat);
+  pulleyTower.position.set(0, 0.26, 1.18);
+  rowStation.add(pulleyTower);
+
+  const lowPulleyHousing = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.12, 0.10), steelMat);
+  lowPulleyHousing.position.set(0, 0.42, 1.15);
+  rowStation.add(lowPulleyHousing);
+
+  const lowPulleyWheel = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.022, 24), chromeMat);
+  lowPulleyWheel.rotation.z = Math.PI / 2;
+  lowPulleyWheel.position.set(0, 0.42, 1.15);
+  rowStation.add(lowPulleyWheel);
+
+  // Protective Weight Stack Tower Enclosure in front
+  const weightStack = new THREE.Mesh(new THREE.BoxGeometry(0.36, 1.40, 0.28), steelMat);
+  weightStack.position.set(0, 0.70, 1.38);
+  rowStation.add(weightStack);
+
+  rowStation.visible = initialMode === 'cable' && isSeatedRow;
+  scene.add(rowStation);
+
+  // DEDICATED CLOSE-GRIP DOUBLE-D / V-BAR HANDLE
+  const vBarHandle = new THREE.Group();
+
+  // Central Chrome Attachment Bracket & Carabiner Ring
+  const centerRing = new THREE.Mesh(new THREE.TorusGeometry(0.025, 0.006, 12, 24), chromeMat);
+  centerRing.rotation.y = Math.PI / 2;
+  centerRing.position.set(0, 0, 0.04);
+  vBarHandle.add(centerRing);
+
+  const centerBracket = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.035, 0.05), chromeMat);
+  centerBracket.position.set(0, 0, 0.01);
+  vBarHandle.add(centerBracket);
+
+  // Horizontal Cross Connecting Bar
+  const crossBar = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.18, 16), chromeMat);
+  crossBar.rotation.z = Math.PI / 2;
+  crossBar.position.set(0, 0, 0);
+  vBarHandle.add(crossBar);
+
+  // Left & Right Angled Knurled Grip Handles (V-Shape angled slightly inward towards user)
+  const handleL = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.16, 16), steelMat);
+  handleL.position.set(0.09, -0.01, -0.06);
+  handleL.rotation.x = Math.PI / 8;
+  handleL.rotation.y = -Math.PI / 16;
+  vBarHandle.add(handleL);
+
+  const handleR = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.16, 16), steelMat);
+  handleR.position.set(-0.09, -0.01, -0.06);
+  handleR.rotation.x = Math.PI / 8;
+  handleR.rotation.y = Math.PI / 16;
+  vBarHandle.add(handleR);
+
+  // Protective End Caps on handles
+  const capL1 = new THREE.Mesh(new THREE.SphereGeometry(0.018, 12, 12), chromeMat);
+  capL1.position.set(0.09, 0.07, -0.09);
+  vBarHandle.add(capL1);
+
+  const capL2 = new THREE.Mesh(new THREE.SphereGeometry(0.018, 12, 12), chromeMat);
+  capL2.position.set(0.09, -0.09, -0.03);
+  vBarHandle.add(capL2);
+
+  const capR1 = new THREE.Mesh(new THREE.SphereGeometry(0.018, 12, 12), chromeMat);
+  capR1.position.set(-0.09, 0.07, -0.09);
+  vBarHandle.add(capR1);
+
+  const capR2 = new THREE.Mesh(new THREE.SphereGeometry(0.018, 12, 12), chromeMat);
+  capR2.position.set(-0.09, -0.09, -0.03);
+  vBarHandle.add(capR2);
+
+  vBarHandle.visible = initialMode === 'cable' && isSeatedRow;
+  scene.add(vBarHandle);
+
+  // DYNAMIC HORIZONTAL CABLE WIRE (From low pulley wheel at (0, 0.42, 1.15) to V-Bar ring)
+  const rowCableWire = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 1.0, 8), chromeMat);
+  rowCableWire.visible = initialMode === 'cable' && isSeatedRow;
+  scene.add(rowCableWire);
+
+  // 6. OVERHEAD PULL-UP BAR
   const pullUpBar = new THREE.Group();
   const puShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 1.3, 16), steelMat);
   puShaft.rotation.z = Math.PI / 2;
@@ -322,5 +456,11 @@ export function createGymEquipment(scene, exercise, initialMode) {
   }
   scene.add(benchGroup);
 
-  return { barbell, dumbbellL, dumbbellR, latBar, latCableWire, latStation, cableRope, ropeCordL, ropeCordR, ropeBallL, ropeBallR, cableWire, pullUpBar, benchGroup, pad: padPivot, strut };
+  return {
+    barbell, dumbbellL, dumbbellR,
+    latBar, latCableWire, latStation,
+    cableRope, ropeCordL, ropeCordR, ropeBallL, ropeBallR, cableWire,
+    rowStation, vBarHandle, rowCableWire,
+    pullUpBar, benchGroup, pad: padPivot, strut
+  };
 }

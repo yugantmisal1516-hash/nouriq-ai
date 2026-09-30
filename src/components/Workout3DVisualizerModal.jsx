@@ -917,29 +917,107 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
 
       // 7. SEATED CABLE ROW
       case 'seated-row': {
-        model.position.set(0, 0.45, 0);
-        if (b('thighL')) b('thighL').rotateX(-1.45);
-        if (b('thighR')) b('thighR').rotateX(-1.45);
-        if (b('shinL')) b('shinL').rotateX(0.35);
-        if (b('shinR')) b('shinR').rotateX(0.35);
+        model.rotation.set(0, -Math.PI / 2, 0);
+        model.position.set(0, 0.40, 0);
+
+        // Lower body: seated comfortably on commercial bench pad at y = 0.35m, soft athletic 25° knee bend
+        // Feet solidly braced flat against angled footplates at z = 0.82m, y = 0.15m
+        if (b('thighL')) {
+          b('thighL').rotateX(-1.40);
+          b('thighL').rotateZ(-0.08);
+        }
+        if (b('thighR')) {
+          b('thighR').rotateX(-1.40);
+          b('thighR').rotateZ(0.08);
+        }
+        if (b('shinL')) b('shinL').rotateX(0.48);
+        if (b('shinR')) b('shinR').rotateX(0.48);
+        if (b('footL')) b('footL').rotateX(-0.35);
+        if (b('footR')) b('footR').rotateX(-0.35);
 
         if (isMistake) {
-          // Rocking lower back like a boat
-          if (b('spine001')) b('spine001').rotateX(THREE.MathUtils.lerp(0.50, -0.40, t));
-          if (b('upper_armL')) b('upper_armL').rotateX(THREE.MathUtils.lerp(0.5, -0.2, t));
-          if (b('upper_armR')) b('upper_armR').rotateX(THREE.MathUtils.lerp(0.5, -0.2, t));
-        } else {
-          if (b('spine001')) b('spine001').rotateX(0.08); // upright tall
+          // COMMON MISTAKE:
+          // 1. Rocking-boat momentum: excessive lumbar swing (hinging far forward 0.45 rad then violently heaving back -0.50 rad)
+          // 2. Shrugged shoulders up to ears (hyper-elevated upper traps, zero scapular depression)
+          // 3. Flared elbows wide out to sides instead of skimming ribs
+          // 4. Broken, collapsed wrists
+          const spine1X = THREE.MathUtils.lerp(0.45, -0.50, t);
+          const spine2X = THREE.MathUtils.lerp(0.20, -0.20, t);
+          if (b('spine001')) b('spine001').rotateX(spine1X);
+          if (b('spine002')) b('spine002').rotateX(spine2X);
+          if (b('spine004')) b('spine004').rotateX(THREE.MathUtils.lerp(-0.15, 0.35, t));
+
+          // Shrugged shoulders
+          if (b('shoulderL')) b('shoulderL').rotateZ(0.18);
+          if (b('shoulderR')) b('shoulderR').rotateZ(-0.18);
+
+          const uX = THREE.MathUtils.lerp(0.70, -0.30, t);
+          const uZ = THREE.MathUtils.lerp(-0.10, -0.45, t); // flared outward
           if (b('upper_armL')) {
-            b('upper_armL').rotateX(THREE.MathUtils.lerp(0.65, -0.35, t));
-            b('upper_armL').rotateZ(-0.15);
+            b('upper_armL').rotateX(uX);
+            b('upper_armL').rotateZ(uZ);
           }
           if (b('upper_armR')) {
-            b('upper_armR').rotateX(THREE.MathUtils.lerp(0.65, -0.35, t));
-            b('upper_armR').rotateZ(0.15);
+            b('upper_armR').rotateX(uX);
+            b('upper_armR').rotateZ(-uZ);
           }
-          if (b('forearmL')) b('forearmL').rotateX(THREE.MathUtils.lerp(0.15, 1.45, t));
-          if (b('forearmR')) b('forearmR').rotateX(THREE.MathUtils.lerp(0.15, 1.45, t));
+
+          const fX = THREE.MathUtils.lerp(0.15, 1.45, t);
+          if (b('forearmL')) b('forearmL').rotateX(fX);
+          if (b('forearmR')) b('forearmR').rotateX(fX);
+
+          if (b('handL')) b('handL').rotateX(-0.30);
+          if (b('handR')) b('handR').rotateX(-0.30);
+        } else {
+          // CORRECT FORM:
+          // 1. Stable, upright stationary torso with proud chest (spine001 @ 0.06 rad, spine002 @ -0.04 rad)
+          // 2. Dynamic scapular retraction: natural forward protraction at full stretch (sZ = 0.06), deep lat/rhomboid retraction pinch at finish (sZ = -0.15)
+          // 3. Elbows pinned close to the ribcage driving straight back past the flanks
+          // 4. V-bar trajectory pulling cleanly to lower abdomen/navel level
+          // 5. Solid neutral grip with palms facing inward, wrists rigid and aligned
+          if (b('spine001')) b('spine001').rotateX(0.06);
+          if (b('spine002')) b('spine002').rotateX(-0.04);
+          if (b('spine004')) b('spine004').rotateX(0.02);
+
+          const sZ = THREE.MathUtils.lerp(0.06, -0.15, t);
+          if (b('shoulderL')) b('shoulderL').rotateZ(sZ);
+          if (b('shoulderR')) b('shoulderR').rotateZ(-sZ);
+
+          const uX = THREE.MathUtils.lerp(0.95, -0.15, t);
+          const uY = THREE.MathUtils.lerp(-0.45, -0.15, t);
+          const uZ = THREE.MathUtils.lerp(-0.45, -0.30, t);
+
+          if (b('upper_armL')) {
+            b('upper_armL').rotateX(uX);
+            b('upper_armL').rotateY(uY);
+            b('upper_armL').rotateZ(uZ);
+          }
+          if (b('upper_armR')) {
+            b('upper_armR').rotateX(uX);
+            b('upper_armR').rotateY(-uY);
+            b('upper_armR').rotateZ(-uZ);
+          }
+
+          const fX = THREE.MathUtils.lerp(0.12, 1.55, t);
+          const fZ = THREE.MathUtils.lerp(-0.10, -0.65, t);
+
+          if (b('forearmL')) {
+            b('forearmL').rotateX(fX);
+            b('forearmL').rotateZ(fZ);
+          }
+          if (b('forearmR')) {
+            b('forearmR').rotateX(fX);
+            b('forearmR').rotateZ(-fZ);
+          }
+
+          if (b('handL')) {
+            b('handL').rotateX(-0.15);
+            b('handL').rotateZ(0.65);
+          }
+          if (b('handR')) {
+            b('handR').rotateX(-0.15);
+            b('handR').rotateZ(-0.65);
+          }
         }
         break;
       }
@@ -1495,6 +1573,9 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
     if (eq.latBar) eq.latBar.visible = false;
     if (eq.latStation) eq.latStation.visible = false;
     if (eq.cableRope) eq.cableRope.visible = false;
+    if (eq.rowStation) eq.rowStation.visible = false;
+    if (eq.vBarHandle) eq.vBarHandle.visible = false;
+    if (eq.rowCableWire) eq.rowCableWire.visible = false;
     if (eq.pullUpBar) eq.pullUpBar.visible = false;
 
     // Bench visibility
@@ -1578,6 +1659,29 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
             const wireHeight = Math.max(0.1, 2.25 - barCenterY);
             eq.latCableWire.position.set(0, wireHeight / 2, (0.057 - barCenterZ) * 0.5);
             eq.latCableWire.scale.set(1, wireHeight / 1.5, 1);
+          }
+        }
+      } else if (type === 'seated-row') {
+        if (eq.rowStation) eq.rowStation.visible = true;
+        if (eq.vBarHandle) {
+          eq.vBarHandle.visible = true;
+          const handleY = (handLPos.y + handRPos.y) / 2;
+          const handleZ = (handLPos.z + handRPos.z) / 2;
+          eq.vBarHandle.position.set(0, handleY, handleZ);
+          eq.vBarHandle.rotation.set(0, 0, 0);
+
+          if (eq.rowCableWire) {
+            eq.rowCableWire.visible = true;
+            const pulleyPos = new THREE.Vector3(0, 0.42, 1.15);
+            const handlePos = new THREE.Vector3(0, handleY, handleZ);
+            const mid = new THREE.Vector3().addVectors(pulleyPos, handlePos).multiplyScalar(0.5);
+            const delta = new THREE.Vector3().subVectors(handlePos, pulleyPos);
+            const dist = delta.length();
+            const dir = delta.clone().normalize();
+
+            eq.rowCableWire.position.copy(mid);
+            eq.rowCableWire.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+            eq.rowCableWire.scale.set(1, dist, 1);
           }
         }
       } else {
