@@ -256,7 +256,7 @@ export const EXERCISE_DATABASE = [
     id: 'romanian-deadlift',
     name: 'Dumbbell / Barbell Romanian Deadlift (RDL)',
     muscleGroup: 'Legs',
-    kinematicType: 'deadlift',
+    kinematicType: 'romanian-deadlift',
     primaryMuscle: 'Hamstrings & Gluteus Maximus',
     secondaryMuscles: ['Erector Spinae'],
     equipment: 'Dumbbell',

@@ -37,7 +37,7 @@ export const getEquipmentMode = (exercise) => {
   const name = (exercise.name || '').toLowerCase();
   const id = (exercise.id || '').toLowerCase();
 
-  if (eq.includes('dumbbell') || name.includes('dumbbell') || id.includes('dumbbell') || id === 'romanian-deadlift' || id === 'one-arm-dumbbell-row' || id === 'incline-dumbbell-press' || id === 'overhead-dumbbell-press' || id === 'dumbbell-lateral-raise' || id === 'incline-dumbbell-curl' || id === 'hammer-curl' || exercise?.kinematicType === 'hammer-curl') {
+  if (eq.includes('dumbbell') || name.includes('dumbbell') || id.includes('dumbbell') || id === 'romanian-deadlift' || id === 'one-arm-dumbbell-row' || id === 'incline-dumbbell-press' || id === 'overhead-dumbbell-press' || id === 'dumbbell-lateral-raise' || id === 'incline-dumbbell-curl' || id === 'hammer-curl' || exercise?.kinematicType === 'hammer-curl' || exercise?.kinematicType === 'romanian-deadlift') {
     return 'dumbbell';
   }
   if (eq.includes('barbell') || name.includes('barbell') || id.includes('barbell') || id === 'barbell-bench-press' || id === 'barbell-back-squat' || id === 'barbell-deadlift') {
@@ -1023,32 +1023,148 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
         break;
       }
 
-      // 8. DEADLIFT & ROMANIAN DEADLIFT (RDL)
+      // 8. ROMANIAN DEADLIFT (RDL) & CONVENTIONAL DEADLIFT
+      case 'romanian-deadlift':
       case 'deadlift': {
-        const hinge = (1 - t) * 0.85;
-        model.position.set(0, THREE.MathUtils.lerp(0.78, 0.95, t), THREE.MathUtils.lerp(-0.05, 0, t));
+        const isRDL = type === 'romanian-deadlift' || exercise?.id === 'romanian-deadlift';
+        if (isRDL) {
+          if (isMistake) {
+            // COMMON MISTAKES:
+            // 1. Lumbar Flexion / Cat-Back Rounding: Bending spine instead of hinging hips (excessive shear on L4/L5 discs)
+            // 2. Excessive Knee Bend (Squatting the Weight): Shins pitch forward 65°, turning the hinge into an awkward squat
+            // 3. Weights Drifting Forward: Lats disengage, dumbbells/barbell swing 25cm away from shins
+            // 4. Weight Shifting to Toes: Heels lifting off the ground
+            const mY = THREE.MathUtils.lerp(0.70, 0.95, t);
+            const mZ = THREE.MathUtils.lerp(-0.06, 0.00, t);
+            model.position.set(0, mY, mZ);
 
-        if (isMistake) {
-          // Cat-back lumbar rounding & bar drift
-          if (b('spine001')) b('spine001').rotateX(hinge * 1.35);
-          if (b('thighL')) b('thighL').rotateX(-hinge * 0.4);
-          if (b('thighR')) b('thighR').rotateX(-hinge * 0.4);
-          if (b('upper_armL')) b('upper_armL').rotateX((1 - t) * 0.65); // bar drifts away
-          if (b('upper_armR')) b('upper_armR').rotateX((1 - t) * 0.65);
-        } else {
-          // Flat neutral spine, bar sliding down shins
-          if (b('spine001')) b('spine001').rotateX(hinge);
-          if (b('thighL')) b('thighL').rotateX(-hinge * 0.7);
-          if (b('thighR')) b('thighR').rotateX(-hinge * 0.7);
-          if (b('shinL')) b('shinL').rotateX((1 - t) * 0.25);
-          if (b('shinR')) b('shinR').rotateX((1 - t) * 0.25);
-          if (b('upper_armL')) {
-            b('upper_armL').rotateX((1 - t) * 0.35);
-            b('upper_armL').rotateZ(-0.20);
+            // Dangerous spinal flexion / cat-back hunch
+            const s1X = THREE.MathUtils.lerp(1.38, 0.04, t);
+            const s2X = THREE.MathUtils.lerp(0.35, -0.02, t);
+            if (b('spine001')) b('spine001').rotateX(s1X);
+            if (b('spine002')) b('spine002').rotateX(s2X);
+            if (b('spine004')) b('spine004').rotateX(THREE.MathUtils.lerp(-0.25, 0.02, t)); // head straining down
+
+            // Excessive knee flexion (squatting down)
+            const tX = THREE.MathUtils.lerp(-0.95, -0.08, t);
+            if (b('thighL')) b('thighL').rotateX(tX);
+            if (b('thighR')) b('thighR').rotateX(tX);
+
+            const sX = THREE.MathUtils.lerp(1.15, 0.16, t);
+            if (b('shinL')) b('shinL').rotateX(sX);
+            if (b('shinR')) b('shinR').rotateX(sX);
+
+            // Heels lift off ground (instability onto toes)
+            if (b('footL')) b('footL').rotateX(THREE.MathUtils.lerp(0.20, -0.08, t));
+            if (b('footR')) b('footR').rotateX(THREE.MathUtils.lerp(0.20, -0.08, t));
+
+            // Weights drift forward away from legs (lats disengaged)
+            const uX = THREE.MathUtils.lerp(0.35, -0.05, t);
+            const uZ = THREE.MathUtils.lerp(-0.25, -0.45, t);
+            if (b('upper_armL')) {
+              b('upper_armL').rotateX(uX);
+              b('upper_armL').rotateZ(uZ);
+            }
+            if (b('upper_armR')) {
+              b('upper_armR').rotateX(uX);
+              b('upper_armR').rotateZ(-uZ);
+            }
+
+            if (b('forearmL')) b('forearmL').rotateX(0.15);
+            if (b('forearmR')) b('forearmR').rotateX(0.15);
+            if (b('handL')) b('handL').rotateX(-0.35);
+            if (b('handR')) b('handR').rotateX(-0.35);
+          } else {
+            // CORRECT BIOMECHANICAL FORM:
+            // 1. Pure Posterior Hip Hinge: Glutes push horizontally backward in Z (32cm displacement to wall behind)
+            // 2. Rigid Neutral Lumbar Spine: Flat back hinged 65°-70° forward (spine001 @ 1.24 rad), zero lower back rounding
+            // 3. Vertical Shin Lock: Knees maintain soft fixed 15°-20° unlock, shins remain perpendicular (~85°-89° to floor)
+            // 4. Grounded Flat Feet: Soles remain glued to gym floor pedestal with < 9mm variance
+            // 5. Weights Grazing Shins: Arms hang vertically straight under gravity (lats locked), weights scraping thighs and shins within 2-4cm
+            const mY = THREE.MathUtils.lerp(0.84, 0.95, t);
+            const mZ = THREE.MathUtils.lerp(-0.32, 0.00, t);
+            model.position.set(0, mY, mZ);
+
+            // Neutral flat spine
+            const s1X = THREE.MathUtils.lerp(1.24, 0.04, t);
+            if (b('spine001')) b('spine001').rotateX(s1X);
+            if (b('spine002')) b('spine002').rotateX(-0.02);
+            if (b('spine004')) b('spine004').rotateX(0.02);
+
+            // Femurs hinging backward relative to pelvis
+            const tX = THREE.MathUtils.lerp(-0.79, -0.08, t);
+            if (b('thighL')) {
+              b('thighL').rotateX(tX);
+              b('thighL').rotateZ(-0.06);
+            }
+            if (b('thighR')) {
+              b('thighR').rotateX(tX);
+              b('thighR').rotateZ(0.06);
+            }
+
+            // Shins near-vertical (soft 15° unlock)
+            const sX = THREE.MathUtils.lerp(0.74, 0.16, t);
+            if (b('shinL')) b('shinL').rotateX(sX);
+            if (b('shinR')) b('shinR').rotateX(sX);
+
+            // Feet grounded flat on floor
+            const fX = THREE.MathUtils.lerp(-0.85, -0.08, t);
+            if (b('footL')) b('footL').rotateX(fX);
+            if (b('footR')) b('footR').rotateX(fX);
+
+            // Upper arms: vertical plumb line under gravity, pulling weights into shins
+            const uX = THREE.MathUtils.lerp(0.84, -0.05, t);
+            const uZ = THREE.MathUtils.lerp(-0.45, -0.45, t);
+            if (b('upper_armL')) {
+              b('upper_armL').rotateX(uX);
+              b('upper_armL').rotateZ(uZ);
+            }
+            if (b('upper_armR')) {
+              b('upper_armR').rotateX(uX);
+              b('upper_armR').rotateZ(-uZ);
+            }
+
+            // Forearms & wrists: firm pronated grip
+            const faX = THREE.MathUtils.lerp(0.06, 0.08, t);
+            if (b('forearmL')) b('forearmL').rotateX(faX);
+            if (b('forearmR')) b('forearmR').rotateX(faX);
+
+            if (b('handL')) {
+              b('handL').rotateX(THREE.MathUtils.lerp(-0.15, -0.08, t));
+              b('handL').rotateZ(0.08);
+            }
+            if (b('handR')) {
+              b('handR').rotateX(THREE.MathUtils.lerp(-0.15, -0.08, t));
+              b('handR').rotateZ(-0.08);
+            }
           }
-          if (b('upper_armR')) {
-            b('upper_armR').rotateX((1 - t) * 0.35);
-            b('upper_armR').rotateZ(0.20);
+        } else {
+          // Conventional Floor Deadlift
+          const hinge = (1 - t) * 0.85;
+          model.position.set(0, THREE.MathUtils.lerp(0.78, 0.95, t), THREE.MathUtils.lerp(-0.05, 0, t));
+
+          if (isMistake) {
+            // Cat-back lumbar rounding & bar drift
+            if (b('spine001')) b('spine001').rotateX(hinge * 1.35);
+            if (b('thighL')) b('thighL').rotateX(-hinge * 0.4);
+            if (b('thighR')) b('thighR').rotateX(-hinge * 0.4);
+            if (b('upper_armL')) b('upper_armL').rotateX((1 - t) * 0.65); // bar drifts away
+            if (b('upper_armR')) b('upper_armR').rotateX((1 - t) * 0.65);
+          } else {
+            // Flat neutral spine, bar sliding down shins
+            if (b('spine001')) b('spine001').rotateX(hinge);
+            if (b('thighL')) b('thighL').rotateX(-hinge * 0.7);
+            if (b('thighR')) b('thighR').rotateX(-hinge * 0.7);
+            if (b('shinL')) b('shinL').rotateX((1 - t) * 0.25);
+            if (b('shinR')) b('shinR').rotateX((1 - t) * 0.25);
+            if (b('upper_armL')) {
+              b('upper_armL').rotateX((1 - t) * 0.35);
+              b('upper_armL').rotateZ(-0.20);
+            }
+            if (b('upper_armR')) {
+              b('upper_armR').rotateX((1 - t) * 0.35);
+              b('upper_armR').rotateZ(0.20);
+            }
           }
         }
         break;
@@ -1736,7 +1852,8 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
     if (laser && laser.laserGroup) {
       laser.laserGroup.visible = showBiomechanics;
 
-      const isLegExercise = ['squat', 'deadlift', 'leg-curl', 'leg-extension'].includes(type);
+      const isRDL = type === 'romanian-deadlift' || exercise?.id === 'romanian-deadlift';
+      const isLegExercise = ['squat', 'deadlift', 'leg-curl', 'leg-extension', 'romanian-deadlift'].includes(type);
       const isCalfExercise = type === 'calf-raise';
       const isAbsExercise = type === 'hanging-leg-raise';
 
@@ -1749,6 +1866,11 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
         pB = ankleLPos;
         pC = toeLPos;
       } else if (isAbsExercise) {
+        pA = shoulderLPos;
+        pB = hipLPos;
+        pC = kneeLPos;
+      } else if (isRDL) {
+        // Romanian Deadlift: True Hip Hinge Angle (Shoulder/Torso -> Hip Pivot -> Knee/Femur)
         pA = shoulderLPos;
         pB = hipLPos;
         pC = kneeLPos;
@@ -1863,7 +1985,7 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
 
         muscles.secondaryPatch.position.set(hipLPos.x + 0.08, hipLPos.y - 0.04, hipLPos.z - 0.08);
         muscles.secondaryPatch.scale.set(0.08, 0.10, 0.08);
-      } else if (type === 'deadlift' || type === 'leg-curl') {
+      } else if (type === 'deadlift' || type === 'romanian-deadlift' || type === 'leg-curl') {
         const hamPos = new THREE.Vector3().lerpVectors(hipLPos, kneeLPos, 0.5);
         muscles.primaryPatch.position.set(hamPos.x + 0.06, hamPos.y, hamPos.z - 0.06);
         muscles.primaryPatch.scale.set(0.09, 0.14, 0.08);
@@ -2055,6 +2177,26 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
               THREE.MathUtils.lerp(-0.12, -0.35, t),
               THREE.MathUtils.lerp(0.00, -0.40, t)
             );
+          }
+        }
+      } else if (type === 'romanian-deadlift' || exercise?.id === 'romanian-deadlift') {
+        if (eq.dumbbellL) {
+          eq.dumbbellL.visible = true;
+          eq.dumbbellL.position.copy(handLPos);
+          if (isMistake) {
+            eq.dumbbellL.rotation.set(-0.25, 0.10, 0.15);
+          } else {
+            // Align dumbbells horizontally in front of thighs/shins with slight pronated pitch
+            eq.dumbbellL.rotation.set(THREE.MathUtils.lerp(0.12, -0.40, t), 0.12, 0.08);
+          }
+        }
+        if (eq.dumbbellR) {
+          eq.dumbbellR.visible = true;
+          eq.dumbbellR.position.copy(handRPos);
+          if (isMistake) {
+            eq.dumbbellR.rotation.set(-0.25, -0.10, -0.15);
+          } else {
+            eq.dumbbellR.rotation.set(THREE.MathUtils.lerp(0.12, -0.40, t), -0.12, -0.08);
           }
         }
       } else {
