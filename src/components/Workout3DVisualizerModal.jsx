@@ -1054,47 +1054,92 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
         break;
       }
 
-      // 9. SQUAT & LEG PRESS
+      // 9. BARBELL BACK SQUAT
       case 'squat': {
-        const squatDepth = t * (isMistake ? 0.22 : 0.40);
-        model.position.set(0, 0.95 - squatDepth, -t * (isMistake ? 0.35 : 0.20));
-
         if (isMistake) {
-          // Knees cave inward (valgus collapse), excessive forward torso pitch
-          if (b('spine001')) b('spine001').rotateX(t * 0.75);
+          // COMMON MISTAKES:
+          // 1. Knee Valgus Collapse: Knees cave sharply inward on ascent (severe ACL/meniscus shear)
+          // 2. "Good Morning" Squat: Hips shoot up, torso collapses forward (excessive lumbar shear)
+          // 3. Heels Lifting Off Ground: Shifting weight entirely onto toes
+          // 4. Cutting Depth Short: Quarter-squat stopping well above parallel
+          const mY = THREE.MathUtils.lerp(0.93, 0.74, t);
+          const mZ = THREE.MathUtils.lerp(0.00, -0.08, t);
+          model.position.set(0, mY, mZ);
+
+          // Torso collapses forward into dangerous spinal lean
+          if (b('spine001')) b('spine001').rotateX(THREE.MathUtils.lerp(0.04, 0.72, t));
+          if (b('spine002')) b('spine002').rotateX(THREE.MathUtils.lerp(-0.02, 0.15, t));
+
+          // Severe knee valgus collapse (knees knock together)
+          const tX = THREE.MathUtils.lerp(-0.06, -0.85, t);
           if (b('thighL')) {
-            b('thighL').rotateX(-t * 0.9);
-            b('thighL').rotateZ(-t * 0.35);
+            b('thighL').rotateX(tX);
+            b('thighL').rotateZ(THREE.MathUtils.lerp(-0.20, 0.25, t)); // caves inward
           }
           if (b('thighR')) {
-            b('thighR').rotateX(-t * 0.9);
-            b('thighR').rotateZ(t * 0.35);
+            b('thighR').rotateX(tX);
+            b('thighR').rotateZ(THREE.MathUtils.lerp(0.20, -0.25, t)); // caves inward
           }
+
+          if (b('shinL')) b('shinL').rotateX(THREE.MathUtils.lerp(0.10, 1.10, t));
+          if (b('shinR')) b('shinR').rotateX(THREE.MathUtils.lerp(0.10, 1.10, t));
+
+          // Heels lift off ground (weight on toes)
+          if (b('footL')) b('footL').rotateX(THREE.MathUtils.lerp(-0.04, 0.25, t));
+          if (b('footR')) b('footR').rotateX(THREE.MathUtils.lerp(-0.04, 0.25, t));
         } else {
-          // Full parallel depth, knees track over toes
-          if (b('spine001')) b('spine001').rotateX(t * 0.32);
+          // CORRECT BIOMECHANICAL FORM:
+          // 1. Grounded Shoulder-Width Base: Feet planted flat at y=0 throughout whole rep (zero sliding)
+          // 2. Pure Vertical Bar Path: Barbell stays strictly over midfoot throughout descent
+          // 3. True Parallel Depth: Hip crease descends level with top of patella (knee angle drops from 175° to 88°)
+          // 4. Knees Tracking Over Toes: Hip abduction and external rotation tracking over flared toes
+          // 5. 360° Intra-Abdominal Brace: Neutral spine with 30°-35° natural torso pitch, zero butt-wink
+          const mY = THREE.MathUtils.lerp(0.93, 0.63, t);
+          const mZ = THREE.MathUtils.lerp(0.00, -0.25, t);
+          model.position.set(0, mY, mZ);
+
+          if (b('spine001')) b('spine001').rotateX(THREE.MathUtils.lerp(0.04, 0.48, t));
+          if (b('spine002')) b('spine002').rotateX(-0.02);
+
+          const tX = THREE.MathUtils.lerp(-0.06, -1.34, t);
           if (b('thighL')) {
-            b('thighL').rotateX(-t * 1.3);
-            b('thighL').rotateZ(t * 0.12);
+            b('thighL').rotateX(tX);
+            b('thighL').rotateZ(-0.20);
           }
           if (b('thighR')) {
-            b('thighR').rotateX(-t * 1.3);
-            b('thighR').rotateZ(-t * 0.12);
+            b('thighR').rotateX(tX);
+            b('thighR').rotateZ(0.20);
           }
-          if (b('shinL')) b('shinL').rotateX(t * 1.3);
-          if (b('shinR')) b('shinR').rotateX(t * 1.3);
+
+          const sX = THREE.MathUtils.lerp(0.10, 1.62, t);
+          if (b('shinL')) b('shinL').rotateX(sX);
+          if (b('shinR')) b('shinR').rotateX(sX);
+
+          // Ankle dorsiflexion maintaining flat grounded foot contact
+          const fX = THREE.MathUtils.lerp(-0.04, -0.76, t);
+          if (b('footL')) {
+            b('footL').rotateX(fX);
+            b('footL').rotateZ(0.20); // 15°-20° outward toe flare
+          }
+          if (b('footR')) {
+            b('footR').rotateX(fX);
+            b('footR').rotateZ(-0.20);
+          }
         }
 
+        // Upper Arms & Forearms gripping the barbell securely across upper traps
         if (b('upper_armL')) {
-          b('upper_armL').rotateZ(0.9);
-          b('upper_armL').rotateX(-0.35);
+          b('upper_armL').rotateX(-0.75);
+          b('upper_armL').rotateY(-0.60);
+          b('upper_armL').rotateZ(1.35);
         }
         if (b('upper_armR')) {
-          b('upper_armR').rotateZ(-0.9);
-          b('upper_armR').rotateX(-0.35);
+          b('upper_armR').rotateX(-0.75);
+          b('upper_armR').rotateY(0.60);
+          b('upper_armR').rotateZ(-1.35);
         }
-        if (b('forearmL')) b('forearmL').rotateX(1.3);
-        if (b('forearmR')) b('forearmR').rotateX(1.3);
+        if (b('forearmL')) b('forearmL').rotateX(1.90);
+        if (b('forearmR')) b('forearmR').rotateX(1.90);
         break;
       }
 
@@ -2028,7 +2073,7 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
       if (eq.barbell) {
         eq.barbell.visible = true;
         if (type === 'squat' || type === 'calf-raise') {
-          eq.barbell.position.set(0, trapsPos.y, trapsPos.z - 0.08);
+          eq.barbell.position.set(0, trapsPos.y + 0.01, trapsPos.z - 0.05);
           eq.barbell.rotation.set(0, 0, 0);
         } else {
           const barCenterY = (handLPos.y + handRPos.y) / 2;

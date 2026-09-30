@@ -574,7 +574,7 @@ export const EXERCISE_BIOMECHANICS = {
     name: 'Barbell Back Squat',
     equipment: 'barbell',
     defaultCamera: 'side',
-    cameraConfig: { theta: Math.PI / 2, phi: Math.PI / 2.3, radius: 2.25, targetY: 0.75 },
+    cameraConfig: { theta: Math.PI / 2.3, phi: Math.PI / 2.3, radius: 2.35, targetY: 0.85 },
     primaryMuscles: ['quadriceps_femoris', 'gluteus_maximus'],
     secondaryMuscles: ['hamstrings', 'adductors', 'erector_spinae'],
     jointAngle: {
