@@ -1024,7 +1024,7 @@ export const EXERCISE_BIOMECHANICS = {
     name: 'Dumbbell Hammer Curl',
     equipment: 'dumbbell',
     defaultCamera: 'side',
-    cameraConfig: { theta: Math.PI / 2, phi: Math.PI / 2.3, radius: 2.1, targetY: 0.85 },
+    cameraConfig: { theta: Math.PI / 2.3, phi: Math.PI / 2.3, radius: 2.15, targetY: 1.15 },
     primaryMuscles: ['brachialis', 'brachioradialis'],
     secondaryMuscles: ['biceps_brachii'],
     jointAngle: {

@@ -476,7 +476,7 @@ export const EXERCISE_DATABASE = [
     id: 'hammer-curl',
     name: 'Dumbbell Hammer Curl',
     muscleGroup: 'Arms',
-    kinematicType: 'bicep-curl',
+    kinematicType: 'hammer-curl',
     primaryMuscle: 'Brachialis & Brachioradialis (Forearm & Arm Thickness)',
     secondaryMuscles: ['Biceps'],
     equipment: 'Dumbbell',

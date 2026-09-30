@@ -37,7 +37,7 @@ export const getEquipmentMode = (exercise) => {
   const name = (exercise.name || '').toLowerCase();
   const id = (exercise.id || '').toLowerCase();
 
-  if (eq.includes('dumbbell') || name.includes('dumbbell') || id.includes('dumbbell') || id === 'romanian-deadlift' || id === 'one-arm-dumbbell-row' || id === 'incline-dumbbell-press' || id === 'overhead-dumbbell-press' || id === 'dumbbell-lateral-raise' || id === 'incline-dumbbell-curl' || id === 'hammer-curl') {
+  if (eq.includes('dumbbell') || name.includes('dumbbell') || id.includes('dumbbell') || id === 'romanian-deadlift' || id === 'one-arm-dumbbell-row' || id === 'incline-dumbbell-press' || id === 'overhead-dumbbell-press' || id === 'dumbbell-lateral-raise' || id === 'incline-dumbbell-curl' || id === 'hammer-curl' || exercise?.kinematicType === 'hammer-curl') {
     return 'dumbbell';
   }
   if (eq.includes('barbell') || name.includes('barbell') || id.includes('barbell') || id === 'barbell-bench-press' || id === 'barbell-back-squat' || id === 'barbell-deadlift') {
@@ -143,6 +143,7 @@ const _qLatMistakeBottomR = new THREE.Quaternion()
 
 const _tempQuatA = new THREE.Quaternion();
 const _tempQuatB = new THREE.Quaternion();
+const _qHammerOffset = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 2);
 
 export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) {
   const canvasRef = useRef(null);
@@ -1376,26 +1377,159 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
         break;
       }
 
-      // 16. INCLINE DUMBBELL BICEP CURL
+      // 16. DUMBBELL HAMMER CURL (Strict Neutral Grip & Brachialis Isolation)
+      case 'hammer-curl': {
+        model.position.set(0, 0.93, 0);
+        model.rotation.set(0, -Math.PI / 2, 0);
+
+        // Grounded Athletic Stance: Soft knees, stable hip base, feet flat on gym floor
+        if (b('thighL')) {
+          b('thighL').rotateX(-0.08);
+          b('thighL').rotateZ(-0.05);
+        }
+        if (b('thighR')) {
+          b('thighR').rotateX(-0.08);
+          b('thighR').rotateZ(0.05);
+        }
+        if (b('shinL')) b('shinL').rotateX(0.14);
+        if (b('shinR')) b('shinR').rotateX(0.14);
+        if (b('footL')) b('footL').rotateX(-0.06);
+        if (b('footR')) b('footR').rotateX(-0.06);
+
+        if (isMistake) {
+          // COMMON MISTAKES:
+          // 1. Torso Momentum Swing: Heaving backward into hyperextension to swing heavy weights up
+          // 2. Elbow Drift & Flare: Elbows flaring out sideways and swinging forward into shoulder flexion
+          // 3. Accidental Supination: Wrists turning palms upward (losing neutral hammer grip and brachialis isolation)
+          // 4. Half-Rep Bottom Cut: Never unlocking to full stretch at bottom, bouncing reps
+          if (b('spine001')) b('spine001').rotateX(THREE.MathUtils.lerp(0.15, -0.35, t));
+          if (b('spine002')) b('spine002').rotateX(THREE.MathUtils.lerp(0.08, -0.15, t));
+          if (b('spine004')) b('spine004').rotateX(THREE.MathUtils.lerp(0.05, 0.25, t));
+
+          if (b('upper_armL')) {
+            b('upper_armL').rotateX(THREE.MathUtils.lerp(-0.05, 0.45, t));
+            b('upper_armL').rotateY(0.10);
+            b('upper_armL').rotateZ(THREE.MathUtils.lerp(-0.55, -0.25, t));
+          }
+          if (b('upper_armR')) {
+            b('upper_armR').rotateX(THREE.MathUtils.lerp(-0.05, 0.45, t));
+            b('upper_armR').rotateY(-0.10);
+            b('upper_armR').rotateZ(THREE.MathUtils.lerp(0.55, 0.25, t));
+          }
+
+          if (b('forearmL')) b('forearmL').rotateX(THREE.MathUtils.lerp(1.05, 2.10, t));
+          if (b('forearmR')) b('forearmR').rotateX(THREE.MathUtils.lerp(1.05, 2.10, t));
+
+          if (b('handL')) b('handL').rotateZ(THREE.MathUtils.lerp(0.0, 0.65, t));
+          if (b('handR')) b('handR').rotateZ(THREE.MathUtils.lerp(0.0, -0.65, t));
+        } else {
+          // CORRECT BIOMECHANICAL FORM:
+          // 1. Rigid Core & Neutral Spine: Solid upright posture, shoulders depressed, ribs down
+          // 2. Elbows Pinned Directly Under Shoulders: Upper arms vertical along torso with ZERO forward drift
+          // 3. Full Extension Stretch: Complete 169° elbow extension at the bottom
+          // 4. Strict Forearm Flexion: Smooth arc up to 54° peak contraction in front of chest/shoulder
+          // 5. Strict Neutral Palms-Facing Grip: Thumbs leading up, zero twisting throughout entire rep
+          if (b('spine001')) b('spine001').rotateX(0.04);
+          if (b('spine002')) b('spine002').rotateX(-0.02);
+
+          if (b('upper_armL')) {
+            b('upper_armL').rotateX(-0.05);
+            b('upper_armL').rotateY(0.10);
+            b('upper_armL').rotateZ(-0.55);
+          }
+          if (b('upper_armR')) {
+            b('upper_armR').rotateX(-0.05);
+            b('upper_armR').rotateY(-0.10);
+            b('upper_armR').rotateZ(0.55);
+          }
+
+          if (b('forearmL')) b('forearmL').rotateX(THREE.MathUtils.lerp(0.08, 2.10, t));
+          if (b('forearmR')) b('forearmR').rotateX(THREE.MathUtils.lerp(0.08, 2.10, t));
+
+          if (b('handL')) {
+            b('handL').rotateX(0.0);
+            b('handL').rotateY(0.0);
+            b('handL').rotateZ(0.0);
+          }
+          if (b('handR')) {
+            b('handR').rotateX(0.0);
+            b('handR').rotateY(0.0);
+            b('handR').rotateZ(0.0);
+          }
+        }
+        break;
+      }
+
+      // 17. INCLINE DUMBBELL BICEP CURL
       case 'bicep-curl': {
         const isHammer = exercise?.id === 'hammer-curl';
 
         if (isHammer) {
-          // Standing Hammer Curl (Neutral grip)
-          model.position.set(0, 0.95, 0);
+          model.position.set(0, 0.93, 0);
           model.rotation.set(0, -Math.PI / 2, 0);
 
+          if (b('thighL')) {
+            b('thighL').rotateX(-0.08);
+            b('thighL').rotateZ(-0.05);
+          }
+          if (b('thighR')) {
+            b('thighR').rotateX(-0.08);
+            b('thighR').rotateZ(0.05);
+          }
+          if (b('shinL')) b('shinL').rotateX(0.14);
+          if (b('shinR')) b('shinR').rotateX(0.14);
+          if (b('footL')) b('footL').rotateX(-0.06);
+          if (b('footR')) b('footR').rotateX(-0.06);
+
           if (isMistake) {
-            if (b('spine001')) b('spine001').rotateX(Math.sin(t * Math.PI) * 0.25); // swinging torso
-            if (b('upper_armL')) b('upper_armL').rotateX(t * 0.45);
-            if (b('upper_armR')) b('upper_armR').rotateX(t * 0.45);
-            if (b('forearmL')) b('forearmL').rotateX(THREE.MathUtils.lerp(0.3, 1.4, t));
-            if (b('forearmR')) b('forearmR').rotateX(THREE.MathUtils.lerp(0.3, 1.4, t));
+            if (b('spine001')) b('spine001').rotateX(THREE.MathUtils.lerp(0.15, -0.35, t));
+            if (b('spine002')) b('spine002').rotateX(THREE.MathUtils.lerp(0.08, -0.15, t));
+            if (b('spine004')) b('spine004').rotateX(THREE.MathUtils.lerp(0.05, 0.25, t));
+
+            if (b('upper_armL')) {
+              b('upper_armL').rotateX(THREE.MathUtils.lerp(-0.05, 0.45, t));
+              b('upper_armL').rotateY(0.10);
+              b('upper_armL').rotateZ(THREE.MathUtils.lerp(-0.55, -0.25, t));
+            }
+            if (b('upper_armR')) {
+              b('upper_armR').rotateX(THREE.MathUtils.lerp(-0.05, 0.45, t));
+              b('upper_armR').rotateY(-0.10);
+              b('upper_armR').rotateZ(THREE.MathUtils.lerp(0.55, 0.25, t));
+            }
+
+            if (b('forearmL')) b('forearmL').rotateX(THREE.MathUtils.lerp(1.05, 2.10, t));
+            if (b('forearmR')) b('forearmR').rotateX(THREE.MathUtils.lerp(1.05, 2.10, t));
+
+            if (b('handL')) b('handL').rotateZ(THREE.MathUtils.lerp(0.0, 0.65, t));
+            if (b('handR')) b('handR').rotateZ(THREE.MathUtils.lerp(0.0, -0.65, t));
           } else {
-            if (b('upper_armL')) b('upper_armL').rotateZ(-0.15);
-            if (b('upper_armR')) b('upper_armR').rotateZ(0.15);
-            if (b('forearmL')) b('forearmL').rotateX(THREE.MathUtils.lerp(0.1, 1.95, t));
-            if (b('forearmR')) b('forearmR').rotateX(THREE.MathUtils.lerp(0.1, 1.95, t));
+            if (b('spine001')) b('spine001').rotateX(0.04);
+            if (b('spine002')) b('spine002').rotateX(-0.02);
+
+            if (b('upper_armL')) {
+              b('upper_armL').rotateX(-0.05);
+              b('upper_armL').rotateY(0.10);
+              b('upper_armL').rotateZ(-0.55);
+            }
+            if (b('upper_armR')) {
+              b('upper_armR').rotateX(-0.05);
+              b('upper_armR').rotateY(-0.10);
+              b('upper_armR').rotateZ(0.55);
+            }
+
+            if (b('forearmL')) b('forearmL').rotateX(THREE.MathUtils.lerp(0.08, 2.10, t));
+            if (b('forearmR')) b('forearmR').rotateX(THREE.MathUtils.lerp(0.08, 2.10, t));
+
+            if (b('handL')) {
+              b('handL').rotateX(0.0);
+              b('handL').rotateY(0.0);
+              b('handL').rotateZ(0.0);
+            }
+            if (b('handR')) {
+              b('handR').rotateX(0.0);
+              b('handR').rotateY(0.0);
+              b('handR').rotateZ(0.0);
+            }
           }
         } else {
           // Seated Incline Dumbbell Bicep Curl on 55° Commercial Incline Bench
@@ -1638,13 +1772,24 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
 
         muscles.secondaryPatch.position.set(shoulderLPos.x + 0.03, shoulderLPos.y - 0.02, shoulderLPos.z - 0.04);
         muscles.secondaryPatch.scale.set(0.05, 0.07, 0.05);
-      } else if (type === 'bicep-curl') {
+      } else if (type === 'bicep-curl' || type === 'hammer-curl') {
+        const isHammer = type === 'hammer-curl' || exercise?.id === 'hammer-curl';
         const bicepPos = new THREE.Vector3().lerpVectors(shoulderLPos, elbowLPos, 0.5);
-        muscles.primaryPatch.position.set(bicepPos.x + 0.03, bicepPos.y, bicepPos.z + 0.05);
-        muscles.primaryPatch.scale.set(0.06, 0.10, 0.06);
+        if (isHammer) {
+          // Primary: Brachialis & Brachioradialis (outer forearm & deep upper arm thickness)
+          muscles.primaryPatch.position.set(elbowLPos.x + 0.03, elbowLPos.y - 0.06, elbowLPos.z + 0.04);
+          muscles.primaryPatch.scale.set(0.06, 0.12, 0.06);
 
-        muscles.secondaryPatch.position.set(elbowLPos.x + 0.02, elbowLPos.y - 0.08, elbowLPos.z + 0.03);
-        muscles.secondaryPatch.scale.set(0.05, 0.08, 0.05);
+          // Secondary: Biceps Brachii
+          muscles.secondaryPatch.position.set(bicepPos.x + 0.03, bicepPos.y, bicepPos.z + 0.04);
+          muscles.secondaryPatch.scale.set(0.05, 0.09, 0.05);
+        } else {
+          muscles.primaryPatch.position.set(bicepPos.x + 0.03, bicepPos.y, bicepPos.z + 0.05);
+          muscles.primaryPatch.scale.set(0.06, 0.10, 0.06);
+
+          muscles.secondaryPatch.position.set(elbowLPos.x + 0.02, elbowLPos.y - 0.08, elbowLPos.z + 0.03);
+          muscles.secondaryPatch.scale.set(0.05, 0.08, 0.05);
+        }
       } else if (type === 'one-arm-row' || type === 'lat-pulldown' || type === 'seated-row') {
         muscles.primaryPatch.position.set(latPos.x + 0.12, latPos.y - 0.02, latPos.z - 0.06);
         muscles.primaryPatch.scale.set(0.09, 0.14, 0.07);
@@ -1821,14 +1966,30 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
             eq.dumbbellR.rotation.set(0.12, -0.35, -0.10);
           }
         }
-      } else if (type === 'bicep-curl') {
-        const isHammer = exercise?.id === 'hammer-curl';
+      } else if (type === 'hammer-curl' || (type === 'bicep-curl' && exercise?.id === 'hammer-curl')) {
         if (eq.dumbbellL) {
           eq.dumbbellL.visible = true;
           eq.dumbbellL.position.copy(handLPos);
-          if (isHammer) {
-            eq.dumbbellL.rotation.set(0, Math.PI / 2, 0);
-          } else if (isMistake) {
+          const qHand = new THREE.Quaternion();
+          if (b('handL')) {
+            b('handL').getWorldQuaternion(qHand);
+            eq.dumbbellL.quaternion.copy(qHand).multiply(_qHammerOffset);
+          }
+        }
+        if (eq.dumbbellR) {
+          eq.dumbbellR.visible = true;
+          eq.dumbbellR.position.copy(handRPos);
+          const qHand = new THREE.Quaternion();
+          if (b('handR')) {
+            b('handR').getWorldQuaternion(qHand);
+            eq.dumbbellR.quaternion.copy(qHand).multiply(_qHammerOffset);
+          }
+        }
+      } else if (type === 'bicep-curl') {
+        if (eq.dumbbellL) {
+          eq.dumbbellL.visible = true;
+          eq.dumbbellL.position.copy(handLPos);
+          if (isMistake) {
             eq.dumbbellL.rotation.set(-0.30, 0.10, THREE.MathUtils.lerp(0.0, 0.20, t));
           } else {
             eq.dumbbellL.rotation.set(
@@ -1841,9 +2002,7 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
         if (eq.dumbbellR) {
           eq.dumbbellR.visible = true;
           eq.dumbbellR.position.copy(handRPos);
-          if (isHammer) {
-            eq.dumbbellR.rotation.set(0, Math.PI / 2, 0);
-          } else if (isMistake) {
+          if (isMistake) {
             eq.dumbbellR.rotation.set(-0.30, -0.10, THREE.MathUtils.lerp(0.0, -0.20, t));
           } else {
             eq.dumbbellR.rotation.set(
