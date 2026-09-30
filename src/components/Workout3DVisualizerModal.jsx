@@ -46,7 +46,7 @@ export const getEquipmentMode = (exercise) => {
   if (eq.includes('cable') || name.includes('cable') || id.includes('cable') || id === 'lat-pulldown' || id === 'face-pull' || id.includes('tricep-pushdown') || id === 'cable-chest-fly' || id === 'seated-cable-row' || id === 'cable-woodchopper') {
     return 'cable';
   }
-  if (eq.includes('machine') || name.includes('machine') || id.includes('machine') || id === 'leg-press' || id === 'leg-extension' || id === 'seated-leg-curl' || id === 'standing-calf-raise') {
+  if (eq.includes('machine') || name.includes('machine') || id.includes('machine') || id === 'leg-press' || id === 'leg-extension' || id === 'seated-leg-curl' || id === 'standing-calf-raise' || exercise?.kinematicType === 'leg-press') {
     return 'machine';
   }
   if (eq.includes('bodyweight') || name.includes('hanging') || id.includes('hanging')) {
@@ -518,8 +518,10 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
       if (eq.strut) eq.strut.visible = false;
     }
 
+    const effectiveType = (exercise?.id === 'leg-press' || type === 'leg-press' || exercise?.kinematicType === 'leg-press') ? 'leg-press' : type;
+
     // Kinematic joint movements across all 16 exercise types
-    switch (type) {
+    switch (effectiveType) {
       // 1. ONE-ARM DUMBBELL ROW
       case 'one-arm-row': {
         model.position.set(0, 0.82, -0.1);
@@ -1259,7 +1261,97 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
         break;
       }
 
-      // 10. LEG EXTENSION
+      // 10. ANGLED LEG PRESS (45° Commercial Sled Press)
+      case 'leg-press': {
+        model.rotation.set(0, -Math.PI / 2, 0);
+        model.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), -Math.PI / 4);
+        model.position.set(0, 0.35, -0.14);
+
+        if (isMistake) {
+          // COMMON MISTAKE:
+          // 1. Pelvic Curl / Butt-Wink: Lumbar spine rounds heavily off backrest at the bottom stretch
+          // 2. Knee Hyperextension Lockout: Snapping knees to 178°+ bone-on-bone lockout at top
+          // 3. Knee Valgus Collapse: Knees cave inward toward midline during drive
+          // 4. Heels Lifting: Pressure shifts entirely to toes with heels leaving footplate
+          const s1X = THREE.MathUtils.lerp(0.42, 0.04, t);
+          if (b('spine001')) b('spine001').rotateX(s1X);
+          if (b('spine002')) b('spine002').rotateX(THREE.MathUtils.lerp(0.18, -0.02, t));
+
+          // Thighs: knees caving inward (valgus collapse) + excessive deep descent
+          const tX = THREE.MathUtils.lerp(-1.80, -1.18, t);
+          const valgusZ = THREE.MathUtils.lerp(0.10, 0.16, t);
+          if (b('thighL')) {
+            b('thighL').rotateX(tX);
+            b('thighL').rotateZ(valgusZ);
+          }
+          if (b('thighR')) {
+            b('thighR').rotateX(tX);
+            b('thighR').rotateZ(-valgusZ);
+          }
+
+          // Shins: extreme flexion at bottom (75°) snapping into dangerous hyperextension at top (178°)
+          const sX = THREE.MathUtils.lerp(1.85, 0.06, t);
+          if (b('shinL')) b('shinL').rotateX(sX);
+          if (b('shinR')) b('shinR').rotateX(sX);
+
+          // Feet: heels lifting off plate
+          const fX = THREE.MathUtils.lerp(0.28, -0.05, t);
+          if (b('footL')) b('footL').rotateX(fX);
+          if (b('footR')) b('footR').rotateX(fX);
+        } else {
+          // CORRECT BIOMECHANICAL FORM:
+          // 1. Solid Pelvic Anchor: Sacrum & lumbar spine firmly braced against 45° backrest pad (zero butt-wink)
+          // 2. Pure 45° Linear Sled Path: Feet travel along 45.0° incline from deep stretch to soft lockout
+          // 3. True 87° Stretch Depth: Controlled eccentric descent until 87° knee angle, maintaining tension on quads
+          // 4. Soft Lockout (167°): Never snapping knee joints, maintaining continuous time-under-tension
+          // 5. Knee-Toe Alignment: Hips abducted ~15° with knees tracking squarely over flared toes
+          // 6. Flat Foot Contact: Entire soles glued flat against diamond footplate
+          if (b('spine001')) b('spine001').rotateX(0.04);
+          if (b('spine002')) b('spine002').rotateX(-0.02);
+          if (b('spine004')) b('spine004').rotateX(0.02);
+
+          const tX = THREE.MathUtils.lerp(-1.68, -1.18, t);
+          if (b('thighL')) {
+            b('thighL').rotateX(tX);
+            b('thighL').rotateZ(-0.14); // outward abduction tracking shoulder-width stance
+          }
+          if (b('thighR')) {
+            b('thighR').rotateX(tX);
+            b('thighR').rotateZ(0.14);
+          }
+
+          const sX = THREE.MathUtils.lerp(1.64, 0.25, t);
+          if (b('shinL')) b('shinL').rotateX(sX);
+          if (b('shinR')) b('shinR').rotateX(sX);
+
+          const fX = THREE.MathUtils.lerp(-0.35, -0.12, t);
+          if (b('footL')) {
+            b('footL').rotateX(fX);
+            b('footL').rotateZ(0.14);
+          }
+          if (b('footR')) {
+            b('footR').rotateX(fX);
+            b('footR').rotateZ(-0.14);
+          }
+        }
+
+        // Upper Arms & Forearms: firmly gripping the side machine safety handles beside hips
+        if (b('upper_armL')) {
+          b('upper_armL').rotateX(-0.35);
+          b('upper_armL').rotateZ(-0.55);
+        }
+        if (b('upper_armR')) {
+          b('upper_armR').rotateX(-0.35);
+          b('upper_armR').rotateZ(0.55);
+        }
+        if (b('forearmL')) b('forearmL').rotateX(0.25);
+        if (b('forearmR')) b('forearmR').rotateX(0.25);
+        if (b('handL')) b('handL').rotateX(-0.15);
+        if (b('handR')) b('handR').rotateX(-0.15);
+        break;
+      }
+
+      // 11. LEG EXTENSION
       case 'leg-extension': {
         model.position.set(0, 0.55, 0);
         if (b('thighL')) b('thighL').rotateX(-1.5);
@@ -1844,6 +1936,8 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
     if (b('thighL')) b('thighL').getWorldPosition(hipLPos);
     if (b('shinL')) b('shinL').getWorldPosition(kneeLPos);
     if (b('footL')) b('footL').getWorldPosition(ankleLPos);
+    const footRPos = new THREE.Vector3();
+    if (b('footR')) b('footR').getWorldPosition(footRPos);
     if (b('toeL')) b('toeL').getWorldPosition(toeLPos);
 
     // -------------------------------------------------------------
@@ -1852,10 +1946,10 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
     if (laser && laser.laserGroup) {
       laser.laserGroup.visible = showBiomechanics;
 
-      const isRDL = type === 'romanian-deadlift' || exercise?.id === 'romanian-deadlift';
-      const isLegExercise = ['squat', 'deadlift', 'leg-curl', 'leg-extension', 'romanian-deadlift'].includes(type);
-      const isCalfExercise = type === 'calf-raise';
-      const isAbsExercise = type === 'hanging-leg-raise';
+      const isRDL = effectiveType === 'romanian-deadlift' || exercise?.id === 'romanian-deadlift';
+      const isLegExercise = ['squat', 'deadlift', 'leg-curl', 'leg-extension', 'romanian-deadlift', 'leg-press'].includes(effectiveType) || exercise?.id === 'leg-press';
+      const isCalfExercise = effectiveType === 'calf-raise';
+      const isAbsExercise = effectiveType === 'hanging-leg-raise';
 
       let pA = shoulderLPos;
       let pB = elbowLPos;
@@ -1912,8 +2006,8 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
     if (trajectory) {
       trajectory.setVisible(showBiomechanics);
 
-      const trackingPoint = ['squat', 'leg-extension', 'leg-curl', 'calf-raise', 'hanging-leg-raise'].includes(type)
-        ? (type === 'squat' ? hipLPos : ankleLPos)
+      const trackingPoint = ['squat', 'leg-extension', 'leg-curl', 'calf-raise', 'hanging-leg-raise', 'leg-press'].includes(effectiveType) || exercise?.id === 'leg-press'
+        ? (effectiveType === 'squat' ? hipLPos : ankleLPos)
         : handLPos;
 
       if (trajectoryPointsRef.current.length < 30) {
@@ -1978,7 +2072,7 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
         const tricepPos = new THREE.Vector3().lerpVectors(shoulderLPos, elbowLPos, 0.5);
         muscles.secondaryPatch.position.set(tricepPos.x + 0.05, tricepPos.y, tricepPos.z - 0.04);
         muscles.secondaryPatch.scale.set(0.05, 0.09, 0.05);
-      } else if (type === 'squat' || type === 'leg-extension') {
+      } else if (effectiveType === 'squat' || effectiveType === 'leg-extension' || effectiveType === 'leg-press' || exercise?.id === 'leg-press') {
         const quadPos = new THREE.Vector3().lerpVectors(hipLPos, kneeLPos, 0.5);
         muscles.primaryPatch.position.set(quadPos.x + 0.06, quadPos.y, quadPos.z + 0.06);
         muscles.primaryPatch.scale.set(0.09, 0.14, 0.08);
@@ -2088,6 +2182,8 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
     if (eq.cableColumn) eq.cableColumn.visible = false;
     if (eq.faceCableWire) eq.faceCableWire.visible = false;
     if (eq.pullUpBar) eq.pullUpBar.visible = false;
+    if (eq.legPressStation) eq.legPressStation.visible = false;
+    if (eq.legPressSled) eq.legPressSled.visible = false;
 
     // Bench visibility
     const isInclineCurl = type === 'bicep-curl' && exercise?.id !== 'hammer-curl';
@@ -2345,9 +2441,30 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
           }
         }
       }
+    } else if (activeMode === 'machine') {
+      if (effectiveType === 'leg-press' || exercise?.id === 'leg-press') {
+        if (eq.legPressStation) eq.legPressStation.visible = true;
+        if (eq.legPressSled) {
+          eq.legPressSled.visible = true;
+          const footMidY = (ankleLPos.y + footRPos.y) / 2;
+          const footMidZ = (ankleLPos.z + footRPos.z) / 2;
+          eq.legPressSled.position.set(0, footMidY, footMidZ + 0.02);
+        }
+      }
     } else if (activeMode === 'bodyweight') {
       if (eq.pullUpBar) {
-        eq.pullUpBar.visible = (type === 'hanging-leg-raise');
+        eq.pullUpBar.visible = (effectiveType === 'hanging-leg-raise' || type === 'hanging-leg-raise');
+      }
+    }
+
+    // Always guarantee Leg Press station and articulated sliding sled whenever Angled Leg Press is active
+    if (effectiveType === 'leg-press' || exercise?.id === 'leg-press') {
+      if (eq.legPressStation) eq.legPressStation.visible = true;
+      if (eq.legPressSled) {
+        eq.legPressSled.visible = true;
+        const footMidY = (ankleLPos.y + footRPos.y) / 2;
+        const footMidZ = (ankleLPos.z + footRPos.z) / 2;
+        eq.legPressSled.position.set(0, footMidY, footMidZ + 0.02);
       }
     }
   };

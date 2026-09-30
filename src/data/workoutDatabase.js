@@ -206,7 +206,7 @@ export const EXERCISE_DATABASE = [
     id: 'leg-press',
     name: 'Angled Leg Press',
     muscleGroup: 'Legs',
-    kinematicType: 'squat',
+    kinematicType: 'leg-press',
     primaryMuscle: 'Quadriceps',
     secondaryMuscles: ['Glutes'],
     equipment: 'Machine',

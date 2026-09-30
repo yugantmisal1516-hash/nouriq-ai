@@ -13,6 +13,7 @@ export function createGymEquipment(scene, exercise, initialMode) {
   const isLatPulldown = exercise?.kinematicType === 'lat-pulldown' || exercise?.id === 'lat-pulldown';
   const isSeatedRow = exercise?.kinematicType === 'seated-row' || exercise?.id === 'seated-cable-row' || exercise?.id === 'seated-row';
   const isFacePull = exercise?.kinematicType === 'face-pull' || exercise?.id === 'face-pull';
+  const isLegPress = exercise?.kinematicType === 'leg-press' || exercise?.id === 'leg-press';
 
   // 1. OLYMPIC BARBELL ROD (2.15m knurled chrome shaft with dual 20kg bumper plates)
   const barbell = new THREE.Group();
@@ -508,7 +509,180 @@ export function createGymEquipment(scene, exercise, initialMode) {
     padPivot.rotation.x = 0; // flat
     strut.visible = false;
   }
-  scene.add(benchGroup);
+  // 8. COMMERCIAL 45° ANGLED LEG PRESS STATION & ARTICULATED SLIDING SLED
+  const legPressStation = new THREE.Group();
+
+  // Floor Base Frame (Heavy-duty longitudinal rails)
+  const lpBaseL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.05, 1.85), steelMat);
+  lpBaseL.position.set(0.34, 0.025, 0.15);
+  legPressStation.add(lpBaseL);
+
+  const lpBaseR = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.05, 1.85), steelMat);
+  lpBaseR.position.set(-0.34, 0.025, 0.15);
+  legPressStation.add(lpBaseR);
+
+  // Floor Crossbeams
+  const lpCrossFront = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.05, 0.06), steelMat);
+  lpCrossFront.position.set(0, 0.025, 1.05);
+  legPressStation.add(lpCrossFront);
+
+  const lpCrossMid = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.05, 0.06), steelMat);
+  lpCrossMid.position.set(0, 0.025, 0.10);
+  legPressStation.add(lpCrossMid);
+
+  const lpCrossRear = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.05, 0.06), steelMat);
+  lpCrossRear.position.set(0, 0.025, -0.75);
+  legPressStation.add(lpCrossRear);
+
+  // 45° Structural A-Frame Upright Supports (Front Pillars at z = 0.95)
+  const lpFrontPillarL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.78, 0.06), steelMat);
+  lpFrontPillarL.position.set(0.34, 0.40, 0.95);
+  legPressStation.add(lpFrontPillarL);
+
+  const lpFrontPillarR = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.78, 0.06), steelMat);
+  lpFrontPillarR.position.set(-0.34, 0.40, 0.95);
+  legPressStation.add(lpFrontPillarR);
+
+  const lpTopFrontCross = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.06, 0.06), steelMat);
+  lpTopFrontCross.position.set(0, 0.78, 0.95);
+  legPressStation.add(lpTopFrontCross);
+
+  // Rear Backrest Triangular Support Frame
+  const lpRearPillarL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.60, 0.05), steelMat);
+  lpRearPillarL.position.set(0.18, 0.32, -0.55);
+  lpRearPillarL.rotation.x = Math.PI / 8;
+  legPressStation.add(lpRearPillarL);
+
+  const lpRearPillarR = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.60, 0.05), steelMat);
+  lpRearPillarR.position.set(-0.18, 0.32, -0.55);
+  lpRearPillarR.rotation.x = Math.PI / 8;
+  legPressStation.add(lpRearPillarR);
+
+  // 45° Solid Chrome Linear Guide Rails (Dual rails angled at 45°)
+  const railLen = 0.96;
+  const lpRailL = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, railLen, 20), chromeMat);
+  lpRailL.rotation.x = Math.PI / 4;
+  lpRailL.position.set(0.32, 0.48, 0.65);
+  legPressStation.add(lpRailL);
+
+  const lpRailR = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, railLen, 20), chromeMat);
+  lpRailR.rotation.x = Math.PI / 4;
+  lpRailR.position.set(-0.32, 0.48, 0.65);
+  legPressStation.add(lpRailR);
+
+  // Bottom & Top Rubber Bumper Stops on Guide Rails
+  for (let sign of [-1, 1]) {
+    const stopBot = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.04, 16), steelMat);
+    stopBot.rotation.x = Math.PI / 4;
+    stopBot.position.set(sign * 0.32, 0.18, 0.35);
+    legPressStation.add(stopBot);
+
+    const stopTop = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.04, 16), steelMat);
+    stopTop.rotation.x = Math.PI / 4;
+    stopTop.position.set(sign * 0.32, 0.78, 0.95);
+    legPressStation.add(stopTop);
+  }
+
+  // Ergonomic Reclined Seat & Backrest System
+  const lpSeatPad = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.06, 0.28), leatherMat);
+  lpSeatPad.position.set(0, 0.22, -0.15);
+  lpSeatPad.rotation.x = -0.15; // 8° backward tilt to lock pelvis into seat
+  lpSeatPad.receiveShadow = true;
+  legPressStation.add(lpSeatPad);
+
+  const lpBackrest = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.06, 0.76), leatherMat);
+  lpBackrest.position.set(0, 0.48, -0.42);
+  lpBackrest.rotation.x = Math.PI / 4; // 45° recline
+  lpBackrest.receiveShadow = true;
+  legPressStation.add(lpBackrest);
+
+  const lpBackPlate = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.015, 0.74), steelMat);
+  lpBackPlate.position.set(0, 0.47, -0.43);
+  lpBackPlate.rotation.x = Math.PI / 4;
+  legPressStation.add(lpBackPlate);
+
+  // Dual Side Gripping Handles beside the seat (where mannequin hands anchor)
+  for (let sign of [-1, 1]) {
+    const handleMount = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.08, 0.03), steelMat);
+    handleMount.position.set(sign * 0.21, 0.26, -0.18);
+    legPressStation.add(handleMount);
+
+    const handleGrip = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.18, 14), chromeMat);
+    handleGrip.rotation.x = Math.PI / 4;
+    handleGrip.position.set(sign * 0.21, 0.32, -0.19);
+    legPressStation.add(handleGrip);
+  }
+
+  // Side Racking Pins / Safety Handles
+  for (let sign of [-1, 1]) {
+    const rackPin = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.12, 12), chromeMat);
+    rackPin.rotation.z = Math.PI / 2;
+    rackPin.position.set(sign * 0.42, 0.36, 0.40);
+    legPressStation.add(rackPin);
+  }
+
+  legPressStation.visible = initialMode === 'machine' && isLegPress;
+  scene.add(legPressStation);
+
+  // 9. ARTICULATED SLIDING SLED & DIAMOND-PLATE FOOTPLATE (Slides along 45° rails)
+  const legPressSled = new THREE.Group();
+
+  // Diamond-Plate Heavy Footplate (angled at 45° perpendicular to rails)
+  const footplate = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.03, 0.48), steelMat);
+  footplate.rotation.x = -Math.PI / 4;
+  footplate.receiveShadow = true;
+  legPressSled.add(footplate);
+
+  // Chrome Lip & Edge Guard on Footplate
+  const plateLip = new THREE.Mesh(new THREE.BoxGeometry(0.70, 0.045, 0.02), chromeMat);
+  plateLip.position.set(0, -0.16, -0.16);
+  plateLip.rotation.x = -Math.PI / 4;
+  legPressSled.add(plateLip);
+
+  // Sled Carriage Crossbeam & Linear Bearings
+  const carriageBeam = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.07, 0.07), steelMat);
+  carriageBeam.position.set(0, 0.03, 0.03);
+  carriageBeam.rotation.x = Math.PI / 4;
+  legPressSled.add(carriageBeam);
+
+  // Linear Bearing Sleeves around guide rails (at x = ±0.32)
+  for (let sign of [-1, 1]) {
+    const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, 0.16, 16), chromeMat);
+    sleeve.rotation.x = Math.PI / 4;
+    sleeve.position.set(sign * 0.32, 0, 0);
+    legPressSled.add(sleeve);
+  }
+
+  // Dual Olympic Weight Horns & 20kg Cast Iron Bumper Plates
+  for (let sign of [-1, 1]) {
+    const horn = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.30, 16), chromeMat);
+    horn.rotation.z = Math.PI / 2;
+    horn.position.set(sign * 0.54, 0.02, 0.02);
+    legPressSled.add(horn);
+
+    const innerCollar = new THREE.Mesh(new THREE.CylinderGeometry(0.040, 0.040, 0.025, 16), steelMat);
+    innerCollar.rotation.z = Math.PI / 2;
+    innerCollar.position.set(sign * 0.41, 0.02, 0.02);
+    legPressSled.add(innerCollar);
+
+    for (let i = 0; i < 2; i++) {
+      const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.225, 0.225, 0.042, 32), plateCastMat);
+      plate.rotation.z = Math.PI / 2;
+      plate.rotation.x = Math.PI / 4;
+      plate.position.set(sign * (0.46 + i * 0.055), 0.02, 0.02);
+      plate.castShadow = true;
+      legPressSled.add(plate);
+
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, 0.044, 16), chromeMat);
+      hub.rotation.z = Math.PI / 2;
+      hub.rotation.x = Math.PI / 4;
+      hub.position.set(sign * (0.46 + i * 0.055), 0.02, 0.02);
+      legPressSled.add(hub);
+    }
+  }
+
+  legPressSled.visible = initialMode === 'machine' && isLegPress;
+  scene.add(legPressSled);
 
   return {
     barbell, dumbbellL, dumbbellR,
@@ -516,6 +690,7 @@ export function createGymEquipment(scene, exercise, initialMode) {
     cableRope, ropeCordL, ropeCordR, ropeBallL, ropeBallR, cableWire,
     rowStation, vBarHandle, rowCableWire,
     cableColumn, faceCableWire,
-    pullUpBar, benchGroup, pad: padPivot, strut
+    pullUpBar, benchGroup, pad: padPivot, strut,
+    legPressStation, legPressSled
   };
 }

@@ -624,7 +624,7 @@ export const EXERCISE_BIOMECHANICS = {
     name: 'Angled Leg Press',
     equipment: 'machine',
     defaultCamera: 'side',
-    cameraConfig: { theta: Math.PI / 2, phi: Math.PI / 2.3, radius: 2.25, targetY: 0.75 },
+    cameraConfig: { theta: Math.PI / 2.2, phi: Math.PI / 2.4, radius: 2.35, targetY: 0.50 },
     primaryMuscles: ['quadriceps_femoris', 'gluteus_maximus'],
     secondaryMuscles: ['adductors'],
     jointAngle: {
@@ -655,7 +655,8 @@ export const EXERCISE_BIOMECHANICS = {
       title: 'Pelvis Curling & Hard Knee Lockout',
       badges: [
         { text: '⚠ Butt Wink / Pelvic Curl', bone: 'spine001', color: 'rose' },
-        { text: '⚠ Dangerous Knee Hyperextension', bone: 'shinL', color: 'rose' }
+        { text: '⚠ Dangerous Knee Hyperextension', bone: 'shinL', color: 'rose' },
+        { text: '⚠ Heels Lifting Off Footplate', bone: 'footL', color: 'rose' }
       ],
       aiCoaching: 'Nouriq AI: Lowering too deep curls your lower back off the pad. Stop before your tailbone lifts, and keep a soft knee unlock at the top.',
       spineTwist: 0.30,
