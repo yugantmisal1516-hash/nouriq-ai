@@ -92,54 +92,54 @@ const _qPressMistakeTopR = new THREE.Quaternion()
 
 // Pre-allocated static rotation quaternions for lat pulldown (zero GC overhead)
 const _qLatTopL = new THREE.Quaternion()
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -0.20))
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.50))
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 2.10));
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.00))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.60))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 1.95));
 
 const _qLatTopR = new THREE.Quaternion()
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -0.20))
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -0.50))
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -2.10));
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.00))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -0.60))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -1.95));
 
 const _qLatMidL = new THREE.Quaternion()
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.50))
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.30))
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 1.35));
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.30))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.20))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 1.50));
 
 const _qLatMidR = new THREE.Quaternion()
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.50))
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -0.30))
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -1.35));
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.30))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -0.20))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -1.50));
 
 const _qLatBottomL = new THREE.Quaternion()
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.70))
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -0.90))
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 0.10));
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.20))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -0.30))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 0.75));
 
 const _qLatBottomR = new THREE.Quaternion()
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.70))
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.90))
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -0.10));
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.20))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.30))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -0.75));
 
 const _qLatMistakeTopL = new THREE.Quaternion()
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -0.20))
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.50))
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 2.10));
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.00))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.60))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 1.95));
 
 const _qLatMistakeTopR = new THREE.Quaternion()
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -0.20))
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -0.50))
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -2.10));
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.00))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -0.60))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -1.95));
 
 const _qLatMistakeBottomL = new THREE.Quaternion()
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.20))
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -0.20))
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 0.90));
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.30))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.10))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 1.10));
 
 const _qLatMistakeBottomR = new THREE.Quaternion()
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.20))
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.20))
-  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -0.90));
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.30))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -0.10))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -1.10));
 
 const _tempQuatA = new THREE.Quaternion();
 const _tempQuatB = new THREE.Quaternion();
@@ -856,7 +856,7 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
         } else {
           // CORRECT FORM:
           // 1. Stable, proud thoracic posture: 12°-18° slight lean back with chest puffed to the ceiling
-          // 2. Scapular depression initiating the pull, driving elbows down and back into back pockets
+          // 2. Dynamic scapular depression initiating the pull, driving elbows down and back into back pockets
           // 3. Constant wide grip separation matching the lat bar with locked overhand grip
           // 4. Monotonic downward bar stroke directly to the upper clavicles
           const spine1X = THREE.MathUtils.lerp(-0.15, -0.22, t);
@@ -864,6 +864,13 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
           if (b('spine001')) b('spine001').rotateX(spine1X);
           if (b('spine002')) b('spine002').rotateX(spine2X);
           if (b('spine004')) b('spine004').rotateX(0.12); // looking up along the cable line of pull
+
+          // Scapular depression: shoulder elevates slightly at top stretch, depresses tightly at peak
+          const sZ = t <= 0.5
+            ? THREE.MathUtils.lerp(0.00, 0.05, t / 0.5)
+            : THREE.MathUtils.lerp(0.05, -0.05, (t - 0.5) / 0.5);
+          if (b('shoulderL')) b('shoulderL').rotateZ(sZ);
+          if (b('shoulderR')) b('shoulderR').rotateZ(-sZ);
 
           let fX;
           if (initialQuats['upper_armL'] && initialQuats['upper_armR']) {
@@ -877,7 +884,7 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
               _tempQuatB.copy(initialQuats['upper_armR']).multiply(_qLatMidR);
               if (b('upper_armR')) b('upper_armR').quaternion.copy(_tempQuatA).slerp(_tempQuatB, u);
 
-              fX = THREE.MathUtils.lerp(0.05, 1.20, u);
+              fX = THREE.MathUtils.lerp(0.02, 1.35, u);
             } else {
               const u = (t - 0.5) / 0.5;
               _tempQuatA.copy(initialQuats['upper_armL']).multiply(_qLatMidL);
@@ -888,7 +895,7 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
               _tempQuatB.copy(initialQuats['upper_armR']).multiply(_qLatBottomR);
               if (b('upper_armR')) b('upper_armR').quaternion.copy(_tempQuatA).slerp(_tempQuatB, u);
 
-              fX = THREE.MathUtils.lerp(1.20, 1.60, u);
+              fX = THREE.MathUtils.lerp(1.35, 1.80, u);
             }
           }
 
@@ -897,12 +904,12 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
 
           // Strong overhand hook grip wrapping around the wide angled bar handles
           if (b('handL')) {
-            b('handL').rotateX(-0.10);
-            b('handL').rotateZ(0.15);
+            b('handL').rotateX(-0.15);
+            b('handL').rotateZ(0.20);
           }
           if (b('handR')) {
-            b('handR').rotateX(-0.10);
-            b('handR').rotateZ(-0.15);
+            b('handR').rotateX(-0.15);
+            b('handR').rotateZ(-0.20);
           }
         }
         break;
@@ -1569,7 +1576,7 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
 
           if (eq.latCableWire) {
             const wireHeight = Math.max(0.1, 2.25 - barCenterY);
-            eq.latCableWire.position.set(0, wireHeight / 2, (0.10 - barCenterZ) * 0.5);
+            eq.latCableWire.position.set(0, wireHeight / 2, (0.057 - barCenterZ) * 0.5);
             eq.latCableWire.scale.set(1, wireHeight / 1.5, 1);
           }
         }

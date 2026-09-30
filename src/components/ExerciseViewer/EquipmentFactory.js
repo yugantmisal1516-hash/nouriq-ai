@@ -98,12 +98,12 @@ export function createGymEquipment(scene, exercise, initialMode) {
 
   // Ergonomic angled outer drop grips: 0.20m long at ±0.46m (matching lifter's wide hand separation)
   const gripL = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.20, 14), steelMat);
-  gripL.position.set(0.48, -0.05, 0.02);
+  gripL.position.set(0.46, -0.035, 0.0);
   gripL.rotation.z = Math.PI / 5;
   latBar.add(gripL);
 
   const gripR = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.20, 14), steelMat);
-  gripR.position.set(-0.48, -0.05, 0.02);
+  gripR.position.set(-0.46, -0.035, 0.0);
   gripR.rotation.z = -Math.PI / 5;
   latBar.add(gripR);
 
@@ -186,19 +186,19 @@ export function createGymEquipment(scene, exercise, initialMode) {
   stackShroud.position.set(0, 0.70, 0.72);
   latStation.add(stackShroud);
 
-  // Overhead Cantilever Boom extending back towards the lifter at y = 2.25, z = 0.10
-  const overheadBoom = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.60), steelMat);
+  // Overhead Cantilever Boom extending back towards the lifter at y = 2.25, z = 0.057 to 0.65
+  const overheadBoom = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.65), steelMat);
   overheadBoom.position.set(0, 2.25, 0.35);
   latStation.add(overheadBoom);
 
-  // Overhead Pulley Wheel & Housing
+  // Overhead Pulley Wheel & Housing aligned with bar path (z = 0.057)
   const pulleyHousing = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.12, 0.10), steelMat);
-  pulleyHousing.position.set(0, 2.25, 0.10);
+  pulleyHousing.position.set(0, 2.25, 0.057);
   latStation.add(pulleyHousing);
 
   const pulleyWheel = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.02, 24), chromeMat);
   pulleyWheel.rotation.z = Math.PI / 2;
-  pulleyWheel.position.set(0, 2.25, 0.10);
+  pulleyWheel.position.set(0, 2.25, 0.057);
   latStation.add(pulleyWheel);
 
   latStation.visible = initialMode === 'cable' && isLatPulldown;
