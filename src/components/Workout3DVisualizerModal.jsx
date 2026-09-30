@@ -90,6 +90,57 @@ const _qPressMistakeBottomR = new THREE.Quaternion()
 const _qPressMistakeTopR = new THREE.Quaternion()
   .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -2.80));
 
+// Pre-allocated static rotation quaternions for lat pulldown (zero GC overhead)
+const _qLatTopL = new THREE.Quaternion()
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -0.20))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.50))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 2.10));
+
+const _qLatTopR = new THREE.Quaternion()
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -0.20))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -0.50))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -2.10));
+
+const _qLatMidL = new THREE.Quaternion()
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.50))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.30))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 1.35));
+
+const _qLatMidR = new THREE.Quaternion()
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.50))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -0.30))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -1.35));
+
+const _qLatBottomL = new THREE.Quaternion()
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.70))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -0.90))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 0.10));
+
+const _qLatBottomR = new THREE.Quaternion()
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.70))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.90))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -0.10));
+
+const _qLatMistakeTopL = new THREE.Quaternion()
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -0.20))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.50))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 2.10));
+
+const _qLatMistakeTopR = new THREE.Quaternion()
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -0.20))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -0.50))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -2.10));
+
+const _qLatMistakeBottomL = new THREE.Quaternion()
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.20))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -0.20))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 0.90));
+
+const _qLatMistakeBottomR = new THREE.Quaternion()
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.20))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.20))
+  .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -0.90));
+
 const _tempQuatA = new THREE.Quaternion();
 const _tempQuatB = new THREE.Quaternion();
 
@@ -754,33 +805,105 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
         break;
       }
 
-      // 6. LAT PULLDOWN
+      // 6. LAT PULLDOWN (WIDE GRIP)
       case 'lat-pulldown': {
-        model.position.set(0, 0.55, 0);
-        if (b('thighL')) b('thighL').rotateX(-1.5);
-        if (b('thighR')) b('thighR').rotateX(-1.5);
-        if (b('shinL')) b('shinL').rotateX(1.5);
-        if (b('shinR')) b('shinR').rotateX(1.5);
+        // Seated at the commercial Lat Pulldown machine station
+        model.position.set(0, 0.58, 0);
+        model.rotation.set(0, -Math.PI / 2, 0);
+
+        // Athletic Seated Base: Thighs horizontal resting on seat pad and locked under thigh roller pads
+        if (b('thighL')) {
+          b('thighL').rotateX(-1.45);
+          b('thighL').rotateZ(-0.12);
+        }
+        if (b('thighR')) {
+          b('thighR').rotateX(-1.45);
+          b('thighR').rotateZ(0.12);
+        }
+        // Shins bent at 90° at knees, dropping vertically to the gym floor
+        if (b('shinL')) b('shinL').rotateX(1.45);
+        if (b('shinR')) b('shinR').rotateX(1.45);
+        // Feet planted firmly flat on the floor pedestal
+        if (b('footL')) b('footL').rotateX(-0.10);
+        if (b('footR')) b('footR').rotateX(-0.10);
 
         if (isMistake) {
-          // 45° torso recline
-          if (b('spine001')) b('spine001').rotateX(THREE.MathUtils.lerp(-0.2, -0.75, t));
-          if (b('upper_armL')) b('upper_armL').rotateZ(THREE.MathUtils.lerp(2.2, 0.8, t));
-          if (b('upper_armR')) b('upper_armR').rotateZ(THREE.MathUtils.lerp(-2.2, -0.8, t));
-          if (b('forearmL')) b('forearmL').rotateX(THREE.MathUtils.lerp(0.2, 1.2, t));
-          if (b('forearmR')) b('forearmR').rotateX(THREE.MathUtils.lerp(0.2, 1.2, t));
+          // COMMON MISTAKE:
+          // 1. Severe 45° Torso Recline & Momentum Heave (turning pulldown into a sloppy row)
+          // 2. Flared horizontal elbows dragging back instead of driving down into back pockets
+          // 3. Yanking with biceps and collapsing/broken wrists
+          // 4. Head wrenched forward
+          if (b('spine001')) b('spine001').rotateX(THREE.MathUtils.lerp(-0.20, -0.75, t));
+          if (b('spine002')) b('spine002').rotateX(THREE.MathUtils.lerp(-0.08, -0.25, t));
+          if (b('spine004')) b('spine004').rotateX(THREE.MathUtils.lerp(0.05, 0.40, t));
+
+          if (initialQuats['upper_armL'] && initialQuats['upper_armR']) {
+            _tempQuatA.copy(initialQuats['upper_armL']).multiply(_qLatMistakeTopL);
+            _tempQuatB.copy(initialQuats['upper_armL']).multiply(_qLatMistakeBottomL);
+            if (b('upper_armL')) b('upper_armL').quaternion.copy(_tempQuatA).slerp(_tempQuatB, t);
+
+            _tempQuatA.copy(initialQuats['upper_armR']).multiply(_qLatMistakeTopR);
+            _tempQuatB.copy(initialQuats['upper_armR']).multiply(_qLatMistakeBottomR);
+            if (b('upper_armR')) b('upper_armR').quaternion.copy(_tempQuatA).slerp(_tempQuatB, t);
+          }
+
+          if (b('forearmL')) b('forearmL').rotateX(THREE.MathUtils.lerp(0.15, 1.45, t));
+          if (b('forearmR')) b('forearmR').rotateX(THREE.MathUtils.lerp(0.15, 1.45, t));
+
+          // Broken, cocked wrists
+          if (b('handL')) b('handL').rotateX(-0.35);
+          if (b('handR')) b('handR').rotateX(-0.35);
         } else {
-          if (b('spine001')) b('spine001').rotateX(THREE.MathUtils.lerp(-0.12, -0.22, t));
-          if (b('upper_armL')) {
-            b('upper_armL').rotateZ(THREE.MathUtils.lerp(2.5, 0.5, t));
-            b('upper_armL').rotateX(t * 0.3);
+          // CORRECT FORM:
+          // 1. Stable, proud thoracic posture: 12°-18° slight lean back with chest puffed to the ceiling
+          // 2. Scapular depression initiating the pull, driving elbows down and back into back pockets
+          // 3. Constant wide grip separation matching the lat bar with locked overhand grip
+          // 4. Monotonic downward bar stroke directly to the upper clavicles
+          const spine1X = THREE.MathUtils.lerp(-0.15, -0.22, t);
+          const spine2X = THREE.MathUtils.lerp(-0.05, -0.08, t);
+          if (b('spine001')) b('spine001').rotateX(spine1X);
+          if (b('spine002')) b('spine002').rotateX(spine2X);
+          if (b('spine004')) b('spine004').rotateX(0.12); // looking up along the cable line of pull
+
+          let fX;
+          if (initialQuats['upper_armL'] && initialQuats['upper_armR']) {
+            if (t <= 0.5) {
+              const u = t / 0.5;
+              _tempQuatA.copy(initialQuats['upper_armL']).multiply(_qLatTopL);
+              _tempQuatB.copy(initialQuats['upper_armL']).multiply(_qLatMidL);
+              if (b('upper_armL')) b('upper_armL').quaternion.copy(_tempQuatA).slerp(_tempQuatB, u);
+
+              _tempQuatA.copy(initialQuats['upper_armR']).multiply(_qLatTopR);
+              _tempQuatB.copy(initialQuats['upper_armR']).multiply(_qLatMidR);
+              if (b('upper_armR')) b('upper_armR').quaternion.copy(_tempQuatA).slerp(_tempQuatB, u);
+
+              fX = THREE.MathUtils.lerp(0.05, 1.20, u);
+            } else {
+              const u = (t - 0.5) / 0.5;
+              _tempQuatA.copy(initialQuats['upper_armL']).multiply(_qLatMidL);
+              _tempQuatB.copy(initialQuats['upper_armL']).multiply(_qLatBottomL);
+              if (b('upper_armL')) b('upper_armL').quaternion.copy(_tempQuatA).slerp(_tempQuatB, u);
+
+              _tempQuatA.copy(initialQuats['upper_armR']).multiply(_qLatMidR);
+              _tempQuatB.copy(initialQuats['upper_armR']).multiply(_qLatBottomR);
+              if (b('upper_armR')) b('upper_armR').quaternion.copy(_tempQuatA).slerp(_tempQuatB, u);
+
+              fX = THREE.MathUtils.lerp(1.20, 1.60, u);
+            }
           }
-          if (b('upper_armR')) {
-            b('upper_armR').rotateZ(THREE.MathUtils.lerp(-2.5, -0.5, t));
-            b('upper_armR').rotateX(t * 0.3);
+
+          if (b('forearmL')) b('forearmL').rotateX(fX);
+          if (b('forearmR')) b('forearmR').rotateX(fX);
+
+          // Strong overhand hook grip wrapping around the wide angled bar handles
+          if (b('handL')) {
+            b('handL').rotateX(-0.10);
+            b('handL').rotateZ(0.15);
           }
-          if (b('forearmL')) b('forearmL').rotateX(THREE.MathUtils.lerp(0.1, 1.6, t));
-          if (b('forearmR')) b('forearmR').rotateX(THREE.MathUtils.lerp(0.1, 1.6, t));
+          if (b('handR')) {
+            b('handR').rotateX(-0.10);
+            b('handR').rotateZ(-0.15);
+          }
         }
         break;
       }
@@ -1363,6 +1486,7 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
     if (eq.dumbbellL) eq.dumbbellL.visible = false;
     if (eq.dumbbellR) eq.dumbbellR.visible = false;
     if (eq.latBar) eq.latBar.visible = false;
+    if (eq.latStation) eq.latStation.visible = false;
     if (eq.cableRope) eq.cableRope.visible = false;
     if (eq.pullUpBar) eq.pullUpBar.visible = false;
 
@@ -1436,11 +1560,18 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
       }
     } else if (activeMode === 'cable') {
       if (type === 'lat-pulldown') {
+        if (eq.latStation) eq.latStation.visible = true;
         if (eq.latBar) {
           eq.latBar.visible = true;
           const barCenterY = (handLPos.y + handRPos.y) / 2;
           const barCenterZ = (handLPos.z + handRPos.z) / 2;
           eq.latBar.position.set(0, barCenterY, barCenterZ);
+
+          if (eq.latCableWire) {
+            const wireHeight = Math.max(0.1, 2.25 - barCenterY);
+            eq.latCableWire.position.set(0, wireHeight / 2, (0.10 - barCenterZ) * 0.5);
+            eq.latCableWire.scale.set(1, wireHeight / 1.5, 1);
+          }
         }
       } else {
         if (eq.cableRope) {

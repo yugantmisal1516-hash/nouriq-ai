@@ -88,21 +88,121 @@ export function createGymEquipment(scene, exercise, initialMode) {
   scene.add(dumbbellL);
   scene.add(dumbbellR);
 
-  // 3. WIDE LAT PULLDOWN CABLE BAR
+  // 3. WIDE LAT PULLDOWN CABLE BAR & DEDICATED STATION
   const latBar = new THREE.Group();
-  const latShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 1.25, 16), chromeMat);
+  
+  // Central chrome bar: 0.86m straight section
+  const latShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 0.86, 16), chromeMat);
   latShaft.rotation.z = Math.PI / 2;
   latBar.add(latShaft);
-  const gripL = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.2, 14), steelMat);
-  gripL.position.set(0.62, -0.06, 0);
-  gripL.rotation.z = Math.PI / 3;
+
+  // Ergonomic angled outer drop grips: 0.20m long at ±0.46m (matching lifter's wide hand separation)
+  const gripL = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.20, 14), steelMat);
+  gripL.position.set(0.48, -0.05, 0.02);
+  gripL.rotation.z = Math.PI / 5;
   latBar.add(gripL);
-  const gripR = gripL.clone();
-  gripR.position.set(-0.62, -0.06, 0);
-  gripR.rotation.z = -Math.PI / 3;
+
+  const gripR = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.20, 14), steelMat);
+  gripR.position.set(-0.48, -0.05, 0.02);
+  gripR.rotation.z = -Math.PI / 5;
   latBar.add(gripR);
+
+  // Center chrome swivel ring
+  const latSwivel = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.04, 12), chromeMat);
+  latSwivel.position.set(0, 0.02, 0);
+  latBar.add(latSwivel);
+
+  // Overhead High-Pulley Cable Wire (connecting bar swivel to overhead pulley tower at y = 2.25m)
+  const latCableWire = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 1.5, 8), chromeMat);
+  latCableWire.position.set(0, 0.75, 0);
+  latBar.add(latCableWire);
+
   latBar.visible = initialMode === 'cable' && isLatPulldown;
   scene.add(latBar);
+
+  // DEDICATED LAT PULLDOWN MACHINE STATION
+  const latStation = new THREE.Group();
+
+  // Floor Base Rails (dark steel)
+  const baseRailL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 1.30), steelMat);
+  baseRailL.position.set(0.32, 0.03, 0.15);
+  latStation.add(baseRailL);
+
+  const baseRailR = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 1.30), steelMat);
+  baseRailR.position.set(-0.32, 0.03, 0.15);
+  latStation.add(baseRailR);
+
+  const baseCrossFront = new THREE.Mesh(new THREE.BoxGeometry(0.70, 0.06, 0.06), steelMat);
+  baseCrossFront.position.set(0, 0.03, 0.75);
+  latStation.add(baseCrossFront);
+
+  const baseCrossRear = new THREE.Mesh(new THREE.BoxGeometry(0.70, 0.06, 0.06), steelMat);
+  baseCrossRear.position.set(0, 0.03, -0.45);
+  latStation.add(baseCrossRear);
+
+  // Central Frame Spine
+  const stationSpine = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.06, 1.10), steelMat);
+  stationSpine.position.set(0, 0.04, 0.15);
+  latStation.add(stationSpine);
+
+  // Seat Support Post & Ergonomic Contoured Seat Pad
+  const seatPost = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.38, 0.07), steelMat);
+  seatPost.position.set(0, 0.22, 0.02);
+  latStation.add(seatPost);
+
+  const latSeatPad = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.06, 0.34), leatherMat);
+  latSeatPad.position.set(0, 0.44, 0.02);
+  latSeatPad.receiveShadow = true;
+  latStation.add(latSeatPad);
+
+  // Adjustable Thigh Lock-Down Roller Assembly
+  const thighPost = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.48, 0.06), steelMat);
+  thighPost.position.set(0, 0.28, 0.30);
+  latStation.add(thighPost);
+
+  const rollerCrossbar = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.56, 16), chromeMat);
+  rollerCrossbar.rotation.z = Math.PI / 2;
+  rollerCrossbar.position.set(0, 0.54, 0.30);
+  latStation.add(rollerCrossbar);
+
+  // Left & Right Thick Round Foam Rollers (locking quadriceps down)
+  const rollerPadL = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.048, 0.20, 20), leatherMat);
+  rollerPadL.rotation.z = Math.PI / 2;
+  rollerPadL.position.set(0.16, 0.54, 0.30);
+  latStation.add(rollerPadL);
+
+  const rollerPadR = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.048, 0.20, 20), leatherMat);
+  rollerPadR.rotation.z = Math.PI / 2;
+  rollerPadR.position.set(-0.16, 0.54, 0.30);
+  latStation.add(rollerPadR);
+
+  // Vertical Weight Tower Column (in front of the lifter at z = 0.65)
+  const towerColumn = new THREE.Mesh(new THREE.BoxGeometry(0.08, 2.25, 0.08), steelMat);
+  towerColumn.position.set(0, 1.15, 0.65);
+  latStation.add(towerColumn);
+
+  // Weight Stack Guide Rods & Weight Shroud (adds authentic gym depth)
+  const stackShroud = new THREE.Mesh(new THREE.BoxGeometry(0.42, 1.20, 0.16), plateCastMat);
+  stackShroud.position.set(0, 0.70, 0.72);
+  latStation.add(stackShroud);
+
+  // Overhead Cantilever Boom extending back towards the lifter at y = 2.25, z = 0.10
+  const overheadBoom = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.60), steelMat);
+  overheadBoom.position.set(0, 2.25, 0.35);
+  latStation.add(overheadBoom);
+
+  // Overhead Pulley Wheel & Housing
+  const pulleyHousing = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.12, 0.10), steelMat);
+  pulleyHousing.position.set(0, 2.25, 0.10);
+  latStation.add(pulleyHousing);
+
+  const pulleyWheel = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.02, 24), chromeMat);
+  pulleyWheel.rotation.z = Math.PI / 2;
+  pulleyWheel.position.set(0, 2.25, 0.10);
+  latStation.add(pulleyWheel);
+
+  latStation.visible = initialMode === 'cable' && isLatPulldown;
+  scene.add(latStation);
 
   // 4. BRAIDED CABLE ROPE ATTACHMENT
   const cableRope = new THREE.Group();
@@ -222,5 +322,5 @@ export function createGymEquipment(scene, exercise, initialMode) {
   }
   scene.add(benchGroup);
 
-  return { barbell, dumbbellL, dumbbellR, latBar, cableRope, ropeCordL, ropeCordR, ropeBallL, ropeBallR, cableWire, pullUpBar, benchGroup, pad: padPivot, strut };
+  return { barbell, dumbbellL, dumbbellR, latBar, latCableWire, latStation, cableRope, ropeCordL, ropeCordR, ropeBallL, ropeBallR, cableWire, pullUpBar, benchGroup, pad: padPivot, strut };
 }

@@ -374,12 +374,12 @@ export const EXERCISE_BIOMECHANICS = {
     primaryMuscles: ['latissimus_dorsi', 'teres_major'],
     secondaryMuscles: ['biceps_brachii', 'brachialis', 'posterior_deltoid'],
     jointAngle: {
-      name: 'Shoulder Adduction',
+      name: 'Pull Angle (Elbow Flexion)',
       jointA: 'shoulderL',
       pivot: 'forearmL',
       jointB: 'handL',
-      optimalStretchDeg: 160,
-      optimalPeakDeg: 70
+      optimalStretchDeg: 150,
+      optimalPeakDeg: 80
     },
     trajectory: {
       joint: 'handL',
