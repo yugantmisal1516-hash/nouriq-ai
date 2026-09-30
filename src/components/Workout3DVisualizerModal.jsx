@@ -1268,25 +1268,110 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
 
       // 15. ROPE FACE PULL
       case 'face-pull': {
-        model.position.set(0, 0.95, 0);
-        if (b('spine001')) b('spine001').rotateX(-0.10);
+        model.rotation.set(0, -Math.PI / 2, 0);
+        model.position.set(0, 0.93, -0.05);
+
+        // Athletic grounded base: soft athletic 20° knee bend, core solidly braced against forward cable tension
+        if (b('thighL')) {
+          b('thighL').rotateX(-0.25);
+          b('thighL').rotateZ(-0.06);
+        }
+        if (b('thighR')) {
+          b('thighR').rotateX(-0.25);
+          b('thighR').rotateZ(0.06);
+        }
+        if (b('shinL')) b('shinL').rotateX(0.35);
+        if (b('shinR')) b('shinR').rotateX(0.35);
+        if (b('footL')) b('footL').rotateX(-0.10);
+        if (b('footR')) b('footR').rotateX(-0.10);
 
         if (isMistake) {
-          // Low elbow row
-          if (b('upper_armL')) b('upper_armL').rotateX(t * 0.4);
-          if (b('upper_armR')) b('upper_armR').rotateX(t * 0.4);
-        } else {
-          // High wide elbows with external rotation
+          // COMMON MISTAKE:
+          // 1. Violent torso swing: lifter swings forward then heaves back into an exaggerated 35° recline
+          // 2. Low elbow row: elbows drop low to ribcage instead of driving high and wide to ears
+          // 3. Zero external rotation: hands stay in front of chest/sternum, forearms pointing down
+          // 4. Head cranes forward like a turtle; collapsed/broken wrists
+          const spine1X = THREE.MathUtils.lerp(0.05, -0.45, t);
+          if (b('spine001')) b('spine001').rotateX(spine1X);
+          if (b('spine004')) b('spine004').rotateX(THREE.MathUtils.lerp(-0.05, 0.35, t));
+
+          // Low elbows dropping into a low chest row
+          const uX = THREE.MathUtils.lerp(0.85, 0.10, t);
+          const uY = THREE.MathUtils.lerp(-0.20, -0.10, t);
+          const uZ = THREE.MathUtils.lerp(-0.20, -0.35, t);
           if (b('upper_armL')) {
-            b('upper_armL').rotateZ(THREE.MathUtils.lerp(0.3, 1.45, t));
-            b('upper_armL').rotateX(THREE.MathUtils.lerp(0.6, -0.4, t));
+            b('upper_armL').rotateX(uX);
+            b('upper_armL').rotateY(uY);
+            b('upper_armL').rotateZ(uZ);
           }
           if (b('upper_armR')) {
-            b('upper_armR').rotateZ(THREE.MathUtils.lerp(-0.3, -1.45, t));
-            b('upper_armR').rotateX(THREE.MathUtils.lerp(0.6, -0.4, t));
+            b('upper_armR').rotateX(uX);
+            b('upper_armR').rotateY(-uY);
+            b('upper_armR').rotateZ(-uZ);
           }
-          if (b('forearmL')) b('forearmL').rotateX(THREE.MathUtils.lerp(0.2, 1.6, t));
-          if (b('forearmR')) b('forearmR').rotateX(THREE.MathUtils.lerp(0.2, 1.6, t));
+
+          const fX = THREE.MathUtils.lerp(0.30, 1.45, t);
+          if (b('forearmL')) b('forearmL').rotateX(fX);
+          if (b('forearmR')) b('forearmR').rotateX(fX);
+
+          if (b('handL')) b('handL').rotateX(-0.35);
+          if (b('handR')) b('handR').rotateX(-0.35);
+        } else {
+          // CORRECT FORM:
+          // 1. Solid upright torso with proud chest, slight 5° athletic backward counter-brace
+          // 2. Dynamic scapular retraction: protraction on reach (sZ = 0.05), deep rear-delt & rhomboid pin on finish (sZ = -0.10)
+          // 3. High, wide elbows level with shoulders/ears throughout the pull (abducted ~85°-90°)
+          // 4. Active external rotation: hands flay rope ends apart beside ears, thumbs pointing backwards
+          // 5. Line of pull straight toward the bridge of the nose / eye level
+          if (b('spine001')) b('spine001').rotateX(-0.06);
+          if (b('spine002')) b('spine002').rotateX(0.04);
+          if (b('spine004')) b('spine004').rotateX(-0.02);
+
+          const sZ = THREE.MathUtils.lerp(0.05, -0.10, t);
+          if (b('shoulderL')) b('shoulderL').rotateZ(sZ);
+          if (b('shoulderR')) b('shoulderR').rotateZ(-sZ);
+
+          const uX = THREE.MathUtils.lerp(1.55, 0.35, t);
+          const uY = THREE.MathUtils.lerp(-0.45, 0.10, t);
+          const uZ = THREE.MathUtils.lerp(-0.25, 1.00, t * t);
+
+          if (b('upper_armL')) {
+            b('upper_armL').rotateX(uX);
+            b('upper_armL').rotateY(uY);
+            b('upper_armL').rotateZ(uZ);
+          }
+          if (b('upper_armR')) {
+            b('upper_armR').rotateX(uX);
+            b('upper_armR').rotateY(-uY);
+            b('upper_armR').rotateZ(-uZ);
+          }
+
+          const fX = THREE.MathUtils.lerp(0.08, 1.80, t);
+          const fZ = THREE.MathUtils.lerp(0.00, 0.40, t);
+
+          if (b('forearmL')) {
+            b('forearmL').rotateX(fX);
+            b('forearmL').rotateZ(fZ);
+          }
+          if (b('forearmR')) {
+            b('forearmR').rotateX(fX);
+            b('forearmR').rotateZ(-fZ);
+          }
+
+          const hX = THREE.MathUtils.lerp(0.00, -0.25, t);
+          const hY = THREE.MathUtils.lerp(0.00, 0.35, t);
+          const hZ = THREE.MathUtils.lerp(0.10, 0.45, t);
+
+          if (b('handL')) {
+            b('handL').rotateX(hX);
+            b('handL').rotateY(hY);
+            b('handL').rotateZ(hZ);
+          }
+          if (b('handR')) {
+            b('handR').rotateX(hX);
+            b('handR').rotateY(-hY);
+            b('handR').rotateZ(-hZ);
+          }
         }
         break;
       }
@@ -1498,7 +1583,15 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
 
         muscles.secondaryPatch.position.set(kneeLPos.x, kneeLPos.y, kneeLPos.z);
         muscles.secondaryPatch.scale.set(0.05, 0.05, 0.05);
-      } else if (type === 'overhead-press' || type === 'lateral-raise' || type === 'face-pull') {
+      } else if (type === 'face-pull') {
+        // Primary: Posterior Deltoid & Infraspinatus (rear shoulder head)
+        muscles.primaryPatch.position.set(shoulderLPos.x + 0.05, shoulderLPos.y - 0.02, shoulderLPos.z - 0.07);
+        muscles.primaryPatch.scale.set(0.07, 0.09, 0.07);
+
+        // Secondary: Rhomboids & Middle Trapezius (mid-upper back retraction)
+        muscles.secondaryPatch.position.set(latPos.x + 0.06, latPos.y + 0.08, latPos.z - 0.06);
+        muscles.secondaryPatch.scale.set(0.08, 0.11, 0.06);
+      } else if (type === 'overhead-press' || type === 'lateral-raise') {
         muscles.primaryPatch.position.set(shoulderLPos.x + 0.06, shoulderLPos.y, shoulderLPos.z);
         muscles.primaryPatch.scale.set(0.08, 0.10, 0.08);
 
@@ -1576,6 +1669,8 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
     if (eq.rowStation) eq.rowStation.visible = false;
     if (eq.vBarHandle) eq.vBarHandle.visible = false;
     if (eq.rowCableWire) eq.rowCableWire.visible = false;
+    if (eq.cableColumn) eq.cableColumn.visible = false;
+    if (eq.faceCableWire) eq.faceCableWire.visible = false;
     if (eq.pullUpBar) eq.pullUpBar.visible = false;
 
     // Bench visibility
@@ -1684,9 +1779,59 @@ export default function Workout3DVisualizerModal({ isOpen, exercise, onClose }) 
             eq.rowCableWire.scale.set(1, dist, 1);
           }
         }
+      } else if (type === 'face-pull') {
+        if (eq.cableColumn) eq.cableColumn.visible = true;
+        if (eq.cableRope) {
+          eq.cableRope.visible = true;
+          if (eq.cableWire) eq.cableWire.visible = false; // Hide overhead vertical wire
+
+          const avgY = (handLPos.y + handRPos.y) / 2;
+          const avgZ = (handLPos.z + handRPos.z) / 2;
+          const handMid = new THREE.Vector3(0, avgY, avgZ);
+          const pulleyPos = new THREE.Vector3(0, 1.60, 1.25);
+
+          const forwardDir = new THREE.Vector3().subVectors(pulleyPos, handMid).normalize();
+          const halfSep = Math.abs(handLPos.x - handRPos.x) / 2;
+          const ropeCordLen = 0.36;
+          const forwardDist = Math.sqrt(Math.max(0.04, ropeCordLen * ropeCordLen - halfSep * halfSep));
+          const clampPos = handMid.clone().add(forwardDir.clone().multiplyScalar(forwardDist));
+
+          eq.cableRope.position.copy(clampPos);
+
+          if (eq.ropeBallL && eq.ropeBallR && eq.ropeCordL && eq.ropeCordR) {
+            const localHandL = handLPos.clone().sub(clampPos);
+            const localHandR = handRPos.clone().sub(clampPos);
+
+            eq.ropeBallL.position.copy(localHandL);
+            eq.ropeBallR.position.copy(localHandR);
+
+            const dirL = localHandL.clone().normalize();
+            eq.ropeCordL.position.set(localHandL.x / 2, localHandL.y / 2, localHandL.z / 2);
+            eq.ropeCordL.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirL);
+            eq.ropeCordL.scale.set(1, Math.max(0.1, localHandL.length() / 0.32), 1);
+
+            const dirR = localHandR.clone().normalize();
+            eq.ropeCordR.position.set(localHandR.x / 2, localHandR.y / 2, localHandR.z / 2);
+            eq.ropeCordR.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirR);
+            eq.ropeCordR.scale.set(1, Math.max(0.1, localHandR.length() / 0.32), 1);
+          }
+
+          if (eq.faceCableWire) {
+            eq.faceCableWire.visible = true;
+            const delta = new THREE.Vector3().subVectors(clampPos, pulleyPos);
+            const dist = delta.length();
+            const mid = new THREE.Vector3().addVectors(pulleyPos, clampPos).multiplyScalar(0.5);
+            const dir = delta.clone().normalize();
+
+            eq.faceCableWire.position.copy(mid);
+            eq.faceCableWire.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+            eq.faceCableWire.scale.set(1, dist, 1);
+          }
+        }
       } else {
         if (eq.cableRope) {
           eq.cableRope.visible = true;
+          if (eq.cableWire) eq.cableWire.visible = true;
           const clampY = (handLPos.y + handRPos.y) / 2 + 0.18;
           const clampZ = (handLPos.z + handRPos.z) / 2 - 0.04;
           eq.cableRope.position.set(0, clampY, clampZ);

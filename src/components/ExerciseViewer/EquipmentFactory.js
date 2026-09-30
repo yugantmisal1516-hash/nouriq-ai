@@ -12,6 +12,7 @@ export function createGymEquipment(scene, exercise, initialMode) {
 
   const isLatPulldown = exercise?.kinematicType === 'lat-pulldown' || exercise?.id === 'lat-pulldown';
   const isSeatedRow = exercise?.kinematicType === 'seated-row' || exercise?.id === 'seated-cable-row' || exercise?.id === 'seated-row';
+  const isFacePull = exercise?.kinematicType === 'face-pull' || exercise?.id === 'face-pull';
 
   // 1. OLYMPIC BARBELL ROD (2.15m knurled chrome shaft with dual 20kg bumper plates)
   const barbell = new THREE.Group();
@@ -369,7 +370,56 @@ export function createGymEquipment(scene, exercise, initialMode) {
   rowCableWire.visible = initialMode === 'cable' && isSeatedRow;
   scene.add(rowCableWire);
 
-  // 6. OVERHEAD PULL-UP BAR
+  // 6. COMMERCIAL ADJUSTABLE FUNCTIONAL TRAINER / CABLE COLUMN STATION (Eye-Level Pulley for Face Pull)
+  const cableColumn = new THREE.Group();
+
+  // Floor Base & Stabilizers
+  const colBaseBeam = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.05, 0.70), steelMat);
+  colBaseBeam.position.set(0, 0.025, 1.35);
+  cableColumn.add(colBaseBeam);
+
+  const colBaseFoot = new THREE.Mesh(new THREE.BoxGeometry(0.70, 0.05, 0.08), steelMat);
+  colBaseFoot.position.set(0, 0.025, 1.25);
+  cableColumn.add(colBaseFoot);
+
+  // Dual Vertical Upright Guide Rails (2.20m high)
+  const guideRailL = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 2.20, 16), chromeMat);
+  guideRailL.position.set(0.12, 1.10, 1.30);
+  cableColumn.add(guideRailL);
+
+  const guideRailR = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 2.20, 16), chromeMat);
+  guideRailR.position.set(-0.12, 1.10, 1.30);
+  cableColumn.add(guideRailR);
+
+  // Top Cross Connector Beam
+  const topCrossBeam = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.06, 0.08), steelMat);
+  topCrossBeam.position.set(0, 2.20, 1.30);
+  cableColumn.add(topCrossBeam);
+
+  // Protective Weight Stack Tower Enclosure
+  const colStack = new THREE.Mesh(new THREE.BoxGeometry(0.38, 2.10, 0.22), steelMat);
+  colStack.position.set(0, 1.05, 1.45);
+  cableColumn.add(colStack);
+
+  // Eye-Level Adjustable Pulley Carriage Assembly (at y = 1.60m, z = 1.25m)
+  const pulleyCarriage = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.14, 0.10), steelMat);
+  pulleyCarriage.position.set(0, 1.60, 1.28);
+  cableColumn.add(pulleyCarriage);
+
+  const colPulleyWheel = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.022, 24), chromeMat);
+  colPulleyWheel.rotation.z = Math.PI / 2;
+  colPulleyWheel.position.set(0, 1.60, 1.25);
+  cableColumn.add(colPulleyWheel);
+
+  cableColumn.visible = initialMode === 'cable' && isFacePull;
+  scene.add(cableColumn);
+
+  // Dedicated Horizontal Cable Wire for Face Pull (from front eye-level pulley to rope clamp)
+  const faceCableWire = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 1.0, 8), chromeMat);
+  faceCableWire.visible = initialMode === 'cable' && isFacePull;
+  scene.add(faceCableWire);
+
+  // 7. OVERHEAD PULL-UP BAR
   const pullUpBar = new THREE.Group();
   const puShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 1.3, 16), steelMat);
   puShaft.rotation.z = Math.PI / 2;
@@ -461,6 +511,7 @@ export function createGymEquipment(scene, exercise, initialMode) {
     latBar, latCableWire, latStation,
     cableRope, ropeCordL, ropeCordR, ropeBallL, ropeBallR, cableWire,
     rowStation, vBarHandle, rowCableWire,
+    cableColumn, faceCableWire,
     pullUpBar, benchGroup, pad: padPivot, strut
   };
 }

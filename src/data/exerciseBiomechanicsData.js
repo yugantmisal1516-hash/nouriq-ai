@@ -924,7 +924,7 @@ export const EXERCISE_BIOMECHANICS = {
     name: 'Rope Face Pull',
     equipment: 'cable',
     defaultCamera: 'threeQuarter',
-    cameraConfig: { theta: Math.PI / 3.2, phi: Math.PI / 2.5, radius: 2.15, targetY: 0.9 },
+    cameraConfig: { theta: Math.PI / 3.2, phi: Math.PI / 2.5, radius: 2.25, targetY: 1.25 },
     primaryMuscles: ['posterior_deltoid', 'infraspinatus'],
     secondaryMuscles: ['rhomboids', 'middle_trapezius'],
     jointAngle: {
@@ -932,8 +932,8 @@ export const EXERCISE_BIOMECHANICS = {
       jointA: 'shoulderL',
       pivot: 'forearmL',
       jointB: 'handL',
-      optimalStretchDeg: 155,
-      optimalPeakDeg: 80
+      optimalStretchDeg: 145,
+      optimalPeakDeg: 65
     },
     trajectory: {
       joint: 'handL',
@@ -944,9 +944,9 @@ export const EXERCISE_BIOMECHANICS = {
     correctForm: {
       title: 'Correct Biomechanical Form',
       badges: [
-        { text: '✓ Thumbs Backward / External Rotation', bone: 'handL', color: 'emerald' },
         { text: '✓ High Elbows Level With Ears', bone: 'forearmL', color: 'emerald' },
-        { text: '✓ 1s Rear Delt & Rotator Cuff Squeeze', bone: 'shoulderL', color: 'emerald' }
+        { text: '✓ Thumbs Backward / External Rotation', bone: 'handL', color: 'emerald' },
+        { text: '✓ 1s Rear Delt & Infraspinatus Pin', bone: 'shoulderL', color: 'emerald' }
       ],
       aiCoaching: 'Nouriq AI: Pull the center of the rope toward your bridge of nose. Flay the rope ends apart, drive elbows high and back, and rotate thumbs toward the wall behind you.',
       tempo: '2s Pull & Rotate • 1.5s Rear Delt Hold • 3s Rebound Stretch'
@@ -955,7 +955,8 @@ export const EXERCISE_BIOMECHANICS = {
       title: 'Elbows Dropping into Low Row',
       badges: [
         { text: '⚠ Elbows Dropping to Chest', bone: 'forearmL', color: 'rose' },
-        { text: '⚠ Zero External Rotation', bone: 'handL', color: 'rose' }
+        { text: '⚠ Zero External Rotation', bone: 'handL', color: 'rose' },
+        { text: '⚠ Violent Torso Recline Momentum', bone: 'spine001', color: 'rose' }
       ],
       aiCoaching: 'Nouriq AI: Do not turn this into a row. Keep elbows high and rotate thumbs backward to activate your rear delts and rotator cuffs.',
       spineTwist: 0.20,
