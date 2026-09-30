@@ -974,7 +974,7 @@ export const EXERCISE_BIOMECHANICS = {
     name: 'Incline Dumbbell Bicep Curl',
     equipment: 'dumbbell',
     defaultCamera: 'side',
-    cameraConfig: { theta: Math.PI / 2, phi: Math.PI / 2.3, radius: 2.1, targetY: 0.85 },
+    cameraConfig: { theta: Math.PI / 2.2, phi: Math.PI / 2.3, radius: 2.15, targetY: 0.65 },
     primaryMuscles: ['biceps_long_head', 'biceps_short_head'],
     secondaryMuscles: ['brachialis', 'brachioradialis'],
     jointAngle: {
